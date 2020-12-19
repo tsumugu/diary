@@ -5,8 +5,8 @@
       <div class="regist__body__signined" v-if="isSignIn">
         <!-- form -->
         <div><input type="datetime-local" placeholder="日付" v-model="when" /></div>
-        <div><select v-model="where"><option disabled value="">場所</option><option v-for="(val, key) in placeList" v-bind:value="val.id">{{val.name}}</option></select></div>
-        <div><select v-model="who"><option disabled value="">誰と行ったか</option><option v-for="(val, key) in friendsList" v-bind:value="val.id">{{val.name}}</option></select></div>
+        <div><select v-model="where"><option disabled value="">場所</option><option v-for="(val, key) in placeList" v-bind:value="val.place_id" v-bind:disabled="val.place_id==null">{{val.name}}</option></select><div><input type="text" v-model="whereAdd" /><button v-on:click="onAddWhereButton">+</button></div></div>
+        <div><select v-model="who"><option disabled value="">誰と行ったか</option><option v-for="(val, key) in friendsList" v-bind:value="val.place_id">{{val.name}}</option></select></div>
         <div><textarea placeholder="したこと" v-model="what" /></div>
         <div class="imgPreview">
           <img v-bind:src="src" v-for="(src, key) in previewImageList" :key="key">
@@ -21,6 +21,7 @@
 <script>
 import axios from 'axios'
 import ImgUploader from '../assets/ImgUploader.js'
+import PlacesManager from '../assets/PlacesManager.js'
 import firebase from 'firebase'
 var database = firebase.database()
 
@@ -32,24 +33,32 @@ export default {
       userInfo: null,
       isNowLoading: true,
       IU: null,
+      PM: null,
       uploadFiles: null,
       uploadPromiseList: [],
       previewImageList: [],
       submitImageUrlList: [],
-      placeList: [
-        {id:"thisisid-aaaa", name:"Tokyo"},
-        {id:"thisisid-bbbb", name:"Kyoto"},
-        {id:"thisisid-cccc", name:"Hokkaido"}
-      ],
+      userAddedPlaceList: [],
+      nearbyPlaceList: [],
+      placeList: [],
       friendsList: [
         {id:"thisisid-dddd", name:"Taro"},
         {id:"thisisid-eeee", name:"Jiro"},
         {id:"thisisid-ffff", name:"Saburo"}
       ],
+      whereAdd: null,
       when: null,
       where: null,
       who: null,
       what: null
+    }
+  },
+  watch: {
+    userAddedPlaceList() {
+      this.onChangePlaceList()
+    },
+    nearbyPlaceList() {
+      this.onChangePlaceList()
     }
   },
   methods: {
@@ -61,6 +70,11 @@ export default {
       })
       //this.createPreviewImage(files)
     },
+    onChangePlaceList() {
+      this.placeList = []
+      this.placeList = this.userAddedPlaceList.concat(this.nearbyPlaceList)
+      //console.log(this.placeList, this.nearbyPlaceList, this.userAddedPlaceList)
+    },
     createPreviewImage(file) {
       const reader = new FileReader()
       reader.onload = e => {
@@ -70,6 +84,20 @@ export default {
     },
     uploadImg(file) {
       return this.IU.upload(file)
+    },
+    onAddWhereButton() {
+      //this.whereAddで検索してみる
+      this.PM.searchplacesbyname(this.whereAdd).then((response) => {
+        // selectを更新
+        this.userAddedPlaceList = []
+        this.userAddedPlaceList.push({name: "-- Search Result --", place_id: null})
+        response.data.forEach((place) => {
+          this.userAddedPlaceList.push(place)
+        })
+        this.userAddedPlaceList.push({name: "-- GPS Result --", place_id: null})
+      }).catch((error) => {
+        console.log("Places Manager Error", error)
+      })
     },
     onSubmit() {
       // submit処理
@@ -82,7 +110,7 @@ export default {
       // 2. アップロードが完了したらすべての情報を合わせてRealtimeDBにset
       Promise.all(this.uploadPromiseList).then((ImageUrls) => {
         //APIから帰ってきたJSONをパースして、URLを配列にまとめる
-        ImageUrls.forEach(json => {
+        ImageUrls.forEach((json) => {
           this.submitImageUrlList.push(json.data.url)
         })
         var UserPostInfoObj = {
@@ -109,21 +137,46 @@ export default {
       firebase.database().ref("posts/"+this.userInfo.uid).push(Obj).then(() => {
         alert("投稿しました！")
       })
-      .catch(function(error) {
+      .catch((error) => {
         //onError
-        console.log(error)
+        console.log("Firebase Error", error)
         alert("投稿に失敗しました")
       })
     }
   },
   mounted() {
     const _this = this
+
     firebase.auth().onAuthStateChanged(user => {
       _this.isSignIn = (user != null)
       _this.userInfo = user
       _this.isNowLoading = false
     })
+
     this.IU = new ImgUploader(axios)
+    this.PM = new PlacesManager(axios)
+    // 現在地を取得
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition((position) => { 
+        var data = position.coords
+	      var lat = data.latitude
+	      var lon = data.longitude
+        // "-33.8670522", "151.1957362"
+        // 取得した現在地をもとに近辺のランドマークを取得
+        this.PM.searchnearbyplacesbylatlon(lat, lon).then((response) => {
+          // selectを更新
+          response.data.forEach((place) => {
+            this.nearbyPlaceList.push(place)
+          })
+        }).catch((error) => {
+          console.log("Places Manager Error", error)
+        })
+      }, (error) => { console.log("GeoLocation API Error", error) })
+    } else {
+      // 端末がGeoLocation APIに非対応だった場合
+      // 最近の場所を適当に表示
+    }
+
   }
 }
 </script>
