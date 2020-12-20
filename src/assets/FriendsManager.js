@@ -6,16 +6,31 @@ export default class FriendsManager {
     }
     friendidtoname(friendId) {
       return new Promise((resolve) => {
-        this.database.ref("friends/"+this.userInfo.uid).on('value', (snapshot) =>{
-          var friendsInfo = snapshot.val()
-          var friendName = null
-          Object.keys(friendsInfo).forEach(fid => {
-            if (fid == friendId) {
-              friendName = friendsInfo[fid].name
-            }
+        // リストだったら...
+        if (friendId.substr(0, 5) == "fg - ") {
+          var realFriendId = friendId.slice(5)
+          this.database.ref("friendsGroup/"+this.userInfo.uid).on('value', (snapshot) =>{
+            var friendsInfo = snapshot.val()
+            var friendName = null
+            Object.keys(friendsInfo).forEach(fid => {
+              if (fid == realFriendId) {
+                friendName = friendsInfo[fid].name
+              }
+            })
+            resolve(friendName);
           })
-          resolve(friendName);
-        })
+        } else {
+          this.database.ref("friends/"+this.userInfo.uid).on('value', (snapshot) =>{
+            var friendsInfo = snapshot.val()
+            var friendName = null
+            Object.keys(friendsInfo).forEach(fid => {
+              if (fid == friendId) {
+                friendName = friendsInfo[fid].name
+              }
+            })
+            resolve(friendName);
+          })
+        }
       })
     }
     savemyfriend(friendName) {

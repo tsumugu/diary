@@ -45,6 +45,7 @@ export default {
       nearbyPlaceList: [],
       placeList: [],
       friendsList: [],
+      friendsGroupList: [],
       whereAdd: null,
       whoAdd: null,
       when: null,
@@ -98,9 +99,19 @@ export default {
         // 端末がGeoLocation APIに非対応だった場合
         // 最近の場所を適当に表示
       }
+      
+      this.FM.fetchfriendsgroup().then((friedsgroupinfo) => {
+        this.friendsList.push({name: "-- Friends Groups --", friendsId: null})
+        Object.keys(friedsgroupinfo).forEach(gid => {
+          this.friendsList.push({
+            "friendsId": "fg - "+gid,
+            "name": friedsgroupinfo[gid].name
+          })
+        })
+      })
 
       this.FM.fetchsavedfriends().then((friedsinfo) => {
-        this.friendsList = []
+        this.friendsList.push({name: "-- Friends --", friendsId: null})
         Object.keys(friedsinfo).forEach(fid => {
           this.friendsList.push({
             "friendsId": fid,
@@ -110,7 +121,6 @@ export default {
       })
 
       this.PM.fetchusersavedplaces().then((placesinfo) => {
-        this.userAddedPlaceList = []
         this.userAddedPlaceList.push({name: "-- User Saved Place --", placeId: null})
         Object.keys(placesinfo).forEach(pid => {
           this.userAddedPlaceList.push({
