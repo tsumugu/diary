@@ -31,6 +31,14 @@ export default {
   mounted() {
     this.userInfo = this.propsUserInfo
     firebase.database().ref("posts/"+this.userInfo.uid).on('value', (snapshot) =>{
+      /*
+      this.PM.placeidtoname("pid_1767bc32531322").then((result) => {
+        console.log(result)
+      })
+      this.FM.friendidtoname("-MOvaEq-wx22o-urQBHX").then((result) => {
+        console.log(result)
+      })
+      */
       this.TLItemsList = snapshot.val()
     })
   }

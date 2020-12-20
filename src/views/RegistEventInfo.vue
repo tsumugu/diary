@@ -22,6 +22,7 @@
 import axios from 'axios'
 import ImgUploader from '../assets/ImgUploader.js'
 import PlacesManager from '../assets/PlacesManager.js'
+import FriendsManager from '../assets/FriendsManager.js'
 import firebase from 'firebase'
 var database = firebase.database()
 
@@ -34,6 +35,7 @@ export default {
       isNowLoading: true,
       IU: null,
       PM: null,
+      FM: null,
       uploadFiles: null,
       uploadPromiseList: [],
       previewImageList: [],
@@ -54,7 +56,7 @@ export default {
   watch: {
     isSignIn(after, before) {
       if (before == null) {
-        this.initLoadFromFirebase()
+        this.initMain()
       }
     },
     userAddedPlaceList() {
@@ -68,9 +70,36 @@ export default {
     }
   },
   methods: {
-    initLoadFromFirebase() {
-      firebase.database().ref("friends/"+this.userInfo.uid).on('value', (snapshot) =>{
-        var friedsinfo = snapshot.val()
+    initMain() {
+
+      this.IU = new ImgUploader(axios)
+      this.PM = new PlacesManager(axios, database, this.userInfo)
+      this.FM = new FriendsManager(axios, database, this.userInfo)
+      // 現在地を取得
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition((position) => { 
+          var data = position.coords
+	        var lat = data.latitude
+	        var lon = data.longitude
+          // "-33.8670522", "151.1957362"
+          // 取得した現在地をもとに近辺のランドマークを取得
+          this.PM.searchnearbyplacesbylatlon(lat, lon).then((response) => {
+            // selectを更新
+            this.nearbyPlaceList = []
+            this.nearbyPlaceList.push({name: "-- GPS Result --", place_id: null})
+            response.data.forEach((place) => {
+              this.nearbyPlaceList.push(place)
+            })
+          }).catch((error) => {
+            console.log("Places Manager Error", error)
+          })
+        }, (error) => { console.log("GeoLocation API Error", error) })
+      } else {
+        // 端末がGeoLocation APIに非対応だった場合
+        // 最近の場所を適当に表示
+      }
+
+      this.FM.fetchsavedfriends().then((friedsinfo) => {
         this.friendsList = []
         Object.keys(friedsinfo).forEach(fid => {
           this.friendsList.push({
@@ -79,8 +108,8 @@ export default {
           })
         })
       })
-      firebase.database().ref("places/"+this.userInfo.uid).on('value', (snapshot) =>{
-        var placesinfo = snapshot.val()
+
+      this.PM.fetchusersavedplaces().then((placesinfo) => {
         this.userAddedPlaceList = []
         this.userAddedPlaceList.push({name: "-- User Saved Place --", place_id: null})
         Object.keys(placesinfo).forEach(pid => {
@@ -134,7 +163,7 @@ export default {
       })
     },
     onAddWhoButton() {
-      firebase.database().ref("friends/"+this.userInfo.uid).push({"name":this.whoAdd}).then(() => {
+      this.FM.savemyfriend(this.whoAdd).then(() => {
         alert("フレンドを追加しました！")
       })
       .catch((error) => {
@@ -186,7 +215,7 @@ export default {
         }
       })
       // place_idと名前を保存(同名で上書きされるので存在確認はしない)
-      firebase.database().ref("places/"+this.userInfo.uid+"/"+Obj.where).set({name: place_name}).then(() => {
+      this.PM.savemyplace(Obj.where, place_name).then(() => {
         //
         firebase.database().ref("posts/"+this.userInfo.uid).push(Obj).then(() => {
           alert("投稿しました！")
@@ -211,33 +240,6 @@ export default {
       _this.userInfo = user
       _this.isNowLoading = false
     })
-
-    this.IU = new ImgUploader(axios)
-    this.PM = new PlacesManager(axios)
-
-    // 現在地を取得
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition((position) => { 
-        var data = position.coords
-	      var lat = data.latitude
-	      var lon = data.longitude
-        // "-33.8670522", "151.1957362"
-        // 取得した現在地をもとに近辺のランドマークを取得
-        this.PM.searchnearbyplacesbylatlon(lat, lon).then((response) => {
-          // selectを更新
-          this.nearbyPlaceList = []
-          this.nearbyPlaceList.push({name: "-- GPS Result --", place_id: null})
-          response.data.forEach((place) => {
-            this.nearbyPlaceList.push(place)
-          })
-        }).catch((error) => {
-          console.log("Places Manager Error", error)
-        })
-      }, (error) => { console.log("GeoLocation API Error", error) })
-    } else {
-      // 端末がGeoLocation APIに非対応だった場合
-      // 最近の場所を適当に表示
-    }
 
   }
 }
