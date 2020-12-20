@@ -5,13 +5,13 @@ export default class PlacesManager {
       this.userInfo = arg_userinfo
     }
     searchnearbyplacesbylatlon(lat, lon) {
-      return this.axios.get('http://tsumugu2626.xyz/placessearch/nearby.php?lat='+lat+'&lon='+lon)
+      return this.axios.get('https://secure.tsumugu2626.xyz/placessearch/nearby.php?lat='+lat+'&lon='+lon)
     }
     searchplacesbyname(query) {
-      return this.axios.get(encodeURI('http://tsumugu2626.xyz/placessearch/name.php?q='+query))
+      return this.axios.get(encodeURI('https://secure.tsumugu2626.xyz/placessearch/name.php?q='+query))
     }
     searchplacesbyname(query) {
-      return this.axios.get(encodeURI('http://tsumugu2626.xyz/placessearch/name.php?q='+query))
+      return this.axios.get(encodeURI('https://secure.tsumugu2626.xyz/placessearch/name.php?q='+query))
     }
     savemyplace(placeId, placeName) {
       return new Promise((resolve, reject) => {
@@ -33,16 +33,31 @@ export default class PlacesManager {
     }
     placeidtoname(placeId) {
       return new Promise((resolve) => {
-        this.database.ref("places/"+this.userInfo.uid).on('value', (snapshot) =>{
-          var placesInfo = snapshot.val()
-          var placeName = null
-          Object.keys(placesInfo).forEach(pid => {
-            if (pid == placeId) {
-              placeName = placesInfo[pid].name
+        //placeIdの最初がpid_だったら
+        if (placeId.substr(0, 4) == "pid_") {
+          this.database.ref("places/"+this.userInfo.uid).on('value', (snapshot) =>{
+            var placesInfo = snapshot.val()
+            var placeName = null
+            Object.keys(placesInfo).forEach(pid => {
+              if (pid == placeId) {
+                placeName = placesInfo[pid].name
+              }
+            })
+            if (placeName == null) {
+              this.axios.get('https://secure.tsumugu2626.xyz/placessearch/idtoname.php?pid='+placeId).then((res)=>{
+                placeName = res.data
+                resolve(placeName)
+              })
+            } else {
+              resolve(placeName)
             }
           })
-          resolve(placeName)
-        })
+        } else {
+          // GoogleのPlace IDなので、いい感じに変換
+          this.axios.get('https://secure.tsumugu2626.xyz/placessearch/idtoname.php?pid='+placeId).then((res)=>{
+            resolve(res.data)
+          })
+        }
       })
     }
   }
