@@ -4,9 +4,9 @@ export default class FriendsManager {
       this.database = arg_firebase_database
       this.userInfo = arg_userinfo
     }
-    savemyfriend(friend_name) {
+    savemyfriend(friendName) {
       return new Promise((resolve, reject) => {
-        this.database.ref("friends/"+this.userInfo.uid).push({"name":friend_name}).then(() => {
+        this.database.ref("friends/"+this.userInfo.uid).push({"name":friendName}).then(() => {
           resolve(true)
         })
         .catch((error) => {
@@ -22,13 +22,13 @@ export default class FriendsManager {
         })
       })
     }
-    friendidtoname(friend_id) {
+    friendidtoname(friendId) {
       return new Promise((resolve) => {
         this.database.ref("friends/"+this.userInfo.uid).on('value', (snapshot) =>{
           var friendsInfo = snapshot.val()
           var friendName = null
           Object.keys(friendsInfo).forEach(fid => {
-            if (fid == friend_id) {
+            if (fid == friendId) {
               friendName = friendsInfo[fid].name
             }
           })

@@ -5,9 +5,12 @@
 </template>
 
 <script>
-import TLItem from '@/components/TLItem.vue'
+import axios from 'axios'
 import firebase from 'firebase'
 var database = firebase.database()
+import PlacesManager from '../assets/PlacesManager.js'
+import FriendsManager from '../assets/FriendsManager.js'
+import TLItem from '@/components/TLItem.vue'
 
 export default {
   name: 'TimeLine',
@@ -20,27 +23,56 @@ export default {
   data() {
     return {
       userInfo: null,
-      TLItemsList: []
+      TLItemsList: [],
+      PM: null,
+      FM: null
     }
   },
   watch: {
-    userInfo() {
-      console.log(this.userInfo)
+    userInfo(after, before) {
+      if (this.userInfo != null) {
+        this.initMain()
+      }
+    }
+  },
+  methods: {
+    initMain() {
+      this.PM = new PlacesManager(axios, database, this.userInfo)
+      this.FM = new FriendsManager(axios, database, this.userInfo)
+      firebase.database().ref("posts/"+this.userInfo.uid).on('value', (snapshot) =>{
+        var tlitems = snapshot.val()
+        var returnPostsList = []
+        Object.keys(tlitems).forEach(postid => {
+          var itemObj = tlitems[postid]
+          //nameを取得していく
+          var placeNamePromise = this.PM.placeidtoname(itemObj.where)
+          var friendNamePromise = this.FM.friendidtoname(itemObj.who)
+          Promise.all([placeNamePromise, friendNamePromise]).then((names) => {
+            var placeName = names[0]
+            var friendName = names[1]
+            var returnObj = {
+              imgUrls: itemObj.imgUrls?itemObj.imgUrls:null,
+              what: itemObj.what,
+              when: itemObj.when,
+              where: {
+                "placeId": itemObj.where,
+                "name": placeName
+              },
+              who: {
+                "friendId": itemObj.who,
+                "name": friendName
+              }
+            }
+            returnPostsList.push(returnObj)
+          })
+        })
+        this.TLItemsList = returnPostsList
+        console.log(this.TLItemsList)
+      })
     }
   },
   mounted() {
     this.userInfo = this.propsUserInfo
-    firebase.database().ref("posts/"+this.userInfo.uid).on('value', (snapshot) =>{
-      /*
-      this.PM.placeidtoname("pid_1767bc32531322").then((result) => {
-        console.log(result)
-      })
-      this.FM.friendidtoname("-MOvaEq-wx22o-urQBHX").then((result) => {
-        console.log(result)
-      })
-      */
-      this.TLItemsList = snapshot.val()
-    })
   }
 }
 </script>

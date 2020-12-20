@@ -5,8 +5,8 @@
       <div class="regist__body__signined" v-if="isSignIn">
         <!-- form -->
         <div><input type="datetime-local" placeholder="日付" v-model="when" /></div>
-        <div><select v-model="where"><option disabled value="">場所</option><option v-for="(val, key) in placeList" v-bind:value="val.place_id" v-bind:disabled="val.place_id==null">{{val.name}}</option></select><div><input type="text" v-model="whereAdd" /><button v-on:click="onAddWhereButton">+</button></div></div>
-        <div><select v-model="who"><option disabled value="">誰と行ったか</option><option v-for="(val, key) in friendsList" v-bind:value="val.friends_id">{{val.name}}</option></select><div><input type="text" v-model="whoAdd" /><button v-on:click="onAddWhoButton">+</button></div></div>
+        <div><select v-model="where"><option disabled value="">場所</option><option v-for="(val, key) in placeList" v-bind:value="val.placeId" v-bind:disabled="val.placeId==null">{{val.name}}</option></select><div><input type="text" v-model="whereAdd" /><button v-on:click="onAddWhereButton">+</button></div></div>
+        <div><select v-model="who"><option disabled value="">誰と行ったか</option><option v-for="(val, key) in friendsList" v-bind:value="val.friendsId">{{val.name}}</option></select><div><input type="text" v-model="whoAdd" /><button v-on:click="onAddWhoButton">+</button></div></div>
         <div><textarea placeholder="したこと" v-model="what" /></div>
         <div class="imgPreview">
           <img v-bind:src="src" v-for="(src, key) in previewImageList" :key="key">
@@ -86,7 +86,7 @@ export default {
           this.PM.searchnearbyplacesbylatlon(lat, lon).then((response) => {
             // selectを更新
             this.nearbyPlaceList = []
-            this.nearbyPlaceList.push({name: "-- GPS Result --", place_id: null})
+            this.nearbyPlaceList.push({name: "-- GPS Result --", placeId: null})
             response.data.forEach((place) => {
               this.nearbyPlaceList.push(place)
             })
@@ -103,7 +103,7 @@ export default {
         this.friendsList = []
         Object.keys(friedsinfo).forEach(fid => {
           this.friendsList.push({
-            "friends_id": fid,
+            "friendsId": fid,
             "name": friedsinfo[fid].name
           })
         })
@@ -111,10 +111,10 @@ export default {
 
       this.PM.fetchusersavedplaces().then((placesinfo) => {
         this.userAddedPlaceList = []
-        this.userAddedPlaceList.push({name: "-- User Saved Place --", place_id: null})
+        this.userAddedPlaceList.push({name: "-- User Saved Place --", placeId: null})
         Object.keys(placesinfo).forEach(pid => {
           this.userAddedPlaceList.push({
-            "place_id": pid,
+            "placeId": pid,
             "name": placesinfo[pid].name
           })
         })
@@ -152,9 +152,9 @@ export default {
       this.PM.searchplacesbyname(this.whereAdd).then((response) => {
         // selectを更新
         this.searchResultPlaceList = []
-        this.searchResultPlaceList.push({name: "-- New User Add --", place_id: null})
-        this.searchResultPlaceList.push({name: this.whereAdd, place_id: "pid_"+this.uniqueStr()})
-        this.searchResultPlaceList.push({name: "-- Search Result --", place_id: null})
+        this.searchResultPlaceList.push({name: "-- New User Add --", placeId: null})
+        this.searchResultPlaceList.push({name: this.whereAdd, placeId: "pid_"+this.uniqueStr()})
+        this.searchResultPlaceList.push({name: "-- Search Result --", placeId: null})
         response.data.forEach((place) => {
           this.searchResultPlaceList.push(place)
         })
@@ -206,16 +206,16 @@ export default {
       })
     },
     setFirebaseRealtimeDB(Obj) {
-      // place_idから名前を取得
-      var place_name = null
+      // placeIdから名前を取得
+      var placeName = null
       Object.keys(this.placeList).forEach(k => {
-        if (this.placeList[k].place_id == Obj.where) {
-          place_name = this.placeList[k].name
+        if (this.placeList[k].placeId == Obj.where) {
+          placeName = this.placeList[k].name
           return true;
         }
       })
-      // place_idと名前を保存(同名で上書きされるので存在確認はしない)
-      this.PM.savemyplace(Obj.where, place_name).then(() => {
+      // placeIdと名前を保存(同名で上書きされるので存在確認はしない)
+      this.PM.savemyplace(Obj.where, placeName).then(() => {
         //
         firebase.database().ref("posts/"+this.userInfo.uid).push(Obj).then(() => {
           alert("投稿しました！")

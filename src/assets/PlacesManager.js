@@ -13,9 +13,9 @@ export default class PlacesManager {
     searchplacesbyname(query) {
       return this.axios.get(encodeURI('http://tsumugu2626.xyz/placessearch/name.php?q='+query))
     }
-    savemyplace(place_id, place_name) {
+    savemyplace(placeId, placeName) {
       return new Promise((resolve, reject) => {
-        this.database.ref("places/"+this.userInfo.uid+"/"+place_id).set({name: place_name}).then(() => {
+        this.database.ref("places/"+this.userInfo.uid+"/"+placeId).set({name: placeName}).then(() => {
           resolve(true)
         })
         .catch((error) => {
@@ -31,13 +31,13 @@ export default class PlacesManager {
         })
       })
     }
-    placeidtoname(place_id) {
+    placeidtoname(placeId) {
       return new Promise((resolve) => {
         this.database.ref("places/"+this.userInfo.uid).on('value', (snapshot) =>{
           var placesInfo = snapshot.val()
           var placeName = null
           Object.keys(placesInfo).forEach(pid => {
-            if (pid == place_id) {
+            if (pid == placeId) {
               placeName = placesInfo[pid].name
             }
           })
