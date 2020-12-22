@@ -1,16 +1,15 @@
 <template>
   <div class="timeline">
     <div v-for="(posts, day) in TLItemsList">
-      <h1>{{day}}</h1>
+      <div><button v-on:click="onDayPrevious"><</button><h1 class="timeline__daytitle">{{day}}</h1><button v-on:click="onDayForward">></button></div>
       <div v-for="post in posts">
-        <TLItem :propsItem=post />
+        <TLItem :propsItem=post :key="post.when" />
       </div>
     </div>
   </div>
 </template>
 
 <script>
-import moment from 'moment'
 import axios from 'axios'
 import firebase from 'firebase'
 var database = firebase.database()
@@ -31,9 +30,11 @@ export default {
       userInfo: null,
       postsList: [],
       postsOrderedbyDateList: [],
+      postsObDKeyList: [],
       TLItemsList: {},
       PM: null,
-      FM: null
+      FM: null,
+      postDateIndex: 0
     }
   },
   watch: {
@@ -91,28 +92,46 @@ export default {
         }
         this.postsOrderedbyDateList[tmpDayString].push(post)
       })
+      // keyをsort
+      var tmpPKL = Object.keys(this.postsOrderedbyDateList)
+      tmpPKL.sort(function(a, b) {
+        if (a < b) {
+          return 1;
+        } else {
+          return -1;
+        }
+      })
+      this.postsObDKeyList = tmpPKL
       this.makeTLItemsList()
     },
-    makeTLItemsList() {
-      var todayDate = moment().utcOffset("+0900").format("YYYY-MM-DD")
+    makeTLItemsList(arg_postDateIndex) {
       var posts = null
       var postDate = null
-
-      var todayPosts = this.postsOrderedbyDateList[todayDate]
-      if (todayPosts != undefined) {
-        posts = todayPosts
-        postDate = todayDate
-      } else {
-        var latestPostDate = Object.keys(this.postsOrderedbyDateList)[0]
-        if (latestPostDate != undefined) {
-          posts = this.postsOrderedbyDateList[latestPostDate]
-          postDate = latestPostDate
-        }
+      var postDateIndex = 0
+      if (arg_postDateIndex != undefined) {
+        postDateIndex = arg_postDateIndex
       }
-      this.TLItemsList = {}
-      this.TLItemsList[postDate] = posts
-      //.split("-").join("/")
-      console.log(this.TLItemsList)
+      var postDateByIndex = this.postsObDKeyList[postDateIndex]
+      if (postDateByIndex != undefined) {
+        posts = this.postsOrderedbyDateList[postDateByIndex]
+        postDate = postDateByIndex
+      }
+      if (posts!=null && postDate!=null) {
+        this.TLItemsList = {}
+        this.TLItemsList[postDate] = posts
+      }
+    },
+    onDayPrevious() {
+      if (this.postsObDKeyList[this.postDateIndex-1] != undefined) {
+        this.postDateIndex -= 1
+        this.makeTLItemsList(this.postDateIndex)
+      }
+    },
+    onDayForward() {
+      if (this.postsObDKeyList[this.postDateIndex+1] != undefined) {
+        this.postDateIndex += 1
+        this.makeTLItemsList(this.postDateIndex)
+      }
     }
   },
   mounted() {
@@ -125,5 +144,9 @@ export default {
 .timeline {
   width: 100%;
   height: 100%;
+  &__daytitle {
+    display: inline;
+    margin: 0 10px 0 10px;
+  }
 }
 </style>
