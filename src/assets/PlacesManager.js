@@ -33,6 +33,9 @@ export default class PlacesManager {
     }
     placeidtoname(placeId) {
       return new Promise((resolve) => {
+        if (placeId == undefined || placeId == null) {
+          resolve(null);
+        }
         //placeIdの最初がpid_だったら
         if (placeId.substr(0, 4) == "pid_") {
           this.database.ref("places/"+this.userInfo.uid).on('value', (snapshot) =>{

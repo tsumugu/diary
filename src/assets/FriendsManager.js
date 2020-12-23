@@ -6,6 +6,9 @@ export default class FriendsManager {
     }
     friendidtoname(friendId) {
       return new Promise((resolve) => {
+        if (friendId == undefined || friendId == null) {
+          resolve(null);
+        }
         // リストだったら...
         if (friendId.substr(0, 5) == "fg - ") {
           var realFriendId = friendId.slice(5)
