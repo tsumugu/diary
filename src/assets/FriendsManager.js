@@ -12,22 +12,26 @@ export default class FriendsManager {
           this.database.ref("friendsGroup/"+this.userInfo.uid).on('value', (snapshot) =>{
             var friendsInfo = snapshot.val()
             var friendName = null
-            Object.keys(friendsInfo).forEach(fid => {
-              if (fid == realFriendId) {
-                friendName = friendsInfo[fid].name
-              }
-            })
+            if (friendsInfo != null) {
+              Object.keys(friendsInfo).forEach(fid => {
+                if (fid == realFriendId) {
+                  friendName = friendsInfo[fid].name
+                }
+              })
+            }
             resolve(friendName);
           })
         } else {
           this.database.ref("friends/"+this.userInfo.uid).on('value', (snapshot) =>{
             var friendsInfo = snapshot.val()
             var friendName = null
-            Object.keys(friendsInfo).forEach(fid => {
-              if (fid == friendId) {
-                friendName = friendsInfo[fid].name
-              }
-            })
+            if (friendsInfo != null) {
+              Object.keys(friendsInfo).forEach(fid => {
+                if (fid == friendId) {
+                  friendName = friendsInfo[fid].name
+                }
+              })
+            }
             resolve(friendName);
           })
         }
@@ -66,22 +70,24 @@ export default class FriendsManager {
           // firebaseから取得できるのは名前がないデータなので、名前を追加で取得して返却する
           var returnObj = {}
           var groupInfo = snapshot.val()
-          Object.keys(groupInfo).forEach(gid => {
-            var memberInfo = groupInfo[gid].member
-            var memberListWithName = []
-            Object.keys(memberInfo).forEach(fid => {
-              this.friendidtoname(memberInfo[fid]).then((res)=>{
-                memberListWithName.push({
-                  "id": memberInfo[fid],
-                  "name": res
+          if (groupInfo != null) {
+            Object.keys(groupInfo).forEach(gid => {
+              var memberInfo = groupInfo[gid].member
+              var memberListWithName = []
+              Object.keys(memberInfo).forEach(fid => {
+                this.friendidtoname(memberInfo[fid]).then((res)=>{
+                  memberListWithName.push({
+                    "id": memberInfo[fid],
+                    "name": res
+                  })
                 })
               })
+              returnObj[gid] = {
+                member: memberListWithName,
+                name: groupInfo[gid].name
+              }
             })
-            returnObj[gid] = {
-              member: memberListWithName,
-              name: groupInfo[gid].name
-            }
-          })
+          }
           resolve(returnObj)
         })
       })

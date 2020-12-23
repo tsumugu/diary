@@ -38,11 +38,13 @@ export default class PlacesManager {
           this.database.ref("places/"+this.userInfo.uid).on('value', (snapshot) =>{
             var placesInfo = snapshot.val()
             var placeName = null
-            Object.keys(placesInfo).forEach(pid => {
-              if (pid == placeId) {
-                placeName = placesInfo[pid].name
-              }
-            })
+            if (placesInfo != null) {
+              Object.keys(placesInfo).forEach(pid => {
+                if (pid == placeId) {
+                  placeName = placesInfo[pid].name
+                }
+              })
+            }
             if (placeName == null) {
               this.axios.get('https://secure.tsumugu2626.xyz/placessearch/idtoname.php?pid='+placeId).then((res)=>{
                 placeName = res.data

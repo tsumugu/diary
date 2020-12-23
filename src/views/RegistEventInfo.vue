@@ -5,13 +5,23 @@
       <div class="regist__body__signined" v-if="isSignIn">
         <!-- form -->
         <div><input type="datetime-local" placeholder="日付" v-model="when" /></div>
-        <div><select v-model="where"><option disabled value="">場所</option><option v-for="(val, key) in placeList" v-bind:value="val.placeId" v-bind:disabled="val.placeId==null">{{val.name}}</option></select><div><input type="text" v-model="whereAdd" /><button v-on:click="onAddWhereButton">+</button></div></div>
+        <hr>
+        <div>
+          <select v-model="where"><option disabled value="">場所</option><option v-for="(val, key) in placeList" v-bind:value="val.placeId" v-bind:disabled="val.placeId==null">{{val.name}}</option></select>
+          <div><button v-on:click="getNowPlaceByGPS">GPSから入力</button></div>
+          <div>写真にに埋め込まれている情報から入力<img v-bind:src="exifSrc" id="preview-exif"><input type="file" @change="onEXIFFileChange" accept="image/*" /></div>
+          <div><input type="text" v-model="whereAdd" /><button v-on:click="onAddWhereButton">+</button></div>
+        </div>
+        <hr>
         <div><select v-model="who"><option disabled value="">誰と行ったか</option><option v-for="(val, key) in friendsList" v-bind:value="val.friendsId">{{val.name}}</option></select><div><input type="text" v-model="whoAdd" /><button v-on:click="onAddWhoButton">+</button></div></div>
+        <hr>
         <div><textarea placeholder="したこと" v-model="what" /></div>
+        <hr>
         <div class="imgPreview">
-          <img v-bind:src="src" v-for="(src, key) in previewImageList" :key="key">
+          <img v-bind:src="src" v-bind:id="'prev-' + key" v-for="(src, key) in previewImageList" :key="key">
         </div>
         <div><input type="file" @change="onFileChange" accept="image/*" multiple /></div>
+        <hr>
         <div><button v-on:click="onSubmit">投稿</button></div>
       </div>
     </div>
@@ -19,6 +29,7 @@
 </template>
 
 <script>
+import EXIF from 'exif-js'
 import axios from 'axios'
 import ImgUploader from '../assets/ImgUploader.js'
 import PlacesManager from '../assets/PlacesManager.js'
@@ -51,7 +62,8 @@ export default {
       when: null,
       where: null,
       who: null,
-      what: null
+      what: null,
+      exifSrc: null
     }
   },
   watch: {
@@ -76,59 +88,49 @@ export default {
       this.IU = new ImgUploader(axios)
       this.PM = new PlacesManager(axios, database, this.userInfo)
       this.FM = new FriendsManager(axios, database, this.userInfo)
-      // 現在地を取得
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition((position) => { 
-          var data = position.coords
-	        var lat = data.latitude
-	        var lon = data.longitude
-          // "-33.8670522", "151.1957362"
-          // 取得した現在地をもとに近辺のランドマークを取得
-          this.PM.searchnearbyplacesbylatlon(lat, lon).then((response) => {
-            // selectを更新
-            this.nearbyPlaceList = []
-            this.nearbyPlaceList.push({name: "-- GPS Result --", placeId: null})
-            response.data.forEach((place) => {
-              this.nearbyPlaceList.push(place)
-            })
-          }).catch((error) => {
-            console.log("Places Manager Error", error)
-          })
-        }, (error) => { console.log("GeoLocation API Error", error) })
-      } else {
-        // 端末がGeoLocation APIに非対応だった場合
-        // 最近の場所を適当に表示
-      }
-      
+
       this.FM.fetchfriendsgroup().then((friedsgroupinfo) => {
-        this.friendsList.push({name: "-- Friends Groups --", friendsId: null})
-        Object.keys(friedsgroupinfo).forEach(gid => {
-          this.friendsList.push({
-            "friendsId": "fg - "+gid,
-            "name": friedsgroupinfo[gid].name
+        if (this.isNotEmptyObj(friedsgroupinfo)) {
+          this.friendsList.push({name: "-- Friends Groups --", friendsId: null})
+          Object.keys(friedsgroupinfo).forEach(gid => {
+            this.friendsList.push({
+              "friendsId": "fg - "+gid,
+              "name": friedsgroupinfo[gid].name
+            })
           })
-        })
+        }
       })
 
       this.FM.fetchsavedfriends().then((friedsinfo) => {
-        this.friendsList.push({name: "-- Friends --", friendsId: null})
-        Object.keys(friedsinfo).forEach(fid => {
-          this.friendsList.push({
-            "friendsId": fid,
-            "name": friedsinfo[fid].name
+        if (this.isNotEmptyObj(friedsinfo)) {
+          this.friendsList.push({name: "-- Friends --", friendsId: null})
+          Object.keys(friedsinfo).forEach(fid => {
+            this.friendsList.push({
+              "friendsId": fid,
+              "name": friedsinfo[fid].name
+            })
           })
-        })
+        }
       })
 
       this.PM.fetchusersavedplaces().then((placesinfo) => {
-        this.userAddedPlaceList.push({name: "-- User Saved Place --", placeId: null})
-        Object.keys(placesinfo).forEach(pid => {
-          this.userAddedPlaceList.push({
-            "placeId": pid,
-            "name": placesinfo[pid].name
+        if (this.isNotEmptyObj(placesinfo)) {
+          this.userAddedPlaceList.push({name: "-- User Saved Place --", placeId: null})
+          Object.keys(placesinfo).forEach(pid => {
+            this.userAddedPlaceList.push({
+              "placeId": pid,
+              "name": placesinfo[pid].name
+            })
           })
-        })
+        }
       })
+    },
+    isNotEmptyObj(obj) {
+      if (obj == undefined || obj == null) {
+        return false
+      } else {
+        return Object.keys(obj).length != 0
+      }
     },
     onFileChange(e) {
       const files = e.target.files || e.dataTransfer.files;
@@ -240,6 +242,87 @@ export default {
       .catch((error) => {
         console.log("Firebase Error", error)
       })
+    },
+    latlonSixtyToTen(d, m, s) {
+      return parseFloat(d) + parseFloat(m/60) + (parseFloat(s)/3600)
+    },
+    onEXIFFileChange(e) {
+      const files = e.target.files || e.dataTransfer.files;
+      const reader = new FileReader()
+      reader.readAsDataURL(files[0])
+      reader.onload = e => {
+        this.exifSrc = e.target.result
+        var imgElm = document.getElementById("preview-exif")
+        setTimeout(()=>{
+          this.getEXIFinfo(imgElm)
+        }, 500)
+      }
+    },
+    getEXIFinfo(elm) {
+      var _this = this
+      EXIF.getData(elm, function() {
+        var timestamp = EXIF.getTag(this, "DateTimeOriginal")
+        if (timestamp != undefined) {
+          var tmpTimestampSplited = timestamp.split(" ")
+          var tmpTimestampMsSplited = tmpTimestampSplited[1].split(":")
+          var timestampFormated = tmpTimestampSplited[0].replaceAll(":", "-")+"T"+tmpTimestampMsSplited[0]+":"+tmpTimestampMsSplited[1] 
+        }
+        var GPSLatitudeSixty = EXIF.getTag(this, "GPSLatitude")
+        var GPSLongitudeSixty = EXIF.getTag(this, "GPSLongitude")
+        if (GPSLatitudeSixty!=undefined && GPSLongitudeSixty!=undefined) {
+          var GPSLatitudeTen = _this.latlonSixtyToTen(GPSLatitudeSixty[0], GPSLatitudeSixty[1], GPSLatitudeSixty[2])
+          var GPSLongitudeTen = _this.latlonSixtyToTen(GPSLongitudeSixty[0], GPSLongitudeSixty[1], GPSLongitudeSixty[2])
+        }
+        var InfoFromEXIF = {
+          date: timestampFormated,
+          latitude: GPSLatitudeTen,
+          longitude: GPSLongitudeTen
+        }
+        _this.setFormFromEXIFinfo(InfoFromEXIF)
+      })
+    },
+    setFormFromEXIFinfo(InfoFromEXIF) {
+      if (InfoFromEXIF.date != undefined) {
+        this.when = InfoFromEXIF.date
+      }
+      if (InfoFromEXIF.latitude != undefined && InfoFromEXIF.longitude != undefined) {
+        this.PM.searchnearbyplacesbylatlon(InfoFromEXIF.latitude, InfoFromEXIF.longitude).then((response) => {
+          // selectを更新
+          this.nearbyPlaceList = []
+          this.nearbyPlaceList.push({name: "-- EXIF Result --", placeId: null})
+          response.data.forEach((place) => {
+            this.nearbyPlaceList.push(place)
+          })
+        }).catch((error) => {
+          console.log("Places Manager Error", error)
+        })
+      } else {
+        alert("位置情報が埋め込まれていないようです...")
+      }
+    },
+    getNowPlaceByGPS() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition((position) => { 
+          var data = position.coords
+	        var lat = data.latitude
+	        var lon = data.longitude
+          // "-33.8670522", "151.1957362"
+          // 取得した現在地をもとに近辺のランドマークを取得
+          this.PM.searchnearbyplacesbylatlon(lat, lon).then((response) => {
+            // selectを更新
+            this.nearbyPlaceList = []
+            this.nearbyPlaceList.push({name: "-- GPS Result --", placeId: null})
+            response.data.forEach((place) => {
+              this.nearbyPlaceList.push(place)
+            })
+          }).catch((error) => {
+            console.log("Places Manager Error", error)
+          })
+        }, (error) => { console.log("GeoLocation API Error", error) })
+      } else {
+        // 端末がGeoLocation APIに非対応だった場合
+        // 最近の場所を適当に表示
+      }
     }
   },
   mounted() {
@@ -274,5 +357,8 @@ export default {
 }
 .imgPreview > img {
   width: 100px;
+}
+#preview-exif {
+  display: none;
 }
 </style>
