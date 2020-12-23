@@ -9,7 +9,7 @@
         <div>
           <select v-model="where"><option disabled value="">場所</option><option v-for="(val, key) in placeList" v-bind:value="val.placeId" v-bind:disabled="val.placeId==null">{{val.name}}</option></select>
           <div><button v-on:click="getNowPlaceByGPS">GPSから入力</button></div>
-          <div>写真にに埋め込まれている情報から入力<img v-bind:src="exifSrc" id="preview-exif"><input type="file" @change="onEXIFFileChange" accept="image/*" /></div>
+          <div>写真に埋め込まれている情報から入力(<label for="uploadexifimg">この画像もアップロードする</label><input type="checkbox" id="uploadexifimg" v-model="isUploadEXIFImg" checked>)<input type="file" ref="exifInput" @change="onEXIFFileChange" accept="image/*" /></div>
           <div><input type="text" v-model="whereAdd" /><button v-on:click="onAddWhereButton">+</button></div>
         </div>
         <hr>
@@ -20,7 +20,7 @@
         <div class="imgPreview">
           <img v-bind:src="src" v-bind:id="'prev-' + key" v-for="(src, key) in previewImageList" :key="key">
         </div>
-        <div><input type="file" @change="onFileChange" accept="image/*" multiple /></div>
+        <div><input type="file" ref="imgInput" @change="onFileChange" accept="image/*" multiple /></div>
         <hr>
         <div><button v-on:click="onSubmit">投稿</button></div>
       </div>
@@ -48,6 +48,9 @@ export default {
       PM: null,
       FM: null,
       uploadFiles: null,
+      uploadFilesEXIF: null,
+      exifSrc: null,
+      isUploadEXIFImg: true,
       uploadPromiseList: [],
       previewImageList: [],
       submitImageUrlList: [],
@@ -62,8 +65,7 @@ export default {
       when: null,
       where: null,
       who: null,
-      what: null,
-      exifSrc: null
+      what: null
     }
   },
   watch: {
@@ -124,6 +126,33 @@ export default {
           })
         }
       })
+    },
+    resetAll() {
+      this.isUploadEXIFImg = true
+      this.uploadPromiseList = []
+      this.previewImageList = []
+      this.submitImageUrlList = []
+      this.searchResultPlaceList = []
+      this.nearbyPlaceList = []
+      this.uploadFiles = null
+      this.uploadFilesEXIF = null
+      this.exifSrc = null
+      this.when = null
+      this.where = null
+      this.who = null
+      this.what = null
+
+      this.$refs.exifInput.value = ""
+      this.$refs.imgInput.value = ""
+
+      /*
+      userAddedPlaceList: [],
+      placeList: [],
+      friendsList: [],
+      friendsGroupList: [],
+      whereAdd: null,
+      whoAdd: null,
+      */
     },
     isNotEmptyObj(obj) {
       if (obj == undefined || obj == null) {
@@ -191,6 +220,12 @@ export default {
           this.uploadPromiseList.push(this.uploadImg(file))
         })
       }
+      //アップロードするにチェックがついていたらアップロード
+      if (this.isUploadEXIFImg) {
+        if (this.uploadFilesEXIF != null) {
+          this.uploadPromiseList.push(this.uploadImg(this.uploadFilesEXIF))
+        }
+      }
       // 2. アップロードが完了したらすべての情報を合わせてRealtimeDBにset
       Promise.all(this.uploadPromiseList).then((ImageUrls) => {
         //APIから帰ってきたJSONをパースして、URLを配列にまとめる
@@ -231,6 +266,7 @@ export default {
         //
         firebase.database().ref("posts/"+this.userInfo.uid).push(Obj).then(() => {
           alert("投稿しました！")
+          this.resetAll()
         })
         .catch((error) => {
           //onError
@@ -248,15 +284,8 @@ export default {
     },
     onEXIFFileChange(e) {
       const files = e.target.files || e.dataTransfer.files;
-      const reader = new FileReader()
-      reader.readAsDataURL(files[0])
-      reader.onload = e => {
-        this.exifSrc = e.target.result
-        var imgElm = document.getElementById("preview-exif")
-        setTimeout(()=>{
-          this.getEXIFinfo(imgElm)
-        }, 500)
-      }
+      this.uploadFilesEXIF = files[0]
+      this.getEXIFinfo(this.uploadFilesEXIF)
     },
     getEXIFinfo(elm) {
       var _this = this
@@ -282,6 +311,7 @@ export default {
       })
     },
     setFormFromEXIFinfo(InfoFromEXIF) {
+      console.log(InfoFromEXIF)
       if (InfoFromEXIF.date != undefined) {
         this.when = InfoFromEXIF.date
       }
@@ -357,8 +387,5 @@ export default {
 }
 .imgPreview > img {
   width: 100px;
-}
-#preview-exif {
-  display: none;
 }
 </style>
