@@ -1,5 +1,6 @@
 <template>
   <div class="TLItem">
+    <button @click="removepost(item.postid)">削除</button>
     <div>日時: {{item.when}}</div>
     <div>場所: {{item.where.name}}</div>
     <div>人: {{item.who.name}}</div>
@@ -17,6 +18,11 @@ export default {
   data() {
     return {
       item: null
+    }
+  },
+  methods: {
+    removepost(postid) {
+      this.$emit("removepost", postid)
     }
   },
   mounted() {

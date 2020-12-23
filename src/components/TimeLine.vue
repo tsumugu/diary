@@ -3,7 +3,7 @@
     <div v-for="(posts, day) in TLItemsList">
       <div><button v-on:click="onDayPrevious"><</button><h1 class="timeline__daytitle">{{day}}</h1><button v-on:click="onDayForward">></button></div>
       <div v-for="post in posts">
-        <TLItem :propsItem=post :key="post.when" />
+        <TLItem :propsItem=post @removepost='removepost' :key="post.when" />
       </div>
     </div>
   </div>
@@ -60,6 +60,7 @@ export default {
             var placeName = names[0]
             var friendName = names[1]
             var returnObj = {
+              postid: postid,
               imgUrls: itemObj.imgUrls?itemObj.imgUrls:null,
               what: itemObj.what,
               when: itemObj.when,
@@ -132,6 +133,19 @@ export default {
         this.postDateIndex += 1
         this.makeTLItemsList(this.postDateIndex)
       }
+    },
+    confirmExPromise(message) {
+      if (window.confirm(message)) {
+        return Promise.resolve();
+      }
+      return Promise.reject();
+    },
+    removepost(postid) {
+      this.confirmExPromise("この投稿を本当に削除しますか?").then(() => {
+        firebase.database().ref("posts/"+this.userInfo.uid+"/"+postid).remove().then(function(){
+          alert('削除しました！')
+        })
+      });
     }
   },
   mounted() {
