@@ -13,7 +13,7 @@
           <div><input type="text" v-model="whereAdd" /><button v-on:click="onAddWhereButton">+</button></div>
         </div>
         <hr>
-        <div><select v-model="who"><option disabled value="">誰と行ったか</option><option v-for="(val, key) in friendsList" v-bind:value="val.friendsId">{{val.name}}</option></select><div><input type="text" v-model="whoAdd" /><button v-on:click="onAddWhoButton">+</button></div></div>
+        <div><select v-model="who"><option disabled value="">誰と行ったか</option><option v-for="(val, key) in friendsList" v-bind:value="val.friendsId" v-bind:disabled="val.friendsId==null">{{val.name}}</option></select><div><input type="text" v-model="whoAdd" /><button v-on:click="onAddWhoButton">+</button></div></div>
         <hr>
         <div><textarea placeholder="したこと" v-model="what" /></div>
         <hr>
@@ -31,6 +31,8 @@
 <script>
 import EXIF from 'exif-js'
 import axios from 'axios'
+import ProgressPromise from 'progress-promise'
+import MyUtil from '../assets/MyUtil.js'
 import ImgUploader from '../assets/ImgUploader.js'
 import PlacesManager from '../assets/PlacesManager.js'
 import FriendsManager from '../assets/FriendsManager.js'
@@ -59,7 +61,6 @@ export default {
       nearbyPlaceList: [],
       placeList: [],
       friendsList: [],
-      friendsGroupList: [],
       whereAdd: null,
       whoAdd: null,
       when: null,
@@ -92,7 +93,7 @@ export default {
       this.FM = new FriendsManager(axios, database, this.userInfo)
 
       this.FM.fetchfriendsgroup().then((friedsgroupinfo) => {
-        if (this.isNotEmptyObj(friedsgroupinfo)) {
+        if (new MyUtil().isObjNotEmpty(friedsgroupinfo)) {
           this.friendsList.push({name: "-- Friends Groups --", friendsId: null})
           Object.keys(friedsgroupinfo).forEach(gid => {
             this.friendsList.push({
@@ -104,7 +105,7 @@ export default {
       })
 
       this.FM.fetchsavedfriends().then((friedsinfo) => {
-        if (this.isNotEmptyObj(friedsinfo)) {
+        if (new MyUtil().isObjNotEmpty(friedsinfo)) {
           this.friendsList.push({name: "-- Friends --", friendsId: null})
           Object.keys(friedsinfo).forEach(fid => {
             this.friendsList.push({
@@ -116,7 +117,7 @@ export default {
       })
 
       this.PM.fetchusersavedplaces().then((placesinfo) => {
-        if (this.isNotEmptyObj(placesinfo)) {
+        if (new MyUtil().isObjNotEmpty(placesinfo)) {
           this.userAddedPlaceList.push({name: "-- User Saved Place --", placeId: null})
           Object.keys(placesinfo).forEach(pid => {
             this.userAddedPlaceList.push({
@@ -134,6 +135,9 @@ export default {
       this.submitImageUrlList = []
       this.searchResultPlaceList = []
       this.nearbyPlaceList = []
+      this.friendsList = []
+      this.userAddedPlaceList = []
+      this.placeList = []
       this.uploadFiles = null
       this.uploadFilesEXIF = null
       this.exifSrc = null
@@ -141,25 +145,12 @@ export default {
       this.where = null
       this.who = null
       this.what = null
-
+      this.whereAdd = null
+      this.whoAdd = null
       this.$refs.exifInput.value = ""
       this.$refs.imgInput.value = ""
 
-      /*
-      userAddedPlaceList: [],
-      placeList: [],
-      friendsList: [],
-      friendsGroupList: [],
-      whereAdd: null,
-      whoAdd: null,
-      */
-    },
-    isNotEmptyObj(obj) {
-      if (obj == undefined || obj == null) {
-        return false
-      } else {
-        return Object.keys(obj).length != 0
-      }
+      this.initMain()
     },
     onFileChange(e) {
       const files = e.target.files || e.dataTransfer.files;
@@ -181,20 +172,13 @@ export default {
       }
       reader.readAsDataURL(file)
     },
-    uploadImg(file) {
-      return this.IU.upload(file)
-    },
-    uniqueStr() {
-      var strong = 1000
-      return new Date().getTime().toString(16)  + Math.floor(strong*Math.random()).toString(16)
-    },
     onAddWhereButton() {
       //this.whereAddで検索してみる
       this.PM.searchplacesbyname(this.whereAdd).then((response) => {
         // selectを更新
         this.searchResultPlaceList = []
         this.searchResultPlaceList.push({name: "-- New User Add --", placeId: null})
-        this.searchResultPlaceList.push({name: this.whereAdd, placeId: "pid_"+this.uniqueStr()})
+        this.searchResultPlaceList.push({name: this.whereAdd, placeId: "pid_"+new MyUtil().uniqueStr()})
         this.searchResultPlaceList.push({name: "-- Search Result --", placeId: null})
         response.data.forEach((place) => {
           this.searchResultPlaceList.push(place)
@@ -205,6 +189,18 @@ export default {
     },
     onAddWhoButton() {
       this.FM.savemyfriend(this.whoAdd).then(() => {
+        this.FM.fetchsavedfriends().then((friedsinfo) => {
+          if (new MyUtil().isObjNotEmpty(friedsinfo)) {
+            this.friendsList = []
+            this.friendsList.push({name: "-- Friends --", friendsId: null})
+            Object.keys(friedsinfo).forEach(fid => {
+              this.friendsList.push({
+                "friendsId": fid,
+                "name": friedsinfo[fid].name
+              })
+            })
+          }
+        })
         alert("フレンドを追加しました！")
       })
       .catch((error) => {
@@ -214,43 +210,45 @@ export default {
     },
     onSubmit() {
       // submit処理
-      // 1. 画像をアップロードする
-      if (this.uploadFiles != null) {
-        Array.from(this.uploadFiles).forEach(file => {
-          this.uploadPromiseList.push(this.uploadImg(file))
-        })
-      }
-      //アップロードするにチェックがついていたらアップロード
-      if (this.isUploadEXIFImg) {
-        if (this.uploadFilesEXIF != null) {
-          this.uploadPromiseList.push(this.uploadImg(this.uploadFilesEXIF))
-        }
-      }
-      // 2. アップロードが完了したらすべての情報を合わせてRealtimeDBにset
-      Promise.all(this.uploadPromiseList).then((ImageUrls) => {
-        //APIから帰ってきたJSONをパースして、URLを配列にまとめる
-        ImageUrls.forEach((json) => {
-          this.submitImageUrlList.push(json.data.url)
-        })
-        var UserPostInfoObj = {
-          when: this.when,
-          where: this.where,
-          who: this.who,
-          what: this.what,
-          imgUrls: this.submitImageUrlList
-        }
         //必須項目のチェック
-        if (UserPostInfoObj.when != null && UserPostInfoObj.where != null && UserPostInfoObj.what != null) {
-          if (UserPostInfoObj.when.replace(/\s+/g,'').length > 0 && UserPostInfoObj.where.replace(/\s+/g,'').length > 0 && UserPostInfoObj.what.replace(/\s+/g,'').length > 0) {
-            //DBに保存
-            this.setFirebaseRealtimeDB(UserPostInfoObj)
+        if (this.when != null && this.where != null && this.what != null) {
+          if (this.when.replace(/\s+/g,'').length > 0 && this.where.replace(/\s+/g,'').length > 0 && this.what.replace(/\s+/g,'').length > 0) {
+            // 画像をアップロードする
+            if (this.uploadFiles != null) {
+              Array.from(this.uploadFiles).forEach(file => {
+                this.uploadPromiseList.push(this.IU.upload(file))
+              })
+            }
+            //アップロードするにチェックがついていたらアップロード
+            if (this.isUploadEXIFImg) {
+              if (this.uploadFilesEXIF != null) {
+                this.uploadPromiseList.push(this.IU.upload(this.uploadFilesEXIF))
+              }
+            }
+            // 2. アップロードが完了したらすべての情報を合わせてRealtimeDBにset
+            ProgressPromise.all(this.uploadPromiseList)
+            .progress(results => console.log('Img Upload is in Progress', Math.round(results.proportion*100*10)/10)+"%")
+            .then((ImageUrls) => {
+              //APIから帰ってきたJSONをパースして、URLを配列にまとめる
+              ImageUrls.forEach((json) => {
+                this.submitImageUrlList.push(json.data.url)
+              })
+              var UserPostInfoObj = {
+                when: this.when,
+                where: this.where,
+                who: this.who,
+                what: this.what,
+                imgUrls: this.submitImageUrlList
+              }
+              //DBに保存
+              this.setFirebaseRealtimeDB(UserPostInfoObj)
+            })
           } else {
             alert("when, where, whatは必須項目です")
           }
         } else {
           alert("when, where, whatは必須項目です")
         }
-      })
     },
     setFirebaseRealtimeDB(Obj) {
       // placeIdから名前を取得
@@ -279,9 +277,6 @@ export default {
         console.log("Firebase Error", error)
       })
     },
-    latlonSixtyToTen(d, m, s) {
-      return parseFloat(d) + parseFloat(m/60) + (parseFloat(s)/3600)
-    },
     onEXIFFileChange(e) {
       const files = e.target.files || e.dataTransfer.files;
       this.uploadFilesEXIF = files[0]
@@ -299,8 +294,8 @@ export default {
         var GPSLatitudeSixty = EXIF.getTag(this, "GPSLatitude")
         var GPSLongitudeSixty = EXIF.getTag(this, "GPSLongitude")
         if (GPSLatitudeSixty!=undefined && GPSLongitudeSixty!=undefined) {
-          var GPSLatitudeTen = _this.latlonSixtyToTen(GPSLatitudeSixty[0], GPSLatitudeSixty[1], GPSLatitudeSixty[2])
-          var GPSLongitudeTen = _this.latlonSixtyToTen(GPSLongitudeSixty[0], GPSLongitudeSixty[1], GPSLongitudeSixty[2])
+          var GPSLatitudeTen = new MyUtil().latlonSixtyToTen(GPSLatitudeSixty[0], GPSLatitudeSixty[1], GPSLatitudeSixty[2])
+          var GPSLongitudeTen = new MyUtil().latlonSixtyToTen(GPSLongitudeSixty[0], GPSLongitudeSixty[1], GPSLongitudeSixty[2])
         }
         var InfoFromEXIF = {
           date: timestampFormated,
