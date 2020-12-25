@@ -1,6 +1,7 @@
 <template>
   <div class="TLItem">
     <button @click="removepost(item.postid)">削除</button>
+    <button @click="gotoedit(item.postid)">編集</button>
     <div>日時: {{item.when}}</div>
     <div>場所: {{item.where.name}}</div>
     <div>人: {{item.who.name}}</div>
@@ -23,6 +24,10 @@ export default {
   methods: {
     removepost(postid) {
       this.$emit("removepost", postid)
+    },
+    gotoedit(postid) {
+      //this.$router.push('/regist/'+postid);
+      window.open('https://diary.tsumugu2626.xyz/editpost/'+postid)
     }
   },
   mounted() {

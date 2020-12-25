@@ -15,6 +15,7 @@ import firebase from 'firebase'
 var database = firebase.database()
 import PlacesManager from '../assets/PlacesManager.js'
 import FriendsManager from '../assets/FriendsManager.js'
+import PostsManager from '../assets/PostsManager.js'
 import TLItem from '@/components/TLItem.vue'
 
 export default {
@@ -34,6 +35,7 @@ export default {
       TLItemsList: {},
       PM: null,
       FM: null,
+      PSM: null,
       postDateIndex: 0
     }
   },
@@ -48,37 +50,12 @@ export default {
     initMain() {
       this.PM = new PlacesManager(axios, database, this.userInfo)
       this.FM = new FriendsManager(axios, database, this.userInfo)
+      this.PSM = new PostsManager(this.PM, this.FM)
       firebase.database().ref("posts/"+this.userInfo.uid).on('value', (snapshot) =>{
         var tlitems = snapshot.val()
-        var tlitemslength = Object.keys(tlitems).length
-        Object.keys(tlitems).forEach(postid => {
-          var itemObj = tlitems[postid]
-          //nameを取得していく
-          var placeNamePromise = this.PM.placeidtoname(itemObj.where)
-          var friendNamePromise = this.FM.friendidtoname(itemObj.who)
-          Promise.all([placeNamePromise, friendNamePromise]).then((names) => {
-            var placeName = names[0]
-            var friendName = names[1]
-            var returnObj = {
-              postid: postid,
-              imgUrls: itemObj.imgUrls?itemObj.imgUrls:null,
-              what: itemObj.what,
-              when: itemObj.when,
-              where: {
-                "placeId": itemObj.where,
-                "name": placeName
-              },
-              who: {
-                "friendId": itemObj.who,
-                "name": friendName
-              }
-            }
-            this.postsList.push(returnObj)
-            // 全件処理が完了したら実行
-            if (tlitemslength == this.postsList.length) {
-              this.makePostsOrderedbyDateList()
-            }
-          })
+        this.PSM.makeArrayWithNames(tlitems).then((res)=>{
+          this.postsList = res
+          this.makePostsOrderedbyDateList()
         })
       })
     },

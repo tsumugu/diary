@@ -1,6 +1,6 @@
 <template>
-  <div class="regist">
-    <EditEvent />
+  <div class="editpost">
+    <EditEvent :propsPostId=postid />
   </div>
 </template>
 
@@ -8,15 +8,23 @@
 import EditEvent from '@/components/EditEvent.vue'
 
 export default {
-  name: "regist",
+  name: "editpost",
   components: {
     EditEvent
+  },
+  data() {
+    return {
+      postid: null
+    }
+  },
+  mounted() {
+    this.postid = this.$route.params.postid
   }
 }
 </script>
 
 <style scoped lang="scss">
-.regist {
+.editpost {
   width: 100%;
   height: 100%;
 }

@@ -15,6 +15,11 @@ const routes = [
     component: () => import('../views/RegistEventInfo.vue')
   },
   {
+    path: '/editpost/:postid',
+    name: 'editpost',
+    component: () => import('../views/EditEventinfo.vue')
+  },
+  {
     path: '/friends',
     name: 'friends',
     component: () => import('../views/Friends.vue')
