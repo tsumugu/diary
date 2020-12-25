@@ -3,7 +3,7 @@ export default class ImgUploader {
     constructor(arg_axios) {
       this.axios = arg_axios
     }
-    upload(files) {
+    upload(formdata) {
       return new ProgressPromise((resolve, reject, progress) => {
         const config = {
           onUploadProgress: function(progressEvent) {
@@ -11,9 +11,7 @@ export default class ImgUploader {
             progress(percentCompleted)
           }
         }
-        const body = new FormData()
-        body.append('files[]', files)
-        this.axios.post('https://readme.tsumugu2626.xyz/edit/upload.php', body, config).then(res => resolve(res)).catch(err => reject(err))
+        this.axios.post('https://readme.tsumugu2626.xyz/edit/uploaddiary.php', formdata, config).then(res => resolve(res)).catch(err => reject(err))
       })
     }
   }

@@ -29,6 +29,7 @@
 </template>
 
 <script>
+import imageCompression from 'browser-image-compression'
 import EXIF from 'exif-js'
 import axios from 'axios'
 import ProgressPromise from 'progress-promise'
@@ -243,15 +244,30 @@ export default {
         // 画像をアップロードする
         if (this.uploadFiles != null) {
           Array.from(this.uploadFiles).forEach(file => {
-            this.uploadPromiseList.push(this.IU.upload(file))
+            this.uploadPromiseList.push(new ProgressPromise((resolve, reject, progress)=>{
+              imageCompression(file, {maxSizeMB:1}).then((compressedImg)=>{
+                const data = new FormData();
+                data.append('photo', compressedImg, compressedImg.name)
+                this.IU.upload(data).then(res => resolve(res)).catch(err => reject(err))
+                //.progress(res => progress(res))
+              })
+            }))
           })
         }
         //アップロードするにチェックがついていたらアップロード
         if (this.isUploadEXIFImg) {
           if (this.uploadFilesEXIF != null) {
-            this.uploadPromiseList.push(this.IU.upload(this.uploadFilesEXIF))
+            this.uploadPromiseList.push(new ProgressPromise((resolve, reject, progress)=>{
+              imageCompression(this.uploadFilesEXIF, {maxSizeMB:1}).then((compressedImg)=>{
+                const data = new FormData();
+                data.append('photo', compressedImg, compressedImg.name)
+                this.IU.upload(data).then(res => resolve(res)).catch(err => reject(err))
+                //.progress(res => progress(res))
+              })
+            }))
           }
         }
+        console.log(this.uploadPromiseList)
         // this.uploadPromiseListが空だとProgressPromise.allが実行されないので適当に空Promiseを追加
         if (this.uploadPromiseList.length == 0) {
           this.uploadPromiseList.push(new ProgressPromise((resolve)=>{resolve()}))
@@ -276,6 +292,7 @@ export default {
             what: this.what,
             imgUrls: this.submitImageUrlList
           }
+          console.log(UserPostInfoObj)
           //DBに保存
           if (this.postedItem != null) {
             // Update処理
