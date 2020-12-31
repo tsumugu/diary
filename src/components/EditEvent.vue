@@ -21,7 +21,10 @@
         <div><textarea placeholder="したこと" v-model="what" /></div>
         <hr>
         <div class="imgPreview">
-          <img v-bind:src="src" v-bind:id="'prev-' + key" v-for="(src, key) in previewImageList" :key="key">
+          <div v-for="(src, key) in previewImageList">
+            <button v-on:click="removeImg(src)" v-show="src.includes('https://i.readme.tsumugu2626.xyz/')">削除</button>
+            <img v-bind:src="src" v-bind:id="'prev-' + key" :key="key">
+          </div>
         </div>
         <div><input type="file" ref="imgInput" @change="onFileChange" accept="image/*" multiple /></div>
         <hr>
@@ -65,7 +68,6 @@ export default {
       isUploadEXIFImg: true,
       uploadPromiseList: [],
       previewImageList: [],
-      submitImageUrlList: [],
       submitImageUrlList: [],
       searchResultPlaceList: [],
       userAddedPlaceList: [],
@@ -340,7 +342,15 @@ export default {
     },
     updateFirebaseRealtimeDB(Obj, postid) {
       var diffObjs = new MyUtil().getDiffBetweenTwoObjects(this.postedItem, Obj)
-      diffObjs["imgUrls"] = this.submitImageUrlList.concat(this.postedItem.imgUrls).unique()
+      var postedItem_imgUrls_removed = this.postedItem.imgUrls
+      Object.keys(new MyUtil().getDiffBetweenTwoObjects(this.postedItem.imgUrls, this.previewImageList)).forEach(key => {
+        // postedItem_imgUrls_removed から this.postedItem.imgUrls[key] を削除
+        var index = postedItem_imgUrls_removed.indexOf(this.postedItem.imgUrls[key])
+        if (index > -1) {
+          postedItem_imgUrls_removed.splice(index, 1)
+        }
+      })
+      diffObjs["imgUrls"] = this.submitImageUrlList.concat(postedItem_imgUrls_removed).unique()
       firebase.database().ref("posts/"+this.userInfo.uid+"/"+postid).update(diffObjs).then(() => {
         this.resetAll()
         this.fillAllFormsFromPostId(this.propsPostId)
@@ -425,6 +435,17 @@ export default {
         // 端末がGeoLocation APIに非対応だった場合
         // 最近の場所を適当に表示
       }
+    },
+
+    removeImg(imgUrl) {
+      // base64の場合は無視
+      if (imgUrl.includes("https://i.readme.tsumugu2626.xyz/")) {
+        //this.previewImageListからimgUrlを削除
+        var index = this.previewImageList.indexOf(imgUrl)
+        if (index > -1) {
+          this.previewImageList.splice(index, 1);
+        }
+      }
     }
   },
   mounted() {
@@ -457,7 +478,7 @@ export default {
     }
   }
 }
-.imgPreview > img, .exifImgPreview > img {
+img {
   width: 200px;
 }
 </style>
