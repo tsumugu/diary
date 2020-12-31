@@ -4,12 +4,9 @@ export default class ReviewTheDayPostsManager {
       this.database = arg_firebase_database
       this.userInfo = arg_userinfo
     }
-    savepost(date, text) {
+    savepost(Obj) {
       return new Promise((resolve, reject) => {
-        firebase.database().ref("reviewthedayposts/"+this.userInfo.uid).push({
-          date: date,
-          text: text
-        }).then(() => {
+        this.database.ref("reviewthedayposts/"+this.userInfo.uid).push(Obj).then(() => {
           resolve(true)
         })
         .catch((error) => {

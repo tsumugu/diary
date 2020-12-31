@@ -2,7 +2,7 @@
   <div class="timeline">
     <div v-for="(posts, day) in TLItemsList">
       <div><button v-on:click="onDayPrevious"><</button><h1 class="timeline__daytitle">{{day}}</h1><button v-on:click="onDayForward">></button></div>
-      <div><ReviewTheDay :propsDate=day :userInfo=propsUserInfo /></div>
+      <div><ReviewTheDay :propsDate=day :userInfo=propsUserInfo :key=day /></div>
       <div v-for="post in posts">
         <TLItem :propsItem=post @removepost='removepost' :key="post.when" />
       </div>
@@ -75,7 +75,6 @@ export default {
       })
       // 中身をsort
       Object.keys(this.postsOrderedbyDateList).forEach(date => {
-        console.log(this.postsOrderedbyDateList[date])
         this.postsOrderedbyDateList[date].sort(function(a, b) {
           const dateA = a.when
           const dateB = b.when

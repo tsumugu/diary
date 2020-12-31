@@ -436,7 +436,6 @@ export default {
         // 最近の場所を適当に表示
       }
     },
-
     removeImg(imgUrl) {
       // base64の場合は無視
       if (imgUrl.includes("https://i.readme.tsumugu2626.xyz/")) {
@@ -447,6 +446,7 @@ export default {
         }
       }
     }
+    //
   },
   mounted() {
     const _this = this

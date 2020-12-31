@@ -4,6 +4,8 @@
     <div class="editdaypost__body" v-else>
       <div class="editdaypost__body__signined" v-if="isSignIn">
         <div><textarea v-model="reviewthedatetext"></textarea></div>
+        <div><textarea v-model="tagsStr"></textarea></div>
+        <button v-on:click="getKeywords()">キーワードを抽出してタグ付け</button>
         <div v-on:click="onSubmit"><button>送信</button></div>
       </div>
     </div>
@@ -27,6 +29,7 @@ export default {
       postid: null,
       date: null,
       reviewthedatetext: null,
+      tagsStr: "",
       beforePostObj: null,
       RTDPM: null
     }
@@ -48,6 +51,7 @@ export default {
             this.beforePostObj = result[id]
             this.date = result[id].date
             this.reviewthedatetext = result[id].text
+            this.tagsStr = result[id].tags.join("\n")
           }
         })
         if (this.reviewthedatetext == null) {
@@ -58,7 +62,7 @@ export default {
     },
     onSubmit() {
       if (this.postid != null) {
-        var diffObjs = new MyUtil().getDiffBetweenTwoObjects(this.beforePostObj, {date: this.date, text: this.reviewthedatetext})
+        var diffObjs = new MyUtil().getDiffBetweenTwoObjects(this.beforePostObj, {date: this.date, text: this.reviewthedatetext, tags: this.tagsStr.split("\n").filter(Boolean)})
         this.RTDPM.updatepost(diffObjs, this.postid).then(() => {
           alert("投稿しました！")
         })
@@ -68,6 +72,13 @@ export default {
           alert("投稿に失敗しました")
         })
       }
+    },
+    getKeywords() {
+      new MyUtil().getKeywordsFromSentence(this.reviewthedatetext).then((res)=>{
+        res.forEach(e => {
+          this.tagsStr += Object.keys(e)[0]+"\n"
+        })
+      })
     }
   },
   mounted() {

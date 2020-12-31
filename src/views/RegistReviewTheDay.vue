@@ -4,6 +4,8 @@
     <div class="registday__body" v-else>
       <div class="registday__body__signined" v-if="isSignIn">
         <div><textarea v-model="reviewthedatetext"></textarea></div>
+        <div><textarea v-model="tagsStr"></textarea></div>
+        <button v-on:click="getKeywords()">キーワードを抽出してタグ付け</button>
         <div v-on:click="onSubmit"><button>送信</button></div>
       </div>
     </div>
@@ -14,6 +16,7 @@
 import axios from 'axios'
 import firebase from 'firebase'
 var database = firebase.database()
+import MyUtil from '../assets/MyUtil.js'
 import ReviewTheDayPostsManager from '../assets/ReviewTheDayPostsManager.js'
 
 export default {
@@ -24,6 +27,7 @@ export default {
       userInfo: null,
       isNowLoading: true,
       reviewthedatetext: null,
+      tagsStr: "",
       RTDPM: null
     }
   },
@@ -42,7 +46,7 @@ export default {
       var date = this.$route.params.date
       if (!isNaN(new Date(date).getTime())) {
         //regist
-        this.RTDPM.savepost(date, this.reviewthedatetext).then(() => {
+        this.RTDPM.savepost({date: date, text: this.reviewthedatetext, tags: this.tagsStr.split("\n").filter(Boolean)}).then(() => {
           alert("投稿しました！")
         })
         .catch((error) => {
@@ -53,6 +57,13 @@ export default {
       } else {
         alert("パラメータが不正です")
       }
+    },
+    getKeywords() {
+      new MyUtil().getKeywordsFromSentence(this.reviewthedatetext).then((res)=>{
+        res.forEach(e => {
+          this.tagsStr += Object.keys(e)[0]+"\n"
+        })
+      })
     }
   },
   mounted() {

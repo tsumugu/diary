@@ -1,3 +1,5 @@
+import axios from 'axios'
+
 export default class MyUtil {
     constructor() {
     }
@@ -43,5 +45,16 @@ export default class MyUtil {
     }
     latlonSixtyToTen(d, m, s) {
       return parseFloat(d) + parseFloat(m/60) + (parseFloat(s)/3600)
+    }
+    getKeywordsFromSentence(sentence) {
+      return new Promise((resolve, reject) => {
+        axios.post("https://labs.goo.ne.jp/api/keyword", {'app_id': 'a7740529e5a7d9a250cd44ad93c6b50d0affb2668a13e24e52a607aaa3fbd05c', 'title': 'a', 'body': sentence}, {headers: {'Content-Type': 'application/json'}})
+        .then((response) => {
+          resolve(response.data.keywords)
+        })
+        .catch((error) => {
+          reject(error)
+        })
+      })
     }
   }
