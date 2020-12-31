@@ -66,6 +66,7 @@ export default {
       uploadPromiseList: [],
       previewImageList: [],
       submitImageUrlList: [],
+      submitImageUrlList: [],
       searchResultPlaceList: [],
       userAddedPlaceList: [],
       nearbyPlaceList: [],
@@ -157,6 +158,7 @@ export default {
       this.postedItem = null
       this.uploadFiles = null
       this.uploadFilesEXIF = null
+      this.uploadFilesEXIFPreviewImage = null
       this.exifSrc = null
       this.when = null
       this.where = null
@@ -177,7 +179,7 @@ export default {
           this.postItem = tlitem
           this.when = tlitem.when
           this.what = tlitem.what
-          this.previewImageList = tlitem.imgUrls
+          this.previewImageList = tlitem.imgUrls.concat()
           this.where = tlitem.where
           this.who = tlitem.who
         } else {
@@ -273,11 +275,10 @@ export default {
             }))
           }
         }
-        console.log(this.uploadPromiseList)
         // this.uploadPromiseListが空だとProgressPromise.allが実行されないので適当に空Promiseを追加
         if (this.uploadPromiseList.length == 0) {
           this.uploadPromiseList.push(new ProgressPromise((resolve)=>{resolve()}))
-          this.submitImageUrlList = this.previewImageList
+          //this.submitImageUrlList = this.previewImageList
         }
         // 2. アップロードが完了したらすべての情報を合わせてRealtimeDBにset
         ProgressPromise.all(this.uploadPromiseList)
@@ -298,7 +299,6 @@ export default {
             what: this.what,
             imgUrls: this.submitImageUrlList
           }
-          console.log(UserPostInfoObj)
           //DBに保存
           if (this.postedItem != null) {
             // Update処理
@@ -340,7 +340,10 @@ export default {
     },
     updateFirebaseRealtimeDB(Obj, postid) {
       var diffObjs = new MyUtil().getDiffBetweenTwoObjects(this.postedItem, Obj)
+      diffObjs["imgUrls"] = this.submitImageUrlList.concat(this.postedItem.imgUrls).unique()
       firebase.database().ref("posts/"+this.userInfo.uid+"/"+postid).update(diffObjs).then(() => {
+        this.resetAll()
+        this.fillAllFormsFromPostId(this.propsPostId)
         alert("更新しました！")
       })
       .catch((error) => {
@@ -381,7 +384,6 @@ export default {
       })
     },
     setFormFromEXIFinfo(InfoFromEXIF) {
-      console.log(InfoFromEXIF)
       if (InfoFromEXIF.date != undefined) {
         this.when = InfoFromEXIF.date
       }
