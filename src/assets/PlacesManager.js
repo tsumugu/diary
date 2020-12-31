@@ -23,6 +23,15 @@ export default class PlacesManager {
         })
       })
     }
+    saveplaceinfo(placeid) {
+    }
+    getplaceinfo(placeid, info) {
+      /*
+      this.axios.get('https://secure.tsumugu2626.xyz/placessearch/idtoname.php?pid='+placeId).then((res)=>{
+        resolve(res.data)
+      })
+      */
+    }
     fetchusersavedplaces() {
       return new Promise((resolve) => {
         this.database.ref("places/"+this.userInfo.uid).on('value', (snapshot) =>{

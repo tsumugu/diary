@@ -1,26 +1,38 @@
 <template>
-  <div class="friends">
-    <div class="friends__loading" v-if="isNowLoading"><!-- Loading --></div>
-    <div class="friends__body" v-else>
-      <div class="home__body__signined" v-if="isSignIn"><EditFriendsGroup :propsUserInfo=userInfo /></div>
+  <div class="analyze">
+    <div class="analyze__loading" v-if="isNowLoading"><!-- Loading --></div>
+    <div class="analyze__body" v-else>
+      <div class="analyze__body__signined" v-if="isSignIn">
+        aa
+      </div>
     </div>
   </div>
 </template>
 
 <script>
 import firebase from 'firebase'
-import EditFriendsGroup from '@/components/EditFriendsGroup.vue'
 
 export default {
-  name: "friends",
-  components: {
-    EditFriendsGroup
-  },
+  name: 'analyze',
   data () {
     return {
       isSignIn: null,
       userInfo: null,
       isNowLoading: true
+    }
+  },
+  watch: {
+    userInfo(after, before) {
+      if (this.userInfo != null) {
+        this.initMain()
+      }
+    }
+  },
+  methods: {
+    initMain() {
+      firebase.database().ref("posts/"+this.userInfo.uid).on('value', (snapshot) =>{
+        var tlitems = snapshot.val()
+      })
     }
   },
   mounted() {
@@ -35,8 +47,8 @@ export default {
 }
 </script>
 
-<style scoped lang="scss">
-.friends {
+<style lang="scss">
+.analyze {
   width: 100%;
   height: 100%;
   &__loading {

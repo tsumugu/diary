@@ -2,6 +2,7 @@
   <div class="timeline">
     <div v-for="(posts, day) in TLItemsList">
       <div><button v-on:click="onDayPrevious"><</button><h1 class="timeline__daytitle">{{day}}</h1><button v-on:click="onDayForward">></button></div>
+      <div><ReviewTheDay :propsDate=day :userInfo=propsUserInfo /></div>
       <div v-for="post in posts">
         <TLItem :propsItem=post @removepost='removepost' :key="post.when" />
       </div>
@@ -17,11 +18,13 @@ import PlacesManager from '../assets/PlacesManager.js'
 import FriendsManager from '../assets/FriendsManager.js'
 import PostsManager from '../assets/PostsManager.js'
 import TLItem from '@/components/TLItem.vue'
+import ReviewTheDay from '@/components/ReviewTheDay.vue'
 
 export default {
   name: 'TimeLine',
   components: {
-    TLItem
+    TLItem,
+    ReviewTheDay
   },
   props: {
     propsUserInfo: null
@@ -69,6 +72,18 @@ export default {
           this.postsOrderedbyDateList[tmpDayString] = []
         }
         this.postsOrderedbyDateList[tmpDayString].push(post)
+      })
+      // 中身をsort
+      Object.keys(this.postsOrderedbyDateList).forEach(date => {
+        this.postsOrderedbyDateList[date].sort(function(a, b) {
+          const dateA = a.when
+          const dateB = b.when
+          if (a < b) {
+            return 1;
+          } else {
+            return -1;
+          }
+        })
       })
       // keyをsort
       var tmpPKL = Object.keys(this.postsOrderedbyDateList)

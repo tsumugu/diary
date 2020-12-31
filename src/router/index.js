@@ -20,9 +20,24 @@ const routes = [
     component: () => import('../views/EditEventinfo.vue')
   },
   {
-    path: '/friends',
-    name: 'friends',
-    component: () => import('../views/Friends.vue')
+    path: '/registday/:date',
+    name: 'registday',
+    component: () => import('../views/RegistReviewTheDay.vue')
+  },
+  {
+    path: '/editdaypost/:postid',
+    name: 'editdaypost',
+    component: () => import('../views/EditReviewTheDay.vue')
+  },
+  {
+    path: '/editfriends',
+    name: 'editfriends',
+    component: () => import('../views/EditFriends.vue')
+  },
+  {
+    path: '/analyze',
+    name: 'analyze',
+    component: () => import('../views/Analyze.vue')
   },
   {
     path: '/signup',

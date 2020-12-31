@@ -240,7 +240,7 @@ export default {
     onSubmit() {
       // submit処理
       //必須項目のチェック
-      if (new MyUtil().isAllValueNotEmpty([this.when, this.where, this.what])) {
+      if (new MyUtil().isAllValueNotEmpty([this.when, this.where])) {
         // 画像をアップロードする
         if (this.uploadFiles != null) {
           Array.from(this.uploadFiles).forEach(file => {
