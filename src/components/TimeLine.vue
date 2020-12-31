@@ -75,6 +75,7 @@ export default {
       })
       // 中身をsort
       Object.keys(this.postsOrderedbyDateList).forEach(date => {
+        console.log(this.postsOrderedbyDateList[date])
         this.postsOrderedbyDateList[date].sort(function(a, b) {
           const dateA = a.when
           const dateB = b.when

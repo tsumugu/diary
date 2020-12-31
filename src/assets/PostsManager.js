@@ -9,29 +9,7 @@ export default class PostsManager {
         var postsList = []
         Object.keys(snapshots).forEach(postid => {
           var itemObj = snapshots[postid]
-          //
-          var returnObj = {
-            postid: postid,
-            imgUrls: itemObj.imgUrls?itemObj.imgUrls:null,
-            what: itemObj.what,
-            when: itemObj.when,
-            where: {
-              "placeId": itemObj.where,
-              "name": null
-            },
-            who: {
-              "friendId": itemObj.who,
-              "name": null
-            }
-          }
-          postsList.push(returnObj)
-          // 全件処理が完了したら実行
-          if (snapshotslength == postsList.length) {
-            resolve(postsList)
-          }
-          //
           //nameを取得していく
-          /*
           var placeNamePromise = this.PM.placeidtoname(itemObj.where)
           var friendNamePromise = this.FM.friendidtoname(itemObj.who)
           Promise.all([placeNamePromise, friendNamePromise]).then((names) => {
@@ -57,7 +35,6 @@ export default class PostsManager {
               resolve(postsList)
             }
           })
-          */
         })
       })
     }

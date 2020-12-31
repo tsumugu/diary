@@ -3,7 +3,8 @@ import App from './App.vue'
 import './registerServiceWorker'
 import router from './router'
 import firebase from 'firebase'
-//import axios from 'axios';
+import "firebase/auth"
+import "firebase/database"
 
 Vue.config.productionTip = false
 
@@ -29,8 +30,6 @@ Array.prototype.unique = function() {
   }
   return a;
 }
-
-//axios.defaults.headers.post['Access-Control-Allow-Origin'] = '*';
 
 new Vue({
   router,

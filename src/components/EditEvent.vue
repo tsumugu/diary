@@ -9,6 +9,9 @@
         <div>
           <select v-model="where"><option disabled value="">場所</option><option v-for="(val, key) in placeList" v-bind:value="val.placeId">{{val.name}}</option></select>
           <div><button v-on:click="getNowPlaceByGPS">GPSから入力</button></div>
+          <div class="exifImgPreview">
+            <img v-bind:src=uploadFilesEXIFPreviewImage>
+          </div>
           <div>写真に埋め込まれている情報から入力(<label for="uploadexifimg">この画像もアップロードする</label><input type="checkbox" id="uploadexifimg" v-model="isUploadEXIFImg" checked>)<input type="file" ref="exifInput" @change="onEXIFFileChange" accept="image/*" /></div>
           <div><input type="text" v-model="whereAdd" /><button v-on:click="onAddWhereButton">+</button></div>
         </div>
@@ -57,6 +60,7 @@ export default {
       PSM: null,
       uploadFiles: null,
       uploadFilesEXIF: null,
+      uploadFilesEXIFPreviewImage: null,
       exifSrc: null,
       isUploadEXIFImg: true,
       uploadPromiseList: [],
@@ -185,7 +189,9 @@ export default {
       const files = e.target.files || e.dataTransfer.files;
       this.uploadFiles = files
       Array.from(files).forEach(file => {
-        this.createPreviewImage(file)
+        this.createPreviewImage(file, e => {
+          this.previewImageList.push(e.target.result)
+        })
       })
       //this.createPreviewImage(files)
     },
@@ -194,10 +200,10 @@ export default {
       var concat1 = this.searchResultPlaceList.concat(this.nearbyPlaceList)
       this.placeList = this.userAddedPlaceList.concat(concat1)
     },
-    createPreviewImage(file) {
+    createPreviewImage(file, callbackFunction) {
       const reader = new FileReader()
       reader.onload = e => {
-        this.previewImageList.push(e.target.result)
+        callbackFunction(e)
       }
       reader.readAsDataURL(file)
     },
@@ -346,6 +352,9 @@ export default {
     onEXIFFileChange(e) {
       const files = e.target.files || e.dataTransfer.files;
       this.uploadFilesEXIF = files[0]
+      this.createPreviewImage(this.uploadFilesEXIF, e => {
+        this.uploadFilesEXIFPreviewImage = e.target.result
+      })
       this.getEXIFinfo(this.uploadFilesEXIF)
     },
     getEXIFinfo(elm) {
@@ -446,7 +455,7 @@ export default {
     }
   }
 }
-.imgPreview > img {
-  width: 100px;
+.imgPreview > img, .exifImgPreview > img {
+  width: 200px;
 }
 </style>
