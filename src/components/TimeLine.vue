@@ -67,18 +67,22 @@ export default {
       this.postsOrderedbyDateList = {}
       this.postsList.forEach(post => {
         //var tmpDayString = post.when.split("T")[0].split("-").join("/")
-        var tmpDayString = post.when.split("T")[0]
-        if (this.postsOrderedbyDateList[tmpDayString] == undefined) {
-          this.postsOrderedbyDateList[tmpDayString] = []
+        if (post.when != undefined) {
+          var tmpDayString = post.when.split("T")[0]
+          if (this.postsOrderedbyDateList[tmpDayString] == undefined) {
+            this.postsOrderedbyDateList[tmpDayString] = []
+          }
+          this.postsOrderedbyDateList[tmpDayString].push(post)
+        } else {
+          console.log("Something went wrong!", post)
         }
-        this.postsOrderedbyDateList[tmpDayString].push(post)
       })
       // 中身をsort
       Object.keys(this.postsOrderedbyDateList).forEach(date => {
         this.postsOrderedbyDateList[date].sort(function(a, b) {
-          const dateA = a.when
-          const dateB = b.when
-          if (a < b) {
+          const dateA = parseInt(a.when.split("T")[1].replace(":", ""))
+          const dateB = parseInt(b.when.split("T")[1].replace(":", ""))
+          if (dateA < dateB) {
             return 1;
           } else {
             return -1;

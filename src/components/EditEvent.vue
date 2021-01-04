@@ -3,6 +3,7 @@
     <div class="editevent__loading" v-if="isNowLoading"><!-- Loading --></div>
     <div class="editevent__body" v-else>
       <div class="editevent__body__signined" v-if="isSignIn">
+        <LoadingDialog propsMessage="test" :propsLoadingProgress=imgLoadingProgress />
         <!-- form -->
         <div><input type="datetime-local" placeholder="日付" v-model="when" /></div>
         <hr>
@@ -39,16 +40,20 @@ import imageCompression from 'browser-image-compression'
 import EXIF from 'exif-js'
 import axios from 'axios'
 import ProgressPromise from 'progress-promise'
+import firebase from 'firebase'
+var database = firebase.database()
 import MyUtil from '../assets/MyUtil.js'
 import ImgUploader from '../assets/ImgUploader.js'
 import PlacesManager from '../assets/PlacesManager.js'
 import FriendsManager from '../assets/FriendsManager.js'
 import PostsManager from '../assets/PostsManager.js'
-import firebase from 'firebase'
-var database = firebase.database()
+import LoadingDialog from '@/components/LoadingDialog.vue'
 
 export default {
   name: "editevent",
+  components: {
+    LoadingDialog
+  },
   props: {
     propsPostId: null
   },
@@ -79,7 +84,10 @@ export default {
       when: null,
       where: null,
       who: null,
-      what: null
+      what: null,
+      imgLoadingProgress: null,
+      imageUploadCount: 0,
+      failedImgDataList: []
     }
   },
   watch: {
@@ -168,6 +176,9 @@ export default {
       this.what = null
       this.whereAdd = null
       this.whoAdd = null
+      this.imgLoadingProgress = null
+      this.imageUploadCount = 0
+      this.failedImgDataList = []
       this.$refs.exifInput.value = ""
       this.$refs.imgInput.value = ""
 
@@ -247,6 +258,16 @@ export default {
         console.log("Firebase Error", error)
       })
     },
+    onImgUploadSucceed() {
+      this.imageUploadCount += 1
+      console.log(this.imageUploadCount, this.uploadPromiseList)
+    },
+    onImgUploadFailed(data) {
+      this.failedImgDataList.push(data)
+      console.log("retry img upload", data)
+      console.log(this.imageUploadCount, this.failedImgDataList, this.uploadPromiseList)
+      // TODO: this.imageUploadCountと、this.failedImgDataListの合計個数がthis.uploadPromiseListに等しかったらエラー表示
+    },
     onSubmit() {
       // submit処理
       //必須項目のチェック
@@ -258,8 +279,13 @@ export default {
               imageCompression(file, {maxSizeMB:1}).then((compressedImg)=>{
                 const data = new FormData();
                 data.append('photo', compressedImg, compressedImg.name)
-                this.IU.upload(data).then(res => resolve(res)).catch(err => reject(err))
-                //.progress(res => progress(res))
+                this.IU.upload(data).then(res => {
+                  this.onImgUploadSucceed()
+                  resolve(res)
+                }).catch(err => {
+                  this.onImgUploadFailed(data)
+                  reject(err)
+                })
               })
             }))
           })
@@ -271,8 +297,13 @@ export default {
               imageCompression(this.uploadFilesEXIF, {maxSizeMB:1}).then((compressedImg)=>{
                 const data = new FormData();
                 data.append('photo', compressedImg, compressedImg.name)
-                this.IU.upload(data).then(res => resolve(res)).catch(err => reject(err))
-                //.progress(res => progress(res))
+                this.IU.upload(data).then(res => {
+                  this.onImgUploadSucceed()
+                  resolve(res)
+                }).catch(err => {
+                  this.onImgUploadFailed(data)
+                  reject(err)
+                })
               })
             }))
           }
@@ -284,7 +315,10 @@ export default {
         }
         // 2. アップロードが完了したらすべての情報を合わせてRealtimeDBにset
         ProgressPromise.all(this.uploadPromiseList)
-        .progress(results => console.log('Img Upload is in Progress', Math.round(results.proportion*100*10)/10)+"%")
+        .progress(results => {
+          this.imgLoadingProgress = ((Math.round(results.proportion*100*10)/10)/100)
+          console.log('Img Upload is in Progress', this.imgLoadingProgress+"%")
+        })
         .then((ImageUrls) => {
           //APIから帰ってきたJSONをパースして、URLを配列にまとめる
           if (ImageUrls != undefined) {
