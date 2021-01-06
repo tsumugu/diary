@@ -7,6 +7,7 @@
     "build": "vue-cli-service build"
   },
   "dependencies": {
+    "@popperjs/core": "^2.6.0",
     "axios": "^0.21.0",
     "browser-image-compression": "^1.0.13",
     "core-js": "^3.6.5",
@@ -15,6 +16,7 @@
     "progress-promise": "0.0.6",
     "progressbar.js": "^1.1.0",
     "register-service-worker": "^1.7.1",
+    "v-calendar": "^2.1.6",
     "vue": "^2.6.11",
     "vue-router": "^3.2.0"
   },

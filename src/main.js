@@ -5,6 +5,7 @@ import router from './router'
 import firebase from 'firebase'
 import "firebase/auth"
 import "firebase/database"
+import VCalendar from 'v-calendar';
 
 Vue.config.productionTip = false
 
@@ -32,6 +33,7 @@ Array.prototype.unique = function() {
 }
 
 new Vue({
+  VCalendar,
   router,
   render: h => h(App)
 }).$mount('#app')

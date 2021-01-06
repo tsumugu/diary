@@ -41,6 +41,7 @@ export default {
   margin: 10px;
   padding: 10px;
   border: solid 1px red;
+  background-color: #ffffff;
 }
 img {
   width: 100px;
