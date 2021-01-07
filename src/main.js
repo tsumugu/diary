@@ -5,7 +5,8 @@ import router from './router'
 import firebase from 'firebase'
 import "firebase/auth"
 import "firebase/database"
-import VCalendar from 'v-calendar';
+import "firebase/analytics"
+import VCalendar from 'v-calendar'
 
 Vue.config.productionTip = false
 

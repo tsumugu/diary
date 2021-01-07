@@ -1,7 +1,38 @@
 export default class PostsManager {
-    constructor(arg_pm, arg_fm) {
+    constructor(arg_axios, arg_database, arg_userinfo, arg_pm, arg_fm) {
+      this.axios = arg_axios
+      this.database = arg_database
+      this.userInfo = arg_userinfo
       this.PM = arg_pm
       this.FM = arg_fm
+    }
+    savepost(Obj) {
+      return new Promise((resolve) => {
+        this.database.ref("posts/"+this.userInfo.uid).push(Obj).then(() => {
+          resolve(true)
+        })
+      })
+    }
+    getpostfromid(postid) {
+      return new Promise((resolve) => {
+        this.database.ref("posts/"+this.userInfo.uid+"/"+postid).on('value', (snapshot) =>{
+          resolve(snapshot.val())
+        })
+      })
+    }
+    updatepost(postid, diffObjs) {
+      return new Promise((resolve) => {
+        this.database.ref("posts/"+this.userInfo.uid+"/"+postid).update(diffObjs).then(() => {
+          resolve(true)
+        })
+      })
+    }
+    fetchallposts() {
+      return new Promise((resolve) => {
+        this.database.ref("posts/"+this.userInfo.uid).on('value', (snapshot) =>{
+          resolve(snapshot.val())
+        })
+      })
     }
     makeArrayWithNames(snapshots) {
       return new Promise((resolve) => {

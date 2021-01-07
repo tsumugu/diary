@@ -35,11 +35,6 @@ const routes = [
     component: () => import('../views/EditFriends.vue')
   },
   {
-    path: '/analyze',
-    name: 'analyze',
-    component: () => import('../views/Analyze.vue')
-  },
-  {
     path: '/signup',
     name: 'signup',
     component: () => import('../views/SignUp.vue')

@@ -112,7 +112,7 @@ export default {
       this.IU = new ImgUploader(axios)
       this.PM = new PlacesManager(axios, database, this.userInfo)
       this.FM = new FriendsManager(axios, database, this.userInfo)
-      this.PSM = new PostsManager(this.PM, this.FM)
+      this.PSM = new PostsManager(axios, database, this.userInfo, this.PM, this.FM)
 
       this.FM.fetchfriendsgroup().then((friedsgroupinfo) => {
         if (new MyUtil().isObjNotEmpty(friedsgroupinfo)) {
@@ -185,8 +185,7 @@ export default {
       this.initMain()
     },
     fillAllFormsFromPostId(postid) {
-      firebase.database().ref("posts/"+this.userInfo.uid+"/"+postid).on('value', (snapshot) =>{
-        var tlitem = snapshot.val()
+      this.PSM.getpostfromid(postid).then((tlitem)=>{
         if (tlitem != null) {
           this.postedItem = tlitem
           this.postItem = tlitem
@@ -359,7 +358,7 @@ export default {
       // placeIdと名前を保存(同名で上書きされるので存在確認はしない)
       this.PM.savemyplace(Obj.where, placeName).then(() => {
         //
-        firebase.database().ref("posts/"+this.userInfo.uid).push(Obj).then(() => {
+        this.PSM.savepost(Obj).then(()=>{
           alert("投稿しました！")
           this.resetAll()
         })
@@ -376,16 +375,19 @@ export default {
     },
     updateFirebaseRealtimeDB(Obj, postid) {
       var diffObjs = new MyUtil().getDiffBetweenTwoObjects(this.postedItem, Obj)
-      var postedItem_imgUrls_removed = this.postedItem.imgUrls
-      Object.keys(new MyUtil().getDiffBetweenTwoObjects(this.postedItem.imgUrls, this.previewImageList)).forEach(key => {
-        // postedItem_imgUrls_removed から this.postedItem.imgUrls[key] を削除
-        var index = postedItem_imgUrls_removed.indexOf(this.postedItem.imgUrls[key])
-        if (index > -1) {
-          postedItem_imgUrls_removed.splice(index, 1)
+      if (this.postedItem.imgUrls != undefined) {
+        if (this.postedItem.imgUrls.length != 0 && this.previewImageList.length != 0) {
+          Object.keys(new MyUtil().getDiffBetweenTwoObjects(this.postedItem.imgUrls, this.previewImageList)).forEach(key => {
+            // postedItem_imgUrls_removed から this.postedItem.imgUrls[key] を削除
+            var index = postedItem_imgUrls_removed.indexOf(this.postedItem.imgUrls[key])
+            if (index > -1) {
+              postedItem_imgUrls_removed.splice(index, 1)
+            }
+          })
+          diffObjs["imgUrls"] = this.submitImageUrlList.concat(postedItem_imgUrls_removed).unique()
         }
-      })
-      diffObjs["imgUrls"] = this.submitImageUrlList.concat(postedItem_imgUrls_removed).unique()
-      firebase.database().ref("posts/"+this.userInfo.uid+"/"+postid).update(diffObjs).then(() => {
+      }
+      this.PSM.updatepost(postid, diffObjs).then((tlitem)=>{
         this.resetAll()
         this.fillAllFormsFromPostId(this.propsPostId)
         alert("更新しました！")
