@@ -1,6 +1,6 @@
 $form-main: #e2e8f0;
 $form-main-darker: #dde4ed;
-input {
+input[type="text"] {
   width: 300px;
   padding: 10px;
   border:solid 1px $form-main;

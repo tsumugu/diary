@@ -4,7 +4,7 @@
       <div class="HomeLogined__ColumnLeftArea__HeaderArea"><div class="HomeLogined__ColumnLeftArea__HeaderArea__title">Diary</div><div class="HomeLogined__ColumnLeftArea__HeaderArea__menubutton"><img src="/img/more_horiz-white-48dp/2x/outline_more_horiz_white_48dp.png" class="HomeLogined__ColumnLeftArea__HeaderArea__menubutton__img"></div></div>
       <div class="HomeLogined__ColumnLeftArea__ReviewthedayArea">
         <div class="HomeLogined__ColumnLeftArea__ReviewthedayArea__title">キーワードで検索して振り返る</div>
-        <div class="HomeLogined__ColumnLeftArea__ReviewthedayArea__ReviewFromKeywordArea"><input class="form-input mt-1 block w-full" placeholder="例: 伊豆旅行2021"><button>検索</button></div>
+        <div class="HomeLogined__ColumnLeftArea__ReviewthedayArea__ReviewFromKeywordArea"><input type="text" class="form-input mt-1 block w-full" placeholder="例: 伊豆旅行2021"><button>検索</button></div>
         <hr class="HomeLogined__ColumnLeftArea__ReviewthedayArea__hr">
         <div class="HomeLogined__ColumnLeftArea__ReviewthedayArea__title">ジャンルから振り返る</div>
         <div class="HomeLogined__ColumnLeftArea__ReviewthedayArea__ReviewFromGenleArea">
@@ -15,8 +15,16 @@
           </div>
           <div class="HomeLogined__ColumnLeftArea__ReviewthedayArea__ReviewFromGenleArea__contents">
             <div v-show="activeNum === 0"><DatePicker :available-dates="availableDates" :attributes="calenderAttrs" v-model='SelectedDateOnCalendar' /></div>
-            <div v-show="activeNum === 1">place</div>
-            <div v-show="activeNum === 2">friends</div>
+            <div v-show="activeNum === 1">
+              <ul>
+                <li v-for="(name, id) in placesInPostsList"><label><input type="radio" v-model="selectedPlaceId" :value="id">{{name}}</label></li>
+              </ul>
+            </div>
+            <div v-show="activeNum === 2">
+              <ul>
+                <li v-for="(info, id) in friendsList"><label><input type="radio" v-model="selectedFriendId" :value="id">{{info.name}}</label></li>
+              </ul>
+            </div>
           </div>
         </div>
       </div>
@@ -53,12 +61,16 @@ export default {
       FM: null,
       PSM: null,
       activeNum: 0,
+      selectedPlaceId: null,
       TLItemsList: [],
       postsList: [],
       postsOrderedbyDateList: [],
+      placesInPostsList: {},
+      friendsList: {},
       calenderAttrs: [],
       availableDates: [],
-      SelectedDateOnCalendar: null
+      SelectedDateOnCalendar: null,
+      selectedFriendId: null
     }
   },
   watch: {
@@ -69,6 +81,12 @@ export default {
     },
     SelectedDateOnCalendar(e) {
       this.filteringPostsByDate(formatISO(e).split("T")[0])
+    },
+    selectedPlaceId() {
+      this.filteringPostsByPlace(this.selectedPlaceId)
+    },
+    selectedFriendId() {
+      this.filteringPostsByFriends(this.selectedFriendId)
     }
   },
   methods: {
@@ -85,6 +103,7 @@ export default {
       this.confirmExPromise("この投稿を本当に削除しますか?").then(() => {
         firebase.database().ref("posts/"+this.userInfo.uid+"/"+postid).remove().then(function(){
           alert('削除しました！')
+          // reload処理
         })
       });
     },
@@ -107,6 +126,10 @@ export default {
           }
           //カレンダーに印を表示
           this.genCalenderDots()
+          //場所を取得
+          this.genPlacesList()
+          //フレンドを取得
+          this.genFriendsList()
         })
       })
     },
@@ -145,11 +168,40 @@ export default {
         this.availableDates.push({start: new Date(e+"T00:00:00"), end: new Date(e+"T00:00:00")})
       })
     },
+    genPlacesList() {
+      this.friendsList = {}
+      this.FM.fetchsavedfriends().then((res)=>{
+        this.friendsList = res
+      })
+    },
+    genFriendsList() {
+      this.placesInPostsList = {}
+      //
+      var localStoragePlaces = window.localStorage.getItem('places')
+      if (localStoragePlaces != undefined) {
+        this.placesInPostsList = JSON.parse(localStoragePlaces)
+      } else {
+        this.postsList.forEach(post => {
+          //var tmpDayString = post.when.split("T")[0].split("-").join("/")
+          if (post.where.name != undefined && post.where.placeId != undefined) {
+            this.placesInPostsList[post.where.placeId] = post.where.name
+          }
+        })
+        window.localStorage.setItem('places', JSON.stringify(this.placesInPostsList))
+      }
+    },
     filteringPostsByDate(date) {
       //日付でフィルタリング
       this.TLItemsList = this.postsOrderedbyDateList[date]
     },
-    //　あとはごにょごにょTLItemsListをfilteringしていく
+    filteringPostsByPlace(placeId) {
+      //場所でフィルタリング
+      this.TLItemsList = this.postsList.filter(e=>e.where.placeId==placeId)
+    },
+    filteringPostsByFriends(friendsId) {
+      //人物でフィルタリング
+      this.TLItemsList = this.postsList.filter(e=>e.who.friendId==friendsId)
+    }
   },
   mounted() {
     this.userInfo = this.propsUserInfo
@@ -168,6 +220,7 @@ $accent-color: pink;
   grid-template-columns: 450px 1fr;
   width: 100%;
   height: 100%;
+  overflow: hidden;
   text-align: left;
   &__ColumnLeftArea {
     border: solid 1px $border;
@@ -206,7 +259,10 @@ $accent-color: pink;
       }
       &__ReviewFromGenleArea {
         &__contents {
-          padding-top: 10px
+          padding-top: 10px;
+          /* TODO: レスポンシブに */
+          height: 300px;
+          overflow: scroll;
         }
       }
     }
