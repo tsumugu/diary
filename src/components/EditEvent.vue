@@ -3,31 +3,54 @@
     <div class="editevent__loading" v-if="isNowLoading"><!-- Loading --></div>
     <div class="editevent__body" v-else>
       <div class="editevent__body__signined" v-if="isSignIn">
-        <LoadingDialog propsMessage="test" :propsLoadingProgress=imgLoadingProgress />
-        <div><DatePicker v-model="whenBeforeFormated" mode="dateTime" is24hr><template v-slot="{ inputValue, inputEvents }"><input :value="inputValue" v-on="inputEvents" /></template></DatePicker></div>
-        <hr>
-        <div>
-          <div class="exifImgPreview"><img v-bind:src=uploadFilesEXIFPreviewImage></div>
-          <div>写真に埋め込まれている情報から入力(<label for="uploadexifimg">この画像もアップロードする</label><input type="checkbox" id="uploadexifimg" v-model="isUploadEXIFImg" checked>)<input type="file" ref="exifInput" @change="onEXIFFileChange" accept="image/*" /></div>
-          <button v-on:click="filteringPlacesListFromSearchbox">テスト</button>
-          <div><button v-on:click="searchNearbyPlaceByGPS">GPSを更新</button></div>
-          <div><input type="text" v-model="whereAdd" @keyup.enter="onAddWhereButton" /></div>
-          <ul>
-            <li v-for="places in placeListDisp">
-              <p>{{places.name}}</p>
-              <ol>
-                <li v-for="item in places.items" :key="item.placeId">
-                  <label><input type="radio" v-model="where" v-bind:value="item.placeId">{{item.name}}</label>
-                </li>
-              </ol>
-            </li>
-          </ul>
-        </div>
-        <hr>
-        <div><select v-model="who"><option disabled value="">誰と行ったか</option><option v-for="(val, key) in friendsList" v-bind:value="val.friendsId">{{val.name}}</option></select><div><input type="text" v-model="whoAdd" /><button v-on:click="onAddWhoButton">+</button></div></div>
-        <hr>
+        <modal class="editevent__modal" name="modal-loading" :clickToClose="false">
+          <LoadingDialog propsMessage="test" :propsLoadingProgress=imgLoadingProgress />
+        </modal>
+        <!-- -->
+        <div>日時: <DatePicker v-model="whenBeforeFormated" mode="dateTime" is24hr><template v-slot="{ inputValue, inputEvents }"><input :value="inputValue" v-on="inputEvents" /></template></DatePicker></div>
+        <!-- -->
+        <div>場所: {{whereName==null?"未入力":whereName}} <button v-on:click="showModal('modal-where')">選択</button></div>
+        <modal class="editevent__modal" name="modal-where" :clickToClose="true" height="95%">
+          <div class="editevent__modal__contents">
+            <button v-on:click="hideModal('modal-where')">Close</button>
+            <div class="exifImgPreview"><img v-bind:src=uploadFilesEXIFPreviewImage></div>
+            <div>写真に埋め込まれている情報から入力(<label for="uploadexifimg">この画像もアップロードする</label><input type="checkbox" id="uploadexifimg" v-model="isUploadEXIFImg" checked>)<input type="file" ref="exifInput" @change="onEXIFFileChange" accept="image/*" /></div>
+            <button v-on:click="filteringPlacesListFromSearchbox">テスト</button>
+            <div><button v-on:click="searchNearbyPlaceByGPS">GPSを更新</button></div>
+            <div><input type="text" v-model="whereAdd" @keyup.enter="onAddWhereButton" /></div>
+            <ul>
+              <li v-for="places in placeListDisp">
+                <p>{{places.name}}</p>
+                <ol>
+                  <li v-for="item in places.items" :key="item.placeId">
+                    <label><input type="radio" v-model="where" v-bind:value="item.placeId">{{item.name}}</label>
+                  </li>
+                </ol>
+              </li>
+            </ul>
+          </div>
+        </modal>
+        <!-- -->
+        <div>誰と行ったか: {{whoName==null?"未入力":whoName}}<button v-on:click="showModal('modal-who')">選択</button></div>
+        <modal class="editevent__modal" name="modal-who" :clickToClose="true" height="95%">
+          <div class="editevent__modal__contents">
+            <button v-on:click="hideModal('modal-who')">Close</button>
+            <ul>
+              <li v-for="friends in friendsList">
+                <p>{{friends.name}}</p>
+                <ol>
+                  <li v-for="item in friends.items" :key="item.friendsId">
+                    <label><input type="radio" v-model="who" v-bind:value="item.friendsId">{{item.name}}</label>
+                  </li>
+                </ol>
+              </li>
+            </ul>
+            <div><input type="text" v-model="whoAdd" /><button v-on:click="onAddWhoButton">+</button></div>
+          </div>
+        </modal>
+        <!-- -->
         <div><textarea placeholder="したこと" v-model="what" /></div>
-        <hr>
+        <!-- -->
         <div class="imgPreview">
           <div v-for="(src, key) in previewImageList">
             <button v-on:click="removeImg(src)" v-show="src.includes('https://i.readme.tsumugu2626.xyz/')">削除</button>
@@ -35,7 +58,7 @@
           </div>
         </div>
         <div><input type="file" ref="imgInput" @change="onFileChange" accept="image/*" multiple /></div>
-        <hr>
+        <!-- -->
         <div><button v-on:click="onSubmit">投稿</button></div>
       </div>
     </div>
@@ -95,7 +118,9 @@ export default {
       when: null,
       whenBeforeFormated: null,
       where: null,
+      whereName: null,
       who: null,
+      whoName: null,
       what: null,
       imgLoadingProgress: null,
       imageUploadCount: 0,
@@ -127,9 +152,22 @@ export default {
       // 再度フィルタリング
       this.filteringPlacesListFromSearchbox()
     },
-    /*
+    who() {
+      var tmpName = null
+      Object.keys(this.friendsList).forEach(k=>{
+        this.friendsList[k].items.forEach(l=>{
+          if (l.friendsId==this.who) {
+            tmpName = l.name
+          }
+        })
+      })
+      if (tmpName != null) {
+        this.whoName = tmpName
+        //モーダルを閉じる
+        this.hideModal("modal-who")
+      }
+    },
     where() {
-      console.log(this.where)
       var tmpName = null
       Object.keys(this.placeList).forEach(k=>{
         this.placeList[k].items.forEach(l=>{
@@ -139,10 +177,11 @@ export default {
         })
       })
       if (tmpName != null) {
-        this.whereAdd = tmpName
+        this.whereName = tmpName
+        //モーダルを閉じる
+        this.hideModal("modal-where")
       }
     },
-    */
     whereAdd() {
       this.filteringPlacesListFromSearchbox()
       // 一定間隔入力がなかったらEnterキーを押下したときと同じ処理を実行
@@ -160,29 +199,7 @@ export default {
       this.FM = new FriendsManager(axios, database, this.userInfo)
       this.PSM = new PostsManager(axios, database, this.userInfo, this.PM, this.FM)
 
-      this.FM.fetchfriendsgroup().then((friedsgroupinfo) => {
-        if (new MyUtil().isObjNotEmpty(friedsgroupinfo)) {
-          this.friendsList.push({name: "-- Friends Groups --", friendsId: null})
-          Object.keys(friedsgroupinfo).forEach(gid => {
-            this.friendsList.push({
-              "friendsId": "fg - "+gid,
-              "name": friedsgroupinfo[gid].name
-            })
-          })
-        }
-      })
-
-      this.FM.fetchsavedfriends().then((friedsinfo) => {
-        if (new MyUtil().isObjNotEmpty(friedsinfo)) {
-          this.friendsList.push({name: "-- Friends --", friendsId: null})
-          Object.keys(friedsinfo).forEach(fid => {
-            this.friendsList.push({
-              "friendsId": fid,
-              "name": friedsinfo[fid].name
-            })
-          })
-        }
-      })
+      this.loadFriends()
 
       this.PM.fetchusersavedplaces().then((placesinfo) => {
         if (new MyUtil().isObjNotEmpty(placesinfo)) {
@@ -193,8 +210,6 @@ export default {
             })
           }]
         }
-        // GPSから最寄りの場所を取得
-        this.searchNearbyPlaceByGPS()
       })
 
       if (this.propsPostId != undefined) {
@@ -203,6 +218,30 @@ export default {
       }
 
       this.whenBeforeFormated = new Date()
+    },
+    loadFriends() {
+      this.friendsList = []
+      this.FM.fetchfriendsgroup().then((friedsgroupinfo) => {
+        if (new MyUtil().isObjNotEmpty(friedsgroupinfo)) {
+          this.friendsList.push({
+            name: "-- Friends Groups --",
+            items: Object.keys(friedsgroupinfo).filter(e=>e!="null"&&e!=null).map(fid => {
+              return { "friendsId": "fg - "+fid, "name": friedsgroupinfo[fid].name }
+            })
+          })
+        }
+      })
+
+      this.FM.fetchsavedfriends().then((friedsinfo) => {
+        if (new MyUtil().isObjNotEmpty(friedsinfo)) {
+          this.friendsList.push({
+            name: "-- Friends --",
+            items: Object.keys(friedsinfo).filter(e=>e!="null"&&e!=null).map(fid => {
+              return { "friendsId": fid, "name": friedsinfo[fid].name }
+            })
+          })
+        }
+      })
     },
     resetAll() {
       this.isUploadEXIFImg = true
@@ -230,7 +269,7 @@ export default {
       this.imgLoadingProgress = null
       this.imageUploadCount = 0
       this.failedImgDataList = []
-      this.$refs.exifInput.value = ""
+      //this.$refs.exifInput.value = ""
       this.$refs.imgInput.value = ""
 
       this.initMain()
@@ -353,6 +392,16 @@ export default {
         }
       }
     },
+    showModal(name) {
+      this.$modal.show(name)
+      // GPSから最寄りの場所を取得
+      if (this.nearbyPlaceList.length == 0) {
+        this.searchNearbyPlaceByGPS()
+      }
+    },
+    hideModal(name) {
+      this.$modal.hide(name)
+    },
     onFileChange(e) {
       const files = e.target.files || e.dataTransfer.files;
       this.uploadFiles = files
@@ -364,7 +413,7 @@ export default {
     },
     onChangePlaceList() {
       this.placeList = []
-      this.placeList = this.userAddedPlaceList.concat(this.nearbyPlaceList.concat(this.searchResultPlaceList))
+      this.placeList = this.nearbyPlaceList.concat(this.userAddedPlaceList.concat(this.searchResultPlaceList))
     },
     createPreviewImage(file, callbackFunction) {
       const reader = new FileReader()
@@ -384,19 +433,8 @@ export default {
     },
     onAddWhoButton() {
       this.FM.savemyfriend(this.whoAdd).then(() => {
-        this.FM.fetchsavedfriends().then((friedsinfo) => {
-          if (new MyUtil().isObjNotEmpty(friedsinfo)) {
-            this.friendsList = []
-            this.friendsList.push({name: "-- Friends --", friendsId: null})
-            Object.keys(friedsinfo).forEach(fid => {
-              this.friendsList.push({
-                "friendsId": fid,
-                "name": friedsinfo[fid].name
-              })
-            })
-          }
-        })
-        alert("フレンドを追加しました！")
+        this.loadFriends()
+        alert("追加しました！")
       })
       .catch((error) => {
         //onError
@@ -415,6 +453,8 @@ export default {
     },
     onSubmit() {
       if (new MyUtil().isAllValueNotEmpty([this.when, this.where])) {
+        //ローディングのモーダルを表示
+        this.showModal('modal-loading')
         // 画像をアップロードする
         if (this.uploadFiles != null) {
           Array.from(this.uploadFiles).forEach(file => {
@@ -484,6 +524,7 @@ export default {
           } else {
             this.setFirebaseRealtimeDB(UserPostInfoObj)
           }
+          this.hideModal('modal-loading')
         })
       } else {
         alert("when, where, whatは必須項目です")
@@ -550,6 +591,14 @@ export default {
     &__signined {
       width: 100%;
       height: 100%;
+    }
+  }
+  &__modal {
+    &__contents {
+      padding: 10px;
+      width: 100%;
+      height: 100%;
+      overflow: scroll;
     }
   }
 }
