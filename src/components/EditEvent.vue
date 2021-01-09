@@ -4,17 +4,24 @@
     <div class="editevent__body" v-else>
       <div class="editevent__body__signined" v-if="isSignIn">
         <LoadingDialog propsMessage="test" :propsLoadingProgress=imgLoadingProgress />
-        <!-- form -->
-        <div><input type="datetime-local" placeholder="日付" v-model="when" /></div>
+        <div><DatePicker v-model="whenBeforeFormated" mode="dateTime" is24hr><template v-slot="{ inputValue, inputEvents }"><input :value="inputValue" v-on="inputEvents" /></template></DatePicker></div>
         <hr>
         <div>
-          <select v-model="where"><option disabled value="">場所</option><option v-for="(val, key) in placeList" v-bind:value="val.placeId">{{val.name}}</option></select>
-          <div><button v-on:click="getNowPlaceByGPS">GPSから入力</button></div>
-          <div class="exifImgPreview">
-            <img v-bind:src=uploadFilesEXIFPreviewImage>
-          </div>
+          <div class="exifImgPreview"><img v-bind:src=uploadFilesEXIFPreviewImage></div>
           <div>写真に埋め込まれている情報から入力(<label for="uploadexifimg">この画像もアップロードする</label><input type="checkbox" id="uploadexifimg" v-model="isUploadEXIFImg" checked>)<input type="file" ref="exifInput" @change="onEXIFFileChange" accept="image/*" /></div>
-          <div><input type="text" v-model="whereAdd" /><button v-on:click="onAddWhereButton">+</button></div>
+          <button v-on:click="filteringPlacesListFromSearchbox">テスト</button>
+          <div><button v-on:click="searchNearbyPlaceByGPS">GPSを更新</button></div>
+          <div><input type="text" v-model="whereAdd" @keyup.enter="onAddWhereButton" /></div>
+          <ul>
+            <li v-for="places in placeListDisp">
+              <p>{{places.name}}</p>
+              <ol>
+                <li v-for="item in places.items" :key="item.placeId">
+                  <label><input type="radio" v-model="where" v-bind:value="item.placeId">{{item.name}}</label>
+                </li>
+              </ol>
+            </li>
+          </ul>
         </div>
         <hr>
         <div><select v-model="who"><option disabled value="">誰と行ったか</option><option v-for="(val, key) in friendsList" v-bind:value="val.friendsId">{{val.name}}</option></select><div><input type="text" v-model="whoAdd" /><button v-on:click="onAddWhoButton">+</button></div></div>
@@ -42,17 +49,20 @@ import axios from 'axios'
 import ProgressPromise from 'progress-promise'
 import firebase from 'firebase'
 var database = firebase.database()
+import formatISO  from 'date-fns/formatISO'
 import MyUtil from '../assets/MyUtil.js'
 import ImgUploader from '../assets/ImgUploader.js'
 import PlacesManager from '../assets/PlacesManager.js'
 import FriendsManager from '../assets/FriendsManager.js'
 import PostsManager from '../assets/PostsManager.js'
 import LoadingDialog from '@/components/LoadingDialog.vue'
+import DatePicker from 'v-calendar/lib/components/date-picker.umd'
 
 export default {
   name: "editevent",
   components: {
-    LoadingDialog
+    LoadingDialog,
+    DatePicker
   },
   props: {
     propsPostId: null
@@ -78,16 +88,19 @@ export default {
       userAddedPlaceList: [],
       nearbyPlaceList: [],
       placeList: [],
+      placeListDisp: [],
       friendsList: [],
       whereAdd: null,
       whoAdd: null,
       when: null,
+      whenBeforeFormated: null,
       where: null,
       who: null,
       what: null,
       imgLoadingProgress: null,
       imageUploadCount: 0,
-      failedImgDataList: []
+      failedImgDataList: [],
+      filterDoTimer: null
     }
   },
   watch: {
@@ -104,6 +117,39 @@ export default {
     },
     nearbyPlaceList() {
       this.onChangePlaceList()
+    },
+    whenBeforeFormated() {
+      this.when = formatISO(this.whenBeforeFormated).replace("+09:00", "")
+    },
+    placeList() {
+      // placeListDispはリスト表示用のリスト
+      this.placeListDisp = this.placeList
+      // 再度フィルタリング
+      this.filteringPlacesListFromSearchbox()
+    },
+    /*
+    where() {
+      console.log(this.where)
+      var tmpName = null
+      Object.keys(this.placeList).forEach(k=>{
+        this.placeList[k].items.forEach(l=>{
+          if (l.placeId==this.where) {
+            tmpName = l.name
+          }
+        })
+      })
+      if (tmpName != null) {
+        this.whereAdd = tmpName
+      }
+    },
+    */
+    whereAdd() {
+      this.filteringPlacesListFromSearchbox()
+      // 一定間隔入力がなかったらEnterキーを押下したときと同じ処理を実行
+      clearTimeout(this.filterDoTimer)
+      this.filterDoTimer =  setTimeout(()=>{
+        this.onAddWhereButton()
+      }, 500)
     }
   },
   methods: {
@@ -140,20 +186,23 @@ export default {
 
       this.PM.fetchusersavedplaces().then((placesinfo) => {
         if (new MyUtil().isObjNotEmpty(placesinfo)) {
-          this.userAddedPlaceList.push({name: "-- User Saved Place --", placeId: null})
-          Object.keys(placesinfo).forEach(pid => {
-            this.userAddedPlaceList.push({
-              "placeId": pid,
-              "name": placesinfo[pid].name
+          this.userAddedPlaceList = [{
+            name: "-- User Saved Place --",
+            items: Object.keys(placesinfo).filter(e=>e!="null"&&e!=null).map(pid => {
+              return { "placeId": pid, "name": placesinfo[pid].name }
             })
-          })
+          }]
         }
+        // GPSから最寄りの場所を取得
+        this.searchNearbyPlaceByGPS()
       })
 
       if (this.propsPostId != undefined) {
         // editpostからのアクセス。
         this.fillAllFormsFromPostId(this.propsPostId)
       }
+
+      this.whenBeforeFormated = new Date()
     },
     resetAll() {
       this.isUploadEXIFImg = true
@@ -165,12 +214,14 @@ export default {
       this.friendsList = []
       this.userAddedPlaceList = []
       this.placeList = []
+      this.placeListDisp = []
       this.postedItem = null
       this.uploadFiles = null
       this.uploadFilesEXIF = null
       this.uploadFilesEXIFPreviewImage = null
       this.exifSrc = null
       this.when = null
+      this.whenBeforeFormated = new Date()
       this.where = null
       this.who = null
       this.what = null
@@ -199,6 +250,109 @@ export default {
         }
       })
     },
+    updateFirebaseRealtimeDB(Obj, postid) {
+      var diffObjs = new MyUtil().getDiffBetweenTwoObjects(this.postedItem, Obj)
+      if (this.postedItem.imgUrls != undefined) {
+        if (this.postedItem.imgUrls.length != 0 && this.previewImageList.length != 0) {
+          Object.keys(new MyUtil().getDiffBetweenTwoObjects(this.postedItem.imgUrls, this.previewImageList)).forEach(key => {
+            var index = postedItem_imgUrls_removed.indexOf(this.postedItem.imgUrls[key])
+            if (index > -1) {
+              postedItem_imgUrls_removed.splice(index, 1)
+            }
+          })
+          diffObjs["imgUrls"] = this.submitImageUrlList.concat(postedItem_imgUrls_removed).unique()
+        }
+      }
+      this.PSM.updatepost(postid, diffObjs).then((tlitem)=>{
+        this.resetAll()
+        this.fillAllFormsFromPostId(this.propsPostId)
+        alert("更新しました！")
+      })
+      .catch((error) => {
+        //onError
+        console.log("Firebase Error", error)
+        alert("投稿に失敗しました")
+      })
+    },
+    getEXIFinfo(elm) {
+      var _this = this
+      EXIF.getData(elm, function() {
+        var timestamp = EXIF.getTag(this, "DateTimeOriginal")
+        if (timestamp != undefined) {
+          var tmpTimestampSplited = timestamp.split(" ")
+          var tmpTimestampMsSplited = tmpTimestampSplited[1].split(":")
+          var timestampFormated = tmpTimestampSplited[0].replaceAll(":", "-")+"T"+tmpTimestampMsSplited[0]+":"+tmpTimestampMsSplited[1] 
+        }
+        var GPSLatitudeSixty = EXIF.getTag(this, "GPSLatitude")
+        var GPSLongitudeSixty = EXIF.getTag(this, "GPSLongitude")
+        if (GPSLatitudeSixty!=undefined && GPSLongitudeSixty!=undefined) {
+          var GPSLatitudeTen = new MyUtil().latlonSixtyToTen(GPSLatitudeSixty[0], GPSLatitudeSixty[1], GPSLatitudeSixty[2])
+          var GPSLongitudeTen = new MyUtil().latlonSixtyToTen(GPSLongitudeSixty[0], GPSLongitudeSixty[1], GPSLongitudeSixty[2])
+        }
+        var InfoFromEXIF = {
+          date: timestampFormated,
+          latitude: GPSLatitudeTen,
+          longitude: GPSLongitudeTen
+        }
+        _this.setFormFromEXIFinfo(InfoFromEXIF)
+      })
+    },
+    setFormFromEXIFinfo(InfoFromEXIF) {
+      if (InfoFromEXIF.date != undefined) {
+        this.when = InfoFromEXIF.date
+      }
+      if (InfoFromEXIF.latitude != undefined && InfoFromEXIF.longitude != undefined) {
+        this.PM.searchnearbyplacesbylatlon(InfoFromEXIF.latitude, InfoFromEXIF.longitude).then((response) => {
+          this.nearbyPlaceList = [{name: "-- EXIF Result --", items: response.data }]
+        }).catch((error) => {
+          console.log("Places Manager Error", error)
+        })
+      } else {
+        alert("位置情報が埋め込まれていないようです...")
+      }
+    },
+    searchNearbyPlaceByGPS() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition((position) => { 
+          var data = position.coords
+	        var lat = data.latitude
+	        var lon = data.longitude
+          this.PM.searchnearbyplacesbylatlon(lat, lon).then((response) => {
+            this.nearbyPlaceList = [{name: "-- GPS Result --", items: response.data }]
+          }).catch((error) => {
+            console.log("Places Manager Error", error)
+          })
+        }, (error) => { console.log("GeoLocation API Error", error) })
+      } else {
+        // alert("この端末は現在位置の取得に対応していません")
+      }
+    },
+    filteringPlacesListFromSearchbox() {
+      // 検索フォームが空白だったら終了
+      if (this.whereAdd == null || this.whereAdd == undefined || this.whereAdd == "" || this.whereAdd.replace(/\s+/g, ' ') == "") {
+        return false
+      }
+      this.placeListDisp = []
+      Object.keys(this.placeList).forEach(k=>{
+        var placeItems = this.placeList[k]
+        var filteredItems = placeItems.items.filter(e=>e.name.indexOf(this.whereAdd)!=-1||e.placeId==null||e.placeId=="null")
+        if (filteredItems.length != 0) {
+          this.placeListDisp.push({
+            name: placeItems.name,
+            items: filteredItems
+          })
+        }
+      })
+    },
+    removeImg(imgUrl) {
+      // base64の場合は無視
+      if (imgUrl.includes("https://i.readme.tsumugu2626.xyz/")) {
+        var index = this.previewImageList.indexOf(imgUrl)
+        if (index > -1) {
+          this.previewImageList.splice(index, 1);
+        }
+      }
+    },
     onFileChange(e) {
       const files = e.target.files || e.dataTransfer.files;
       this.uploadFiles = files
@@ -207,12 +361,10 @@ export default {
           this.previewImageList.push(e.target.result)
         })
       })
-      //this.createPreviewImage(files)
     },
     onChangePlaceList() {
       this.placeList = []
-      var concat1 = this.searchResultPlaceList.concat(this.nearbyPlaceList)
-      this.placeList = this.userAddedPlaceList.concat(concat1)
+      this.placeList = this.userAddedPlaceList.concat(this.nearbyPlaceList.concat(this.searchResultPlaceList))
     },
     createPreviewImage(file, callbackFunction) {
       const reader = new FileReader()
@@ -222,16 +374,10 @@ export default {
       reader.readAsDataURL(file)
     },
     onAddWhereButton() {
-      //this.whereAddで検索してみる
       this.PM.searchplacesbyname(this.whereAdd).then((response) => {
-        // selectを更新
         this.searchResultPlaceList = []
-        this.searchResultPlaceList.push({name: "-- New User Add --", placeId: null})
-        this.searchResultPlaceList.push({name: this.whereAdd, placeId: "pid_"+new MyUtil().uniqueStr()})
-        this.searchResultPlaceList.push({name: "-- Search Result --", placeId: null})
-        response.data.forEach((place) => {
-          this.searchResultPlaceList.push(place)
-        })
+        this.searchResultPlaceList.push({name: "-- New User Add --", items: [{name: this.whereAdd, placeId: "pid_"+new MyUtil().uniqueStr()}]})
+        this.searchResultPlaceList.push({name: "-- Search Result --", items: response.data})
       }).catch((error) => {
         console.log("Places Manager Error", error)
       })
@@ -268,8 +414,6 @@ export default {
       // TODO: this.imageUploadCountと、this.failedImgDataListの合計個数がthis.uploadPromiseListに等しかったらエラー表示
     },
     onSubmit() {
-      // submit処理
-      //必須項目のチェック
       if (new MyUtil().isAllValueNotEmpty([this.when, this.where])) {
         // 画像をアップロードする
         if (this.uploadFiles != null) {
@@ -310,7 +454,6 @@ export default {
         // this.uploadPromiseListが空だとProgressPromise.allが実行されないので適当に空Promiseを追加
         if (this.uploadPromiseList.length == 0) {
           this.uploadPromiseList.push(new ProgressPromise((resolve)=>{resolve()}))
-          //this.submitImageUrlList = this.previewImageList
         }
         // 2. アップロードが完了したらすべての情報を合わせてRealtimeDBにset
         ProgressPromise.all(this.uploadPromiseList)
@@ -357,45 +500,17 @@ export default {
       })
       // placeIdと名前を保存(同名で上書きされるので存在確認はしない)
       this.PM.savemyplace(Obj.where, placeName).then(() => {
-        //
         this.PSM.savepost(Obj).then(()=>{
           alert("投稿しました！")
           this.resetAll()
         })
         .catch((error) => {
-          //onError
           console.log("Firebase Error", error)
           alert("投稿に失敗しました")
         })
-        //
       })
       .catch((error) => {
         console.log("Firebase Error", error)
-      })
-    },
-    updateFirebaseRealtimeDB(Obj, postid) {
-      var diffObjs = new MyUtil().getDiffBetweenTwoObjects(this.postedItem, Obj)
-      if (this.postedItem.imgUrls != undefined) {
-        if (this.postedItem.imgUrls.length != 0 && this.previewImageList.length != 0) {
-          Object.keys(new MyUtil().getDiffBetweenTwoObjects(this.postedItem.imgUrls, this.previewImageList)).forEach(key => {
-            // postedItem_imgUrls_removed から this.postedItem.imgUrls[key] を削除
-            var index = postedItem_imgUrls_removed.indexOf(this.postedItem.imgUrls[key])
-            if (index > -1) {
-              postedItem_imgUrls_removed.splice(index, 1)
-            }
-          })
-          diffObjs["imgUrls"] = this.submitImageUrlList.concat(postedItem_imgUrls_removed).unique()
-        }
-      }
-      this.PSM.updatepost(postid, diffObjs).then((tlitem)=>{
-        this.resetAll()
-        this.fillAllFormsFromPostId(this.propsPostId)
-        alert("更新しました！")
-      })
-      .catch((error) => {
-        //onError
-        console.log("Firebase Error", error)
-        alert("投稿に失敗しました")
       })
     },
     onEXIFFileChange(e) {
@@ -405,82 +520,6 @@ export default {
         this.uploadFilesEXIFPreviewImage = e.target.result
       })
       this.getEXIFinfo(this.uploadFilesEXIF)
-    },
-    getEXIFinfo(elm) {
-      var _this = this
-      EXIF.getData(elm, function() {
-        var timestamp = EXIF.getTag(this, "DateTimeOriginal")
-        if (timestamp != undefined) {
-          var tmpTimestampSplited = timestamp.split(" ")
-          var tmpTimestampMsSplited = tmpTimestampSplited[1].split(":")
-          var timestampFormated = tmpTimestampSplited[0].replaceAll(":", "-")+"T"+tmpTimestampMsSplited[0]+":"+tmpTimestampMsSplited[1] 
-        }
-        var GPSLatitudeSixty = EXIF.getTag(this, "GPSLatitude")
-        var GPSLongitudeSixty = EXIF.getTag(this, "GPSLongitude")
-        if (GPSLatitudeSixty!=undefined && GPSLongitudeSixty!=undefined) {
-          var GPSLatitudeTen = new MyUtil().latlonSixtyToTen(GPSLatitudeSixty[0], GPSLatitudeSixty[1], GPSLatitudeSixty[2])
-          var GPSLongitudeTen = new MyUtil().latlonSixtyToTen(GPSLongitudeSixty[0], GPSLongitudeSixty[1], GPSLongitudeSixty[2])
-        }
-        var InfoFromEXIF = {
-          date: timestampFormated,
-          latitude: GPSLatitudeTen,
-          longitude: GPSLongitudeTen
-        }
-        _this.setFormFromEXIFinfo(InfoFromEXIF)
-      })
-    },
-    setFormFromEXIFinfo(InfoFromEXIF) {
-      if (InfoFromEXIF.date != undefined) {
-        this.when = InfoFromEXIF.date
-      }
-      if (InfoFromEXIF.latitude != undefined && InfoFromEXIF.longitude != undefined) {
-        this.PM.searchnearbyplacesbylatlon(InfoFromEXIF.latitude, InfoFromEXIF.longitude).then((response) => {
-          // selectを更新
-          this.nearbyPlaceList = []
-          this.nearbyPlaceList.push({name: "-- EXIF Result --", placeId: null})
-          response.data.forEach((place) => {
-            this.nearbyPlaceList.push(place)
-          })
-        }).catch((error) => {
-          console.log("Places Manager Error", error)
-        })
-      } else {
-        alert("位置情報が埋め込まれていないようです...")
-      }
-    },
-    getNowPlaceByGPS() {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition((position) => { 
-          var data = position.coords
-	        var lat = data.latitude
-	        var lon = data.longitude
-          // "-33.8670522", "151.1957362"
-          // 取得した現在地をもとに近辺のランドマークを取得
-          this.PM.searchnearbyplacesbylatlon(lat, lon).then((response) => {
-            // selectを更新
-            this.nearbyPlaceList = []
-            this.nearbyPlaceList.push({name: "-- GPS Result --", placeId: null})
-            response.data.forEach((place) => {
-              this.nearbyPlaceList.push(place)
-            })
-          }).catch((error) => {
-            console.log("Places Manager Error", error)
-          })
-        }, (error) => { console.log("GeoLocation API Error", error) })
-      } else {
-        // 端末がGeoLocation APIに非対応だった場合
-        // 最近の場所を適当に表示
-      }
-    },
-    removeImg(imgUrl) {
-      // base64の場合は無視
-      if (imgUrl.includes("https://i.readme.tsumugu2626.xyz/")) {
-        //this.previewImageListからimgUrlを削除
-        var index = this.previewImageList.indexOf(imgUrl)
-        if (index > -1) {
-          this.previewImageList.splice(index, 1);
-        }
-      }
     }
     //
   },
