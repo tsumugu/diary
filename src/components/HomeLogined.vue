@@ -168,27 +168,19 @@ export default {
         this.availableDates.push({start: new Date(e+"T00:00:00"), end: new Date(e+"T00:00:00")})
       })
     },
-    genPlacesList() {
+    genFriendsList() {
       this.friendsList = {}
       this.FM.fetchsavedfriends().then((res)=>{
         this.friendsList = res
       })
     },
-    genFriendsList() {
+    genPlacesList() {
       this.placesInPostsList = {}
-      //
-      var localStoragePlaces = window.localStorage.getItem('places')
-      if (localStoragePlaces != undefined) {
-        this.placesInPostsList = JSON.parse(localStoragePlaces)
-      } else {
-        this.postsList.forEach(post => {
-          //var tmpDayString = post.when.split("T")[0].split("-").join("/")
-          if (post.where.name != undefined && post.where.placeId != undefined) {
-            this.placesInPostsList[post.where.placeId] = post.where.name
-          }
-        })
-        window.localStorage.setItem('places', JSON.stringify(this.placesInPostsList))
-      }
+      this.postsList.forEach(post => {
+        if (post.where.name != undefined && post.where.placeId != undefined) {
+          this.placesInPostsList[post.where.placeId] = post.where.name
+        }
+      })
     },
     filteringPostsByDate(date) {
       //日付でフィルタリング

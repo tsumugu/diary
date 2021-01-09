@@ -244,35 +244,30 @@ export default {
       })
     },
     resetAll() {
-      this.isUploadEXIFImg = true
-      this.uploadPromiseList = []
-      this.previewImageList = []
-      this.submitImageUrlList = []
-      this.searchResultPlaceList = []
-      this.nearbyPlaceList = []
-      this.friendsList = []
-      this.userAddedPlaceList = []
-      this.placeList = []
-      this.placeListDisp = []
-      this.postedItem = null
+
       this.uploadFiles = null
       this.uploadFilesEXIF = null
       this.uploadFilesEXIFPreviewImage = null
       this.exifSrc = null
-      this.when = null
-      this.whenBeforeFormated = new Date()
-      this.where = null
-      this.who = null
-      this.what = null
-      this.whereAdd = null
+      this.isUploadEXIFImg = true
+      this.uploadPromiseList = []
+      this.previewImageList = []
+      // this.whereAdd = null
       this.whoAdd = null
+      this.when = null
+      this.whenBeforeFormated = null
+      this.where = null
+      this.whereName = null
+      this. who = null
+      this.whoName = null
+      this.what = null
       this.imgLoadingProgress = null
       this.imageUploadCount = 0
       this.failedImgDataList = []
+      this.filterDoTimer = null
+
       //this.$refs.exifInput.value = ""
       this.$refs.imgInput.value = ""
-
-      this.initMain()
     },
     fillAllFormsFromPostId(postid) {
       this.PSM.getpostfromid(postid).then((tlitem)=>{
@@ -531,16 +526,9 @@ export default {
       }
     },
     setFirebaseRealtimeDB(Obj) {
-      // placeIdから名前を取得
-      var placeName = null
-      Object.keys(this.placeList).forEach(k => {
-        if (this.placeList[k].placeId == Obj.where) {
-          placeName = this.placeList[k].name
-          return true;
-        }
-      })
       // placeIdと名前を保存(同名で上書きされるので存在確認はしない)
-      this.PM.savemyplace(Obj.where, placeName).then(() => {
+      console.log("savemyplace", Obj.where, this.whereName)
+      this.PM.savemyplace(Obj.where, this.whereName).then(() => {
         this.PSM.savepost(Obj).then(()=>{
           alert("投稿しました！")
           this.resetAll()
