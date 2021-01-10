@@ -13,9 +13,6 @@
         <modal class="editevent__modal" name="modal-where" :clickToClose="true" height="95%">
           <div class="editevent__modal__contents">
             <button v-on:click="hideModal('modal-where')">Close</button>
-            <div class="exifImgPreview"><img v-bind:src=uploadFilesEXIFPreviewImage></div>
-            <div>写真に埋め込まれている情報から入力(<label for="uploadexifimg">この画像もアップロードする</label><input type="checkbox" id="uploadexifimg" v-model="isUploadEXIFImg" checked>)<input type="file" ref="exifInput" @change="onEXIFFileChange" accept="image/*" /></div>
-            <button v-on:click="filteringPlacesListFromSearchbox">テスト</button>
             <div><button v-on:click="searchNearbyPlaceByGPS">GPSを更新</button></div>
             <div><input type="text" v-model="whereAdd" @keyup.enter="onAddWhereButton" /></div>
             <ul>
@@ -54,6 +51,7 @@
         <div class="imgPreview">
           <div v-for="(src, key) in previewImageList">
             <button v-on:click="removeImg(src)" v-show="src.includes('https://i.readme.tsumugu2626.xyz/')">削除</button>
+             <button v-on:click="getEXIFinfo('prev-' + key)">画像に埋め込まれているデータから日時と場所を入力</button>
             <img v-bind:src="src" v-bind:id="'prev-' + key" :key="key">
           </div>
         </div>
@@ -100,10 +98,6 @@ export default {
       FM: null,
       PSM: null,
       uploadFiles: null,
-      uploadFilesEXIF: null,
-      uploadFilesEXIFPreviewImage: null,
-      exifSrc: null,
-      isUploadEXIFImg: true,
       uploadPromiseList: [],
       previewImageList: [],
       submitImageUrlList: [],
@@ -144,6 +138,7 @@ export default {
       this.onChangePlaceList()
     },
     whenBeforeFormated() {
+      //whenBeforeFormated(new Date()) => when(ISO8601)
       this.when = formatISO(this.whenBeforeFormated).replace("+09:00", "")
     },
     placeList() {
@@ -244,18 +239,12 @@ export default {
       })
     },
     resetAll() {
-
       this.uploadFiles = null
-      this.uploadFilesEXIF = null
-      this.uploadFilesEXIFPreviewImage = null
-      this.exifSrc = null
-      this.isUploadEXIFImg = true
       this.uploadPromiseList = []
       this.previewImageList = []
-      // this.whereAdd = null
       this.whoAdd = null
       this.when = null
-      this.whenBeforeFormated = null
+      this.whenBeforeFormated = new Date()
       this.where = null
       this.whereName = null
       this. who = null
@@ -265,8 +254,6 @@ export default {
       this.imageUploadCount = 0
       this.failedImgDataList = []
       this.filterDoTimer = null
-
-      //this.$refs.exifInput.value = ""
       this.$refs.imgInput.value = ""
     },
     fillAllFormsFromPostId(postid) {
@@ -308,36 +295,47 @@ export default {
         alert("投稿に失敗しました")
       })
     },
-    getEXIFinfo(elm) {
+    getEXIFinfo(elmId) {
+      var elm = document.getElementById(elmId);
       var _this = this
-      EXIF.getData(elm, function() {
-        var timestamp = EXIF.getTag(this, "DateTimeOriginal")
-        if (timestamp != undefined) {
-          var tmpTimestampSplited = timestamp.split(" ")
-          var tmpTimestampMsSplited = tmpTimestampSplited[1].split(":")
-          var timestampFormated = tmpTimestampSplited[0].replaceAll(":", "-")+"T"+tmpTimestampMsSplited[0]+":"+tmpTimestampMsSplited[1] 
-        }
-        var GPSLatitudeSixty = EXIF.getTag(this, "GPSLatitude")
-        var GPSLongitudeSixty = EXIF.getTag(this, "GPSLongitude")
-        if (GPSLatitudeSixty!=undefined && GPSLongitudeSixty!=undefined) {
-          var GPSLatitudeTen = new MyUtil().latlonSixtyToTen(GPSLatitudeSixty[0], GPSLatitudeSixty[1], GPSLatitudeSixty[2])
-          var GPSLongitudeTen = new MyUtil().latlonSixtyToTen(GPSLongitudeSixty[0], GPSLongitudeSixty[1], GPSLongitudeSixty[2])
-        }
-        var InfoFromEXIF = {
-          date: timestampFormated,
-          latitude: GPSLatitudeTen,
-          longitude: GPSLongitudeTen
-        }
-        _this.setFormFromEXIFinfo(InfoFromEXIF)
-      })
+      try {
+        EXIF.getData(elm, function() {
+          var timestamp = EXIF.getTag(this, "DateTimeOriginal")
+          if (timestamp != undefined) {
+            var tmpTimestampSplited = timestamp.split(" ")
+            var tmpTimestampMsSplited = tmpTimestampSplited[1].split(":")
+            var timestampFormated = tmpTimestampSplited[0].replaceAll(":", "-")+"T"+tmpTimestampMsSplited[0]+":"+tmpTimestampMsSplited[1]
+          }
+          var GPSLatitudeSixty = EXIF.getTag(this, "GPSLatitude")
+          var GPSLongitudeSixty = EXIF.getTag(this, "GPSLongitude")
+          if (GPSLatitudeSixty!=undefined && GPSLongitudeSixty!=undefined) {
+            var GPSLatitudeTen = new MyUtil().latlonSixtyToTen(GPSLatitudeSixty[0], GPSLatitudeSixty[1], GPSLatitudeSixty[2])
+            var GPSLongitudeTen = new MyUtil().latlonSixtyToTen(GPSLongitudeSixty[0], GPSLongitudeSixty[1], GPSLongitudeSixty[2])
+          }
+          var InfoFromEXIF = {
+            date: timestampFormated,
+            latitude: GPSLatitudeTen,
+            longitude: GPSLongitudeTen
+          }
+          _this.setFormFromEXIFinfo(InfoFromEXIF)
+        })
+      } catch(e) {
+        alert("情報を正常に取得できませんでした")
+        console.log("exif-js Error", e)
+      }
     },
     setFormFromEXIFinfo(InfoFromEXIF) {
       if (InfoFromEXIF.date != undefined) {
+        // XXX: 変換はのちのち...
+        this.whenBeforeFormated = new Date(InfoFromEXIF.date)
         this.when = InfoFromEXIF.date
       }
       if (InfoFromEXIF.latitude != undefined && InfoFromEXIF.longitude != undefined) {
         this.PM.searchnearbyplacesbylatlon(InfoFromEXIF.latitude, InfoFromEXIF.longitude).then((response) => {
-          this.nearbyPlaceList = [{name: "-- EXIF Result --", items: response.data }]
+          this.nearbyPlaceList = [{name: "-- EXIF Result -- (なかったら自分で検索してね)", items: response.data }]
+          new MyUtil().confirmExPromise("位置情報が埋め込まれていました。それを基に場所を入力しますか？").then(()=>{
+            this.showModal("modal-where")
+          })
         }).catch((error) => {
           console.log("Places Manager Error", error)
         })
@@ -468,24 +466,6 @@ export default {
             }))
           })
         }
-        //アップロードするにチェックがついていたらアップロード
-        if (this.isUploadEXIFImg) {
-          if (this.uploadFilesEXIF != null) {
-            this.uploadPromiseList.push(new ProgressPromise((resolve, reject, progress)=>{
-              imageCompression(this.uploadFilesEXIF, {maxSizeMB:1}).then((compressedImg)=>{
-                const data = new FormData();
-                data.append('photo', compressedImg, compressedImg.name)
-                this.IU.upload(data).then(res => {
-                  this.onImgUploadSucceed()
-                  resolve(res)
-                }).catch(err => {
-                  this.onImgUploadFailed(data)
-                  reject(err)
-                })
-              })
-            }))
-          }
-        }
         // this.uploadPromiseListが空だとProgressPromise.allが実行されないので適当に空Promiseを追加
         if (this.uploadPromiseList.length == 0) {
           this.uploadPromiseList.push(new ProgressPromise((resolve)=>{resolve()}))
@@ -522,12 +502,11 @@ export default {
           this.hideModal('modal-loading')
         })
       } else {
-        alert("when, where, whatは必須項目です")
+        alert("when, whereは必須項目です")
       }
     },
     setFirebaseRealtimeDB(Obj) {
       // placeIdと名前を保存(同名で上書きされるので存在確認はしない)
-      console.log("savemyplace", Obj.where, this.whereName)
       this.PM.savemyplace(Obj.where, this.whereName).then(() => {
         this.PSM.savepost(Obj).then(()=>{
           alert("投稿しました！")
@@ -541,16 +520,7 @@ export default {
       .catch((error) => {
         console.log("Firebase Error", error)
       })
-    },
-    onEXIFFileChange(e) {
-      const files = e.target.files || e.dataTransfer.files;
-      this.uploadFilesEXIF = files[0]
-      this.createPreviewImage(this.uploadFilesEXIF, e => {
-        this.uploadFilesEXIFPreviewImage = e.target.result
-      })
-      this.getEXIFinfo(this.uploadFilesEXIF)
     }
-    //
   },
   mounted() {
     const _this = this

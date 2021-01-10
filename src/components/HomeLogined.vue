@@ -42,6 +42,7 @@ import formatISO  from 'date-fns/formatISO'
 import PlacesManager from '../assets/PlacesManager.js'
 import FriendsManager from '../assets/FriendsManager.js'
 import PostsManager from '../assets/PostsManager.js'
+import MyUtil from '../assets/MyUtil.js'
 import TLItem from '@/components/TLItem.vue'
 import DatePicker from 'v-calendar/lib/components/date-picker.umd'
 
@@ -93,14 +94,8 @@ export default {
     onClickTab(n) {
       this.activeNum = n
     },
-    confirmExPromise(message) {
-      if (window.confirm(message)) {
-        return Promise.resolve();
-      }
-      return Promise.reject();
-    },
     removepost(postid) {
-      this.confirmExPromise("この投稿を本当に削除しますか?").then(() => {
+      new MyUtil().confirmExPromise("この投稿を本当に削除しますか?").then(() => {
         firebase.database().ref("posts/"+this.userInfo.uid+"/"+postid).remove().then(function(){
           alert('削除しました！')
           // reload処理
@@ -147,6 +142,19 @@ export default {
           // 日付は必須項目だが、バグで抜けていることがある。
           console.log("Something went wrong!", post)
         }
+      })
+      // 中身を時系列にsort (デフォルトはDB書き込み順)
+      Object.keys(this.postsOrderedbyDateList).forEach(date => {
+        this.postsOrderedbyDateList[date].sort(function(a, b) {
+          // 00:00:00 と 00:00 が混在してるので戦闘から4文字までにして合わせる
+          const dateA = parseInt(a.when.split("T")[1].replace(":", "").slice(0, 4))
+          const dateB = parseInt(b.when.split("T")[1].replace(":", "").slice(0, 4))
+          if (dateA > dateB) {
+            return 1;
+          } else {
+            return -1;
+          }
+        })
       })
     },
     genCalenderDots() {
@@ -261,6 +269,7 @@ $accent-color: pink;
   }
   &__MainArea {
     background-color: $mainarea-bg;
+    overflow: scroll;
   }
 }
 .tabs {

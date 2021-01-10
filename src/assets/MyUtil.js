@@ -57,4 +57,10 @@ export default class MyUtil {
         })
       })
     }
+    confirmExPromise(message) {
+      if (window.confirm(message)) {
+        return Promise.resolve();
+      }
+      return Promise.reject();
+    }
   }
