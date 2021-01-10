@@ -29,7 +29,18 @@
         </div>
       </div>
     </div>
-    <div class="HomeLogined__MainArea"><div v-for="post in TLItemsList"><TLItem :propsItem=post @removepost='removepost' :key="post.when" /></div></div>
+    <div class="HomeLogined__MainArea">
+      <div>
+        <button v-on:click="gotoRegist">投稿</button>
+      </div>
+      <div v-show="TLItemsListDisp.length==0">今日はまだ投稿がありません</div>
+      <div v-for="postsList in TLItemsListDisp">
+        <div v-for="(posts, day) in postsList">
+          <h1>{{day.replaceAll("-", "/")}}</h1>
+          <div v-for="post in posts"><TLItem :propsItem=post @removepost='removepost' :key="post.when" /></div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -64,6 +75,7 @@ export default {
       activeNum: 0,
       selectedPlaceId: null,
       TLItemsList: [],
+      TLItemsListDisp: [],
       postsList: [],
       postsOrderedbyDateList: [],
       placesInPostsList: {},
@@ -88,11 +100,28 @@ export default {
     },
     selectedFriendId() {
       this.filteringPostsByFriends(this.selectedFriendId)
+    },
+    TLItemsList() {
+      var dispPostIdsList = this.TLItemsList.map(e=>e.postid)
+      if (dispPostIdsList.length == 0) {
+        alert("から")
+      }
+      Object.keys(this.postsOrderedbyDateList).forEach(k=>{
+        var placeItems = this.postsOrderedbyDateList[k]
+        var filteredItems = placeItems.filter(e=>dispPostIdsList.includes(e.postid))
+        if (filteredItems.length != 0) {
+          this.TLItemsListDisp.push({[k]: filteredItems})
+        }
+      })
+      console.log(this.TLItemsListDisp)
     }
   },
   methods: {
     onClickTab(n) {
       this.activeNum = n
+    },
+    gotoRegist() {
+      window.open('https://diary.tsumugu2626.xyz/regist')
     },
     removepost(postid) {
       new MyUtil().confirmExPromise("この投稿を本当に削除しますか?").then(() => {
