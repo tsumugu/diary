@@ -37,13 +37,17 @@ export default {
 </script>
 
 <style scoped lang="scss">
-.TLItem {
-  margin: 10px;
-  padding: 10px;
-  border: solid 1px red;
-  background-color: #ffffff;
-}
 img {
   width: 100px;
+}
+button {
+  margin: 10px 10px 10px 0;
+}
+.TLItem {
+  margin-top: 10px;
+  padding: 20px;
+  background-color: #ffffff;
+  border: solid 1px $main-border;
+  border-radius: .25rem;
 }
 </style>

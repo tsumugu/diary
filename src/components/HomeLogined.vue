@@ -3,10 +3,10 @@
     <div class="HomeLogined__ColumnLeftArea">
       <div class="HomeLogined__ColumnLeftArea__HeaderArea"><div class="HomeLogined__ColumnLeftArea__HeaderArea__title">Diary</div><div class="HomeLogined__ColumnLeftArea__HeaderArea__menubutton"><img src="/img/more_horiz-white-48dp/2x/outline_more_horiz_white_48dp.png" class="HomeLogined__ColumnLeftArea__HeaderArea__menubutton__img"></div></div>
       <div class="HomeLogined__ColumnLeftArea__ReviewthedayArea">
-        <div class="HomeLogined__ColumnLeftArea__ReviewthedayArea__title">キーワードで検索して振り返る</div>
-        <div class="HomeLogined__ColumnLeftArea__ReviewthedayArea__ReviewFromKeywordArea"><input type="text" class="form-input mt-1 block w-full" placeholder="例: 伊豆旅行2021"><button>検索</button></div>
+        <div class="HomeLogined__ColumnLeftArea__ReviewthedayArea__title">振り返る　({{this.postsList.length}}件中{{this.TLItemsList.length}}件表示中)</div>
+        <div class="HomeLogined__ColumnLeftArea__ReviewthedayArea__ReviewFromKeywordArea"><input type="text" v-model="searchQueryText" placeholder="キーワードを入力 (例: 伊豆旅行2021)"></div>
         <hr class="HomeLogined__ColumnLeftArea__ReviewthedayArea__hr">
-        <div class="HomeLogined__ColumnLeftArea__ReviewthedayArea__title">ジャンルから振り返る</div>
+        <div class="HomeLogined__ColumnLeftArea__ReviewthedayArea__title">絞り込む</div>
         <div class="HomeLogined__ColumnLeftArea__ReviewthedayArea__ReviewFromGenleArea">
           <div class="HomeLogined__ColumnLeftArea__ReviewthedayArea__ReviewFromGenleArea__tabs tabs">
             <div class="HomeLogined__ColumnLeftArea__ReviewthedayArea__ReviewFromGenleArea__tabs__date tabs__wrapper" v-on:click="onClickTab(0)" v-bind:class="{'tabs__wrapper--active': activeNum === 0}"><div class="tabs__wrapper__items"><img src="/img/watch_later-black-48dp/2x/outline_watch_later_black_48dp.png" class="tabs__wrapper__items__img"><p class="tabs__wrapper__items__text">日時</p></div></div>
@@ -30,13 +30,13 @@
       </div>
     </div>
     <div class="HomeLogined__MainArea">
-      <div>
+      <div class="HomeLogined__MainArea__postbutton">
         <button v-on:click="gotoRegist">投稿</button>
       </div>
-      <div v-show="TLItemsListDisp.length==0">今日はまだ投稿がありません</div>
-      <div v-for="postsList in TLItemsListDisp">
-        <div v-for="(posts, day) in postsList">
-          <h1>{{day.replaceAll("-", "/")}}</h1>
+      <div class="HomeLogined__MainArea__mesnopost" v-show="TLItemsListDisp.length==0">{{notFoundMes}}</div>
+      <div class="HomeLogined__MainArea__Post" v-for="postsList in TLItemsListDisp">
+        <div class="HomeLogined__MainArea__Post__Contents" v-for="(posts, day) in postsList">
+          <div class="HomeLogined__MainArea__Post__Contents__title">{{day.replaceAll("-", "/")}}</div>
           <div v-for="post in posts"><TLItem :propsItem=post @removepost='removepost' :key="post.when" /></div>
         </div>
       </div>
@@ -83,7 +83,9 @@ export default {
       calenderAttrs: [],
       availableDates: [],
       SelectedDateOnCalendar: null,
-      selectedFriendId: null
+      selectedFriendId: null,
+      searchQueryText: null,
+      notFoundMes: "今日はまだ投稿がありません"
     }
   },
   watch: {
@@ -111,6 +113,9 @@ export default {
           this.TLItemsListDisp.push({[k]: filteredItems})
         }
       })
+    },
+    searchQueryText() {
+      this.filteringPostsByQuery(this.searchQueryText)
     }
   },
   methods: {
@@ -144,6 +149,7 @@ export default {
           var todayPosts = this.postsOrderedbyDateList[today]
           if (todayPosts != undefined) {
             this.TLItemsList = todayPosts
+            this.changeMes()
           }
           //カレンダーに印を表示
           this.genCalenderDots()
@@ -216,17 +222,28 @@ export default {
         }
       })
     },
+    changeMes() {
+      this.notFoundMes = "検索結果はありません"
+    },
+    filteringPostsByQuery(text) {
+      //キーワードでフィルタリング
+      this.TLItemsList = this.postsList.filter(e=>new MyUtil().isObjectIncludeQureyText([e.what, e.where.name, e.who.name], text))
+      this.changeMes()
+    },
     filteringPostsByDate(date) {
       //日付でフィルタリング
       this.TLItemsList = this.postsOrderedbyDateList[date]
+      this.changeMes()
     },
     filteringPostsByPlace(placeId) {
       //場所でフィルタリング
       this.TLItemsList = this.postsList.filter(e=>e.where.placeId==placeId)
+      this.changeMes()
     },
     filteringPostsByFriends(friendsId) {
       //人物でフィルタリング
       this.TLItemsList = this.postsList.filter(e=>e.who.friendId==friendsId)
+      this.changeMes()
     }
   },
   mounted() {
@@ -236,11 +253,6 @@ export default {
 </script>
 
 <style scoped lang="scss">
-$white:  #ffffff;
-$headerarea-bg: #BAB8B8;
-$mainarea-bg: #F7F5F5;
-$border: #b3b3b3;
-$accent-color: pink;
 .HomeLogined {
   display:grid;
   grid-template-columns: 450px 1fr;
@@ -249,15 +261,15 @@ $accent-color: pink;
   overflow: hidden;
   text-align: left;
   &__ColumnLeftArea {
-    border: solid 1px $border;
+    border: solid 1px $main-border;
     &__HeaderArea {
       display:grid;
       grid-template-columns: 1fr 30px;
       padding: 20px;
       color: $white;
-      background-color: $headerarea-bg;
+      background-color: $main-headerarea-bg;
       &__title {
-        font-size: 2rem;
+        font-size: 200%;
       }
       &__menubutton {
         position: relative;
@@ -277,11 +289,11 @@ $accent-color: pink;
     &__ReviewthedayArea {
       padding: 20px 20px 20px 20px;
       &__title {
-        font-size: 1.7rem;
+        font-size: 170%;
       }
       &__hr {
         margin: 20px 0 20px 0;
-        border: solid 1px $border;
+        border: solid 1px $main-border;
       }
       &__ReviewFromGenleArea {
         &__contents {
@@ -294,23 +306,45 @@ $accent-color: pink;
     }
   }
   &__MainArea {
-    background-color: $mainarea-bg;
+    padding: 20px;
+    background-color: $main-mainarea-bg;
     overflow: scroll;
+    &__postbutton {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+    }
+    &__mesnopost {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      height: 100%;
+      font-size: 170%;
+    }
+    &__Post {
+      &__Contents {
+        &__title {
+          font-size: 170%;
+        }
+      }
+    }
   }
 }
 .tabs {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
-  border-bottom: solid 5px $accent-color;
+  border-bottom: solid 5px $main-accent-color;
   &__wrapper {
     margin: auto;
-    padding: 0 27px 0 29px;
+    padding: 0 27px 0 28.3px;
+    border-radius: .25rem .25rem 0 0;
     &--border {
-      border: solid $border;
+      border: solid $main-border;
       border-width: 0 1px 0 1px;
     }
     &--active{
-      background-color: $accent-color;
+      background-color: $main-accent-color;
     }
     &__items {
       display: grid;
@@ -321,14 +355,14 @@ $accent-color: pink;
         height: 40px;
       }
       &__text {
-        font-size: 1.2rem;
+        font-size: 120%;
         width: 40px;
         line-height: 0;
       }
     }
   }
 }
-.tabs__wrapper:hover {
-  background-color: $accent-color;
+.tabs__wrapper:hover:not(.tabs__wrapper--active) {
+  background-color: $main-accent-color-hover;
 }
 </style>

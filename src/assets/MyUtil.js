@@ -20,6 +20,17 @@ export default class MyUtil {
       }
       return true
     }
+    isObjectIncludeQureyText(obj, text) {
+      for (var i=0;i<obj.length;i++) {
+        var item = obj[i]
+        if (item != null && item != undefined && item.replace(/\s+/g,'').length > 0) {
+          if (item.indexOf(text) != -1) {
+            return true
+          }
+        }
+      }
+      return false
+    }
     getDiffBetweenTwoObjects(objOld, objNew) {
       var keyOld = Object.keys(objOld)
       var keyNew = Object.keys(objNew)

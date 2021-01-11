@@ -386,17 +386,6 @@ export default {
         }
       })
     },
-    /*
-    removeImg(imgUrl) {
-      // base64の場合は無視
-      if (imgUrl.includes("https://i.readme.tsumugu2626.xyz/")) {
-        var index = this.previewImageList.indexOf(imgUrl)
-        if (index > -1) {
-          this.previewImageList.splice(index, 1);
-        }
-      }
-    },
-    */
     removeImgAtInput(imgUrl) {
       if (imgUrl.includes("https://i.readme.tsumugu2626.xyz/")) {
         //URLだったら
@@ -476,15 +465,24 @@ export default {
         console.log("Firebase Error", error)
       })
     },
+    imgUploadChecker() {
+      if (this.imageUploadCount+this.failedImgDataList.length == this.uploadPromiseList.length) {
+        // this.imageUploadCountと、this.failedImgDataListの合計個数がthis.uploadPromiseListに等しかったら処理完了とみなす
+        if (this.failedImgDataList.length != 0) {
+          alert("画像のアップロードで問題が発生しました")
+          //TODO: retry処理
+          this.resetAll()
+          this.hideModal('modal-loading')
+        }
+      }
+    },
     onImgUploadSucceed() {
       this.imageUploadCount += 1
-      console.log(this.imageUploadCount, this.uploadPromiseList)
+      this.imgUploadChecker()
     },
     onImgUploadFailed(data) {
       this.failedImgDataList.push(data)
-      console.log("retry img upload", data)
-      console.log(this.imageUploadCount, this.failedImgDataList, this.uploadPromiseList)
-      // TODO: this.imageUploadCountと、this.failedImgDataListの合計個数がthis.uploadPromiseListに等しかったらエラー表示
+      this.imgUploadChecker()
     },
     onSubmit() {
       if (new MyUtil().isAllValueNotEmpty([this.when, this.where])) {

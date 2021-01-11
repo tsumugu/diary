@@ -1,3 +1,10 @@
 module.exports = {
-  publicPath: '/'
+  publicPath: '/',
+  css: {
+    loaderOptions: {
+      sass: {
+        prependData: `@import "./src/assets/_colors.scss";`
+      }
+    }
+  }
 }
