@@ -50,8 +50,8 @@
         <!-- -->
         <div class="imgPreview">
           <div v-for="(src, key) in previewImageList">
-            <button v-on:click="removeImg(src)" v-show="src.includes('https://i.readme.tsumugu2626.xyz/')">削除</button>
-             <button v-on:click="getEXIFinfo('prev-' + key)">画像に埋め込まれているデータから日時と場所を入力</button>
+            <button v-on:click="removeImgAtInput(src)">削除</button>
+            <button v-on:click="getEXIFinfo('prev-' + key)">画像に埋め込まれているデータから日時と場所を入力</button>
             <img v-bind:src="src" v-bind:id="'prev-' + key" :key="key">
           </div>
         </div>
@@ -184,6 +184,15 @@ export default {
       this.filterDoTimer =  setTimeout(()=>{
         this.onAddWhereButton()
       }, 500)
+    },
+    uploadFiles() {
+      // 新しいファイルが選択されたら自動的にサムネを表示
+      this.previewImageList = []
+      Array.from(this.uploadFiles).forEach(file => {
+        this.createPreviewImage(file, e => {
+          this.previewImageList.push(e.target.result)
+        })
+      })
     }
   },
   methods: {
@@ -242,6 +251,7 @@ export default {
       this.uploadFiles = null
       this.uploadPromiseList = []
       this.previewImageList = []
+      this.submitImageUrlList = []
       this.whoAdd = null
       this.when = null
       this.whenBeforeFormated = new Date()
@@ -376,6 +386,7 @@ export default {
         }
       })
     },
+    /*
     removeImg(imgUrl) {
       // base64の場合は無視
       if (imgUrl.includes("https://i.readme.tsumugu2626.xyz/")) {
@@ -383,6 +394,42 @@ export default {
         if (index > -1) {
           this.previewImageList.splice(index, 1);
         }
+      }
+    },
+    */
+    removeImgAtInput(imgUrl) {
+      if (imgUrl.includes("https://i.readme.tsumugu2626.xyz/")) {
+        //URLだったら
+        var index = this.previewImageList.indexOf(imgUrl)
+        if (index > -1) {
+          this.previewImageList.splice(index, 1);
+        }
+      } else {
+        // base64だったら
+        new Promise((resolve)=>{
+          // FileListをArrayに変換
+          var filesList = Array.from(this.$refs.imgInput.files)
+          var dt = new DataTransfer();
+          var createCount = 0
+          Object.keys(filesList).map((i)=>{
+            var file = filesList[i]
+            // TODO: いちいちBase64算出するの非効率だからもっといい方法考えたい。
+            this.createPreviewImage(file, e => {
+              if (e.target.result != imgUrl) {
+                dt.items.add(filesList[i])
+              }
+              createCount+=1
+              if (createCount == filesList.length) {
+                // 全件処理完了したらresolve
+                resolve(dt)
+              }
+            })
+          })
+        }).then((dt)=>{
+          this.$refs.imgInput.files = dt.files;
+          // 更新を反映させる
+          this.uploadFiles = this.$refs.imgInput.files
+        })
       }
     },
     showModal(name) {
@@ -396,13 +443,8 @@ export default {
       this.$modal.hide(name)
     },
     onFileChange(e) {
-      const files = e.target.files || e.dataTransfer.files;
+      const files = e.target.files || e.dataTransfer.files
       this.uploadFiles = files
-      Array.from(files).forEach(file => {
-        this.createPreviewImage(file, e => {
-          this.previewImageList.push(e.target.result)
-        })
-      })
     },
     onChangePlaceList() {
       this.placeList = []
@@ -474,7 +516,7 @@ export default {
         ProgressPromise.all(this.uploadPromiseList)
         .progress(results => {
           this.imgLoadingProgress = ((Math.round(results.proportion*100*10)/10)/100)
-          console.log('Img Upload is in Progress', this.imgLoadingProgress+"%")
+          // console.log('Img Upload is in Progress', this.imgLoadingProgress+"%")
         })
         .then((ImageUrls) => {
           //APIから帰ってきたJSONをパースして、URLを配列にまとめる

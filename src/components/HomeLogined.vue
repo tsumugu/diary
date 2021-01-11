@@ -103,9 +103,7 @@ export default {
     },
     TLItemsList() {
       var dispPostIdsList = this.TLItemsList.map(e=>e.postid)
-      if (dispPostIdsList.length == 0) {
-        alert("から")
-      }
+      this.TLItemsListDisp = []
       Object.keys(this.postsOrderedbyDateList).forEach(k=>{
         var placeItems = this.postsOrderedbyDateList[k]
         var filteredItems = placeItems.filter(e=>dispPostIdsList.includes(e.postid))
@@ -113,7 +111,6 @@ export default {
           this.TLItemsListDisp.push({[k]: filteredItems})
         }
       })
-      console.log(this.TLItemsListDisp)
     }
   },
   methods: {
