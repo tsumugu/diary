@@ -3,11 +3,13 @@
     <div class="HomeLogined__ColumnLeftArea">
       <div class="HomeLogined__ColumnLeftArea__HeaderArea"><div class="HomeLogined__ColumnLeftArea__HeaderArea__title">Diary</div><div class="HomeLogined__ColumnLeftArea__HeaderArea__menubutton"><img src="/img/more_horiz-white-48dp/2x/outline_more_horiz_white_48dp.png" class="HomeLogined__ColumnLeftArea__HeaderArea__menubutton__img"></div></div>
       <div class="HomeLogined__ColumnLeftArea__ReviewthedayArea">
-        <div class="HomeLogined__ColumnLeftArea__ReviewthedayArea__title">振り返る　({{this.postsList.length}}件中{{this.TLItemsList.length}}件表示中)</div>
+        <div class="HomeLogined__ColumnLeftArea__ReviewthedayArea__title">絞り込む ({{this.postsList.length}}件中{{this.TLItemsList.length}}件表示中)</div>
         <div class="HomeLogined__ColumnLeftArea__ReviewthedayArea__ReviewFromKeywordArea"><input type="text" v-model="searchQueryText" placeholder="キーワードを入力 (例: 伊豆旅行2021)"></div>
-        <hr class="HomeLogined__ColumnLeftArea__ReviewthedayArea__hr">
-        <div class="HomeLogined__ColumnLeftArea__ReviewthedayArea__title">絞り込む</div>
+        <!--<hr class="HomeLogined__ColumnLeftArea__ReviewthedayArea__hr">-->
         <div class="HomeLogined__ColumnLeftArea__ReviewthedayArea__ReviewFromGenleArea">
+          <div>日付 {{this.selectedDate}} <button v-on:click="()=>{ this.selectedDate = null; this.filteringPosts() }">リセット</button></div>
+          <div>場所 {{this.selectedPlaceId}} <button v-on:click="()=>{ this.selectedPlaceId = null; this.filteringPosts() }">リセット</button></div>
+          <div>人物 {{this.selectedFriendId}} <button v-on:click="()=>{ this.selectedFriendId = null; this.filteringPosts() }">リセット</button></div>
           <div class="HomeLogined__ColumnLeftArea__ReviewthedayArea__ReviewFromGenleArea__tabs tabs">
             <div class="HomeLogined__ColumnLeftArea__ReviewthedayArea__ReviewFromGenleArea__tabs__date tabs__wrapper" v-on:click="onClickTab(0)" v-bind:class="{'tabs__wrapper--active': activeNum === 0}"><div class="tabs__wrapper__items"><img src="/img/watch_later-black-48dp/2x/outline_watch_later_black_48dp.png" class="tabs__wrapper__items__img"><p class="tabs__wrapper__items__text">日時</p></div></div>
             <div class="HomeLogined__ColumnLeftArea__ReviewthedayArea__ReviewFromGenleArea__tabs__place tabs__wrapper tabs__wrapper--border" v-on:click="onClickTab(1)" v-bind:class="{'tabs__wrapper--active': activeNum === 1}"><div class="tabs__wrapper__items"><img src="/img/explore-black-48dp/2x/outline_explore_black_48dp.png" class="tabs__wrapper__items__img"><p class="tabs__wrapper__items__text">場所</p></div></div>
@@ -83,6 +85,7 @@ export default {
       calenderAttrs: [],
       availableDates: [],
       SelectedDateOnCalendar: null,
+      selectedDate: null,
       selectedFriendId: null,
       searchQueryText: null,
       notFoundMes: "今日はまだ投稿がありません"
@@ -95,13 +98,14 @@ export default {
       }
     },
     SelectedDateOnCalendar(e) {
-      this.filteringPostsByDate(formatISO(e).split("T")[0])
+      this.selectedDate = formatISO(e).split("T")[0]
+      this.filteringPosts()
     },
     selectedPlaceId() {
-      this.filteringPostsByPlace(this.selectedPlaceId)
+      this.filteringPosts()
     },
     selectedFriendId() {
-      this.filteringPostsByFriends(this.selectedFriendId)
+      this.filteringPosts()
     },
     TLItemsList() {
       var dispPostIdsList = this.TLItemsList.map(e=>e.postid)
@@ -115,7 +119,7 @@ export default {
       })
     },
     searchQueryText() {
-      this.filteringPostsByQuery(this.searchQueryText)
+      this.filteringPosts()
     }
   },
   methods: {
@@ -138,7 +142,6 @@ export default {
       this.FM = new FriendsManager(axios, database, this.userInfo)
       this.PSM = new PostsManager(axios, database, this.userInfo, this.PM, this.FM)
 
-      //firebase.database().ref("posts/"+this.userInfo.uid).on('value', (snapshot) =>{
       this.PSM.fetchallposts().then((tlitems)=>{
         this.PSM.makeArrayWithNames(tlitems).then((res)=>{
           this.postsList = res
@@ -163,7 +166,6 @@ export default {
     genPostsOrderedbyDateList() {
       this.postsOrderedbyDateList = {}
       this.postsList.forEach(post => {
-        //var tmpDayString = post.when.split("T")[0].split("-").join("/")
         if (post.when != undefined) {
           var tmpDayString = post.when.split("T")[0]
           if (this.postsOrderedbyDateList[tmpDayString] == undefined) {
@@ -225,24 +227,27 @@ export default {
     changeMes() {
       this.notFoundMes = "検索結果はありません"
     },
-    filteringPostsByQuery(text) {
-      //キーワードでフィルタリング
-      this.TLItemsList = this.postsList.filter(e=>new MyUtil().isObjectIncludeQureyText([e.what, e.where.name, e.who.name], text))
-      this.changeMes()
-    },
-    filteringPostsByDate(date) {
-      //日付でフィルタリング
-      this.TLItemsList = this.postsOrderedbyDateList[date]
-      this.changeMes()
-    },
-    filteringPostsByPlace(placeId) {
-      //場所でフィルタリング
-      this.TLItemsList = this.postsList.filter(e=>e.where.placeId==placeId)
-      this.changeMes()
-    },
-    filteringPostsByFriends(friendsId) {
-      //人物でフィルタリング
-      this.TLItemsList = this.postsList.filter(e=>e.who.friendId==friendsId)
+    filteringPosts() {
+      var tmpRes = this.postsList
+      // FIXME: もうちょっと綺麗に書けそう
+      if (new MyUtil().isAllValueNotEmpty([this.searchQueryText])) {
+        tmpRes = tmpRes.filter(e=>new MyUtil().isObjectIncludeQureyText([e.what, e.where.name, e.who.name], this.searchQueryText))
+      }
+      if (new MyUtil().isAllValueNotEmpty([this.selectedDate])) {
+        tmpRes = tmpRes.filter(e=>{
+          if (e.when != undefined) {
+            return e.when.split("T")[0]==this.selectedDate
+          }
+        })
+      }
+      if (new MyUtil().isAllValueNotEmpty([this.selectedPlaceId])) {
+        tmpRes = tmpRes.filter(e=>e.where.placeId==this.selectedPlaceId)
+      }
+      if (new MyUtil().isAllValueNotEmpty([this.selectedFriendId])) {
+        tmpRes = tmpRes.filter(e=>e.who.friendId==this.selectedFriendId)
+      }
+      //
+      this.TLItemsList = tmpRes
       this.changeMes()
     }
   },
