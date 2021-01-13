@@ -547,18 +547,20 @@ export default {
     },
     setFirebaseRealtimeDB(Obj) {
       // placeIdと名前を保存(同名で上書きされるので存在確認はしない)
-      this.PM.savemyplace(Obj.where, this.whereName).then(() => {
-        this.PSM.savepost(Obj).then(()=>{
-          alert("投稿しました！")
-          this.resetAll()
+      this.PM.getIDtoLocationAPI(Obj.where).then((res)=>{
+        this.PM.savemyplace(Obj.where, res).then(() => {
+          this.PSM.savepost(Obj).then(()=>{
+            alert("投稿しました！")
+            this.resetAll()
+          })
+          .catch((error) => {
+            console.log("Firebase Error", error)
+            alert("投稿に失敗しました")
+          })
         })
         .catch((error) => {
           console.log("Firebase Error", error)
-          alert("投稿に失敗しました")
         })
-      })
-      .catch((error) => {
-        console.log("Firebase Error", error)
       })
     }
   },

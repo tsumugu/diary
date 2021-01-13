@@ -11,12 +11,9 @@ export default class PlacesManager {
     searchplacesbyname(query) {
       return this.axios.get(encodeURI('https://secure.tsumugu2626.xyz/placessearch/name.php?q='+query))
     }
-    searchplacesbyname(query) {
-      return this.axios.get(encodeURI('https://secure.tsumugu2626.xyz/placessearch/name.php?q='+query))
-    }
-    savemyplace(placeId, placeName) {
+    savemyplace(placeId, placeInfo) {
       return new Promise((resolve, reject) => {
-        this.database.ref("places/"+this.userInfo.uid+"/"+placeId).set({name: placeName}).then(() => {
+        this.database.ref("places/"+this.userInfo.uid+"/"+placeId).set(placeInfo).then(() => {
           resolve(true)
         })
         .catch((error) => {
@@ -28,6 +25,17 @@ export default class PlacesManager {
       return new Promise((resolve) => {
         this.database.ref("places/"+this.userInfo.uid).on('value', (snapshot) =>{
           var placesinfo = snapshot.val()
+          //もし経度緯度が設定されていなかったら設定する
+          var placeids = Object.keys(placesinfo)
+          placeids.forEach(pid=>{
+            if ((placesinfo[pid].lat==undefined||placesinfo[pid].lon==undefined)&&pid.slice(0, 4)!="pid_") {
+              this.getIDtoLocationAPI(pid).then((res)=>{
+                console.log("Places Manager Info", "Location Not Found => "+pid)
+                this.database.ref("places/"+this.userInfo.uid+"/"+pid).update(res)
+              })
+            }
+          })
+          //
           this.placesinfoCache = placesinfo
           resolve(placesinfo)
         })
@@ -36,6 +44,13 @@ export default class PlacesManager {
     getIDtoNameAPI(placeId) {
       return new Promise((resolve) => {
         this.axios.get('https://secure.tsumugu2626.xyz/placessearch/idtoname.php?pid='+placeId).then((res)=>{
+          resolve(res.data)
+        })
+      })
+    }
+    getIDtoLocationAPI(placeId) {
+      return new Promise((resolve) => {
+        this.axios.get('https://secure.tsumugu2626.xyz/placessearch/idtolatlon.php?pid='+placeId).then((res)=>{
           resolve(res.data)
         })
       })

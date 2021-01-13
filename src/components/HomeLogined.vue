@@ -253,6 +253,7 @@ export default {
   },
   mounted() {
     this.userInfo = this.propsUserInfo
+    console.log("http://localhost:8080/user/"+this.userInfo.uid)
   }
 }
 </script>

@@ -20,6 +20,11 @@ const routes = [
     component: () => import('../views/EditEventinfo.vue')
   },
   {
+    path: '/user/:userid',
+    name: 'useranalyze',
+    component: () => import('../views/UserAnalyze.vue')
+  },
+  {
     path: '/registday/:date',
     name: 'registday',
     component: () => import('../views/RegistReviewTheDay.vue')
