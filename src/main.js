@@ -8,6 +8,7 @@ import "firebase/database"
 import "firebase/analytics"
 import VCalendar from 'v-calendar'
 import VModal from 'vue-js-modal'
+import LoadScript from 'vue-plugin-load-script'
 
 Vue.config.productionTip = false
 
@@ -35,6 +36,8 @@ Array.prototype.unique = function() {
 }
 
 Vue.use(VModal)
+
+Vue.use(LoadScript)
 
 new Vue({
   VCalendar,

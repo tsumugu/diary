@@ -14,8 +14,12 @@ export default class MyUtil {
       // foreachだと意図した挙動にならないので注意。
       for (var i=0;i<objArr.length;i++) {
         var item = objArr[i]
-        if (item == null || item.replace(/\s+/g,'').length <= 0) {
+        if (item == null || item == undefined) {
           return false
+        } else {
+          if (item.replace(/\s+/g,'').length <= 0) {
+            return false
+          }
         }
       }
       return true
