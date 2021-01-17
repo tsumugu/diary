@@ -187,7 +187,7 @@ export default {
     },
     uploadFiles() {
       // 新しいファイルが選択されたら自動的にサムネを表示
-      this.previewImageList = []
+      //this.previewImageList = []
       Array.from(this.uploadFiles).forEach(file => {
         this.createPreviewImage(file, e => {
           this.previewImageList.push(e.target.result)
@@ -282,18 +282,110 @@ export default {
       })
     },
     updateFirebaseRealtimeDB(Obj, postid) {
+                /*
+
+          A. this.postedItem.imgUrls : 過去にアップロード済みの画像URL
+          B. this.previewImageList : 過去にアップロード済みの画像URLと、ブラウザで生成されたbase64が混在
+          C. this.submitImageUrlList : 新規にアップロードした画像URL
+
+          ☆パターン1 : すべて過去にアップロード済みの画像URL
+             A: 任意の個数 (this.postedItem.imgUrls.length)
+             B: Aの個数と等しい (this.previewImageList.length)
+             C: 0個
+
+           　diffObjs["imgUrls"] = this.postedItem.imgUrls
+
+          ☆パターン2 : すべて新規アップロード
+             A: 0個
+             B: 任意の個数
+             C: Bの個数と等しい
+
+           　diffObjs["imgUrls"] = this.submitImageUrlList
+
+          ☆パターン3 : URLと新規アップロードが混在
+             A: 任意の個数 (this.postedItem.imgUrls.length)
+             B: Aの個数+ユーザがアップロードした任意の画像個数 (this.postedItem.imgUrls.length + this.uploadFiles.length)
+             C: ユーザがアップロードした任意の画像個数 (this.uploadFiles.length)
+
+           　diffObjs["imgUrls"] = (this.postedItem.imgUrlsから削除済みを消したもの)とthis.submitImageUrlListを合体
+
+          this.postedItem.imgUrlsからthis.previewImageListにないものを消す、そいつにthis.submitImageUrlListがあれば合体
+          
+          */
       var diffObjs = new MyUtil().getDiffBetweenTwoObjects(this.postedItem, Obj)
+      if (!new MyUtil().isAllValueNotEmpty([this.submitImageUrlList]) && new MyUtil().isAllValueNotEmpty([this.postedItem.imgUrls, this.previewImageList])) {
+        if (this.postedItem.imgUrls.length == this.previewImageList.length) {
+          console.log("☆パターン1 : すべて過去にアップロード済みの画像URL")
+        }
+      }
+
+      if (!new MyUtil().isAllValueNotEmpty([this.postedItem.imgUrls]) && new MyUtil().isAllValueNotEmpty([this.previewImageList, this.submitImageUrlList])) {
+        if (this.previewImageList.length == this.submitImageUrlList.length) {
+          console.log("☆パターン2 : すべて新規アップロード")
+        }
+      }
+
+      if (new MyUtil().isAllValueNotEmpty([this.postedItem.imgUrls, this.previewImageList, this.submitImageUrlList])) {
+        console.log("☆パターン3 : URLと新規アップロードが混在")
+      }
+
+      //console.log(this.postedItem.imgUrls, this.previewImageList, new MyUtil().getDiffBetweenTwoObjects(this.postedItem.imgUrls, this.previewImageList), this.submitImageUrlList)
+      /*
+      if (new MyUtil().isAllValueNotEmpty([this.postedItem.imgUrls, this.previewImageList, this.submitImageUrlList])) {
+        if (this.postedItem.imgUrls.length==this.previewImageList.length && this.submitImageUrlList.length==0) {
+          // ☆パターン1 : すべて過去にアップロード済みの画像URL
+          console.log("☆パターン1 : すべて過去にアップロード済みの画像URL")
+        } else if (this.postedItem.imgUrls.length==0 && this.previewImageList.length==this.submitImageUrlList.length) {
+          // ☆パターン2 : すべて新規アップロード
+          console.log("☆パターン2 : すべて新規アップロード")
+        } else if (this.previewImageList.length==this.postedItem.imgUrls.length+this.uploadFiles.length && this.uploadFiles.length!=0 && this.postedItem.imgUrls.length!=0) {
+          // ☆パターン3 : URLと新規アップロードが混在
+          console.log("☆パターン3 : URLと新規アップロードが混在")
+        } else {
+          console.log("XXX")
+        }
+      } else {
+        // ☆その他 : 画像なし
+        console.log("☆その他 : 画像なし")
+      }
+      */
+      /*
       if (this.postedItem.imgUrls != undefined) {
         if (this.postedItem.imgUrls.length != 0 && this.previewImageList.length != 0) {
-          Object.keys(new MyUtil().getDiffBetweenTwoObjects(this.postedItem.imgUrls, this.previewImageList)).forEach(key => {
+          */
+          /*
+          var postedItem_imgUrls_removed = new MyUtil().getDiffBetweenTwoObjects(this.postedItem.imgUrls, this.previewImageList)
+          // base64が残ってしまう
+          console.log(postedItem_imgUrls_removed)
+          postedItem_imgUrls_removed = this.submitImageUrlList.concat(postedItem_imgUrls_removed).unique()
+          if (postedItem_imgUrls_removed.length == 1 && Object.keys(postedItem_imgUrls_removed[0]).length == 0) {
+            // 一切の変更なし
+            console.log("this.postedItem.imgUrls")
+            diffObjs["imgUrls"] = this.postedItem.imgUrls
+          } else {
+            console.log("postedItem_imgUrls_removed")
+            diffObjs["imgUrls"] = postedItem_imgUrls_removed
+          }
+          */
+
+          /*
+          var postedItem_imgUrls_removed = this.postedItem.imgUrls
+          Object.keys(new MyUtil().getDiffBetweenTwoObjects(this.previewImageList, postedItem_imgUrls_removed)).forEach(key => {
             var index = postedItem_imgUrls_removed.indexOf(this.postedItem.imgUrls[key])
             if (index > -1) {
               postedItem_imgUrls_removed.splice(index, 1)
             }
           })
           diffObjs["imgUrls"] = this.submitImageUrlList.concat(postedItem_imgUrls_removed).unique()
+          */
+          //
+      /*
         }
       }
+      */
+      // DEBUG
+      console.log(diffObjs)
+      /*
       this.PSM.updatepost(postid, diffObjs).then((tlitem)=>{
         this.resetAll()
         this.fillAllFormsFromPostId(this.propsPostId)
@@ -304,6 +396,7 @@ export default {
         console.log("Firebase Error", error)
         alert("投稿に失敗しました")
       })
+      */
     },
     getEXIFinfo(elmId) {
       var elm = document.getElementById(elmId);

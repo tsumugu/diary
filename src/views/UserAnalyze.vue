@@ -3,28 +3,6 @@
     {{userId}}
     <div class="useranalyze__map">
       <div id="map"></div>
-      <!--
-      <GmapMap
-        :center="defaultLocation"
-        :zoom="6"
-        style="width: 500px; height: 300px"
-      >
-        <GmapMarker
-          :key="index"
-          v-for="(m, index) in markers"
-          :position="m.position"
-          :clickable="true"
-          :draggable="false"
-          @click="onClickedPin(m)" />
-        <GmapInfoWindow
-          :key="index"
-          v-for="(m, index) in markers"
-          :position="m.position"
-          :options="infoOptions" >
-          {{m.name}}
-        </GmapInfoWindow>
-      </GmapMap>
-      -->
     </div>
   </div>
 </template>
@@ -35,6 +13,8 @@ import firebase from 'firebase'
 var database = firebase.database()
 import MarkerClusterer from '@googlemaps/markerclustererplus'
 import PlacesManager from '../assets/PlacesManager.js'
+import FriendsManager from '../assets/FriendsManager.js'
+import PostsManager from '../assets/PostsManager.js'
 
 export default {
   name: "useranalyze",
@@ -44,6 +24,8 @@ export default {
     return {
       userId: null,
       PM: null,
+      FM: null,
+      PSM: null,
       map: null,
       markers: [],
       infowindows: [],
@@ -65,6 +47,21 @@ export default {
     this.userId = this.$route.params.userid
     var test = {uid: this.userId}
     this.PM = new PlacesManager(axios, database, {uid: this.userId})
+    this.FM = new FriendsManager(axios, database, {uid: this.userId})
+    this.PSM = new PostsManager(axios, database, {uid: this.userId}, this.PM, this.FM)
+
+    this.PSM.fetchallposts().then((posts) => {
+      this.PSM.makeArrayWithNames(posts).then((postswithname) => {
+        // アクティビティの統計を作成
+        //console.log(postswithname)
+        // friendsの統計を作成
+        postswithname.forEach(e => {
+          console.log(e.who)
+        })
+      })
+    })
+
+    // Google Maps JavaScript APIをロード
     this.$loadScript("https://maps.googleapis.com/maps/api/js?key=AIzaSyCmhvC49uN8fqrGEVOeMwAX-IglON8rcsQ")
     .then(() => {
       // mapを生成
@@ -94,20 +91,6 @@ export default {
             this.markers.push(marker)
           }
         })
-        /*
-        this.markers = Object.keys(places).map(placeid => {
-          if (places[placeid].lat != undefined && places[placeid].lon != undefined) {
-            return new google.maps.Marker({
-              position: {
-                lat: places[placeid].lat, 
-                lng: places[placeid].lon
-              },
-              name: places[placeid].name,
-              pid: placeid
-            })
-          }
-        }).filter(Boolean)
-        */
         // MarkerClustererに渡して表示
         new MarkerClusterer(this.map, this.markers, {imagePath: "https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m"})
       })
