@@ -57,6 +57,9 @@
         </div>
         <div><input type="file" ref="imgInput" @change="onFileChange" accept="image/*" multiple /></div>
         <!-- -->
+        <div><textarea v-model="tagsStr"></textarea></div>
+        <button v-on:click="getKeywords()">キーワードを抽出してタグ付け</button>
+        <!-- -->
         <div><button v-on:click="onSubmit">投稿</button></div>
       </div>
     </div>
@@ -119,7 +122,8 @@ export default {
       imgLoadingProgress: null,
       imageUploadCount: 0,
       failedImgDataList: [],
-      filterDoTimer: null
+      filterDoTimer: null,
+      tagsStr: ""
     }
   },
   watch: {
@@ -217,9 +221,9 @@ export default {
       if (this.propsPostId != undefined) {
         // editpostからのアクセス。
         this.fillAllFormsFromPostId(this.propsPostId)
+      } else {
+        this.whenBeforeFormated = new Date()
       }
-
-      this.whenBeforeFormated = new Date()
     },
     loadFriends() {
       this.friendsList = []
@@ -262,6 +266,7 @@ export default {
       this.imageUploadCount = 0
       this.failedImgDataList = []
       this.filterDoTimer = null
+      this.tagsStr = null
       this.$refs.imgInput.value = ""
     },
     fillAllFormsFromPostId(postid) {
@@ -269,11 +274,12 @@ export default {
         if (tlitem != null) {
           this.postedItem = tlitem
           this.postItem = tlitem
-          this.whenBeforeFormated = tlitem.when
+          this.whenBeforeFormated = new Date(tlitem.when)
           this.what = tlitem.what
           this.previewImageList = tlitem.imgUrls==undefined ? [] : tlitem.imgUrls
           this.where = tlitem.where
           this.who = tlitem.who
+          this.tagsStr = tlitem.tags.join("\n")
         } else {
           alert("投稿が存在しないようです。")
         }
@@ -352,6 +358,13 @@ export default {
         alert("情報を正常に取得できませんでした")
         console.log("exif-js Error", e)
       }
+    },
+    getKeywords() {
+      new MyUtil().getKeywordsFromSentence(this.what).then((res)=>{
+        res.forEach(e => {
+          this.tagsStr += Object.keys(e)[0]+"\n"
+        })
+      })
     },
     setFormFromEXIFinfo(InfoFromEXIF) {
       if (InfoFromEXIF.date != undefined) {
@@ -554,7 +567,8 @@ export default {
             where: this.where,
             who: this.who,
             what: this.what,
-            imgUrls: this.submitImageUrlList
+            imgUrls: this.submitImageUrlList,
+            tags: this.tagsStr.split("\n").filter(Boolean)
           }
           //DBに保存
           if (this.postedItem != null) {

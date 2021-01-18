@@ -25,16 +25,6 @@ const routes = [
     component: () => import('../views/UserAnalyze.vue')
   },
   {
-    path: '/registday/:date',
-    name: 'registday',
-    component: () => import('../views/RegistReviewTheDay.vue')
-  },
-  {
-    path: '/editdaypost/:postid',
-    name: 'editdaypost',
-    component: () => import('../views/EditReviewTheDay.vue')
-  },
-  {
     path: '/editfriends',
     name: 'editfriends',
     component: () => import('../views/EditFriends.vue')
