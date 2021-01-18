@@ -20,7 +20,7 @@
                 <p>{{places.name}}</p>
                 <ol>
                   <li v-for="item in places.items" :key="item.placeId">
-                    <label><input type="radio" v-model="where" v-bind:value="item.placeId">{{item.name}}</label>
+                    <label><input type="radio" v-model="where" v-bind:value="item.placeId">{{item.name!=undefined?item.name:"- 名称未設定 -"}}{{item.location!=undefined?" ("+item.location+")":""}}</label>
                   </li>
                 </ol>
               </li>
@@ -206,9 +206,11 @@ export default {
             })
           }]
           // 名前を更新する
-          this.getWhereName().then((name)=>{
-            this.whereName = name
-          })
+          if (new MyUtil().isAllValueNotEmpty([this.where])) {
+            this.getWhereName().then((name)=>{
+              this.whereName = name
+            })
+          }
         }
       })
 
@@ -392,9 +394,13 @@ export default {
         return false
       }
       this.placeListDisp = []
+      console.log("----")
       Object.keys(this.placeList).forEach(k=>{
         var placeItems = this.placeList[k]
-        var filteredItems = placeItems.items.filter(e=>e.name.indexOf(this.whereAdd)!=-1||e.placeId==null||e.placeId=="null")
+        // 名前やplaceidが未設定のものは弾く
+        var filteredItems = placeItems.items.filter(e=>new MyUtil().isAllValueNotEmpty([e.placeId, e.name]))
+        // 絞り込む
+        filteredItems = filteredItems.filter(e=>(e.name.indexOf(this.whereAdd)!=-1))
         if (filteredItems.length != 0) {
           this.placeListDisp.push({
             name: placeItems.name,
@@ -402,6 +408,7 @@ export default {
           })
         }
       })
+      console.log("----")
     },
     removeImgAtInput(imgUrl) {
       if (imgUrl.includes("https://i.readme.tsumugu2626.xyz/")) {
