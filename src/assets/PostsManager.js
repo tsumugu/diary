@@ -34,6 +34,17 @@ export default class PostsManager {
         })
       })
     }
+    fetchalltags() {
+      return new Promise((resolve) => {
+        this.fetchallposts().then(res=>{
+          var allTags = Object.keys(res).map(postid => res[postid].tags)
+          if (allTags.length != 0) {
+            allTags = allTags.flat().unique().filter(Boolean)
+          }
+          resolve(allTags)
+        })
+      })
+    }
     makeArrayWithNames(snapshots) {
       return new Promise((resolve) => {
         var snapshotslength = Object.keys(snapshots).length
@@ -46,6 +57,18 @@ export default class PostsManager {
           Promise.all([placeNamePromise, friendNamePromise]).then((names) => {
             var placeName = names[0]
             var friendName = names[1]
+            var returnObj = itemObj
+            returnObj["postid"] = postid
+            returnObj["imgUrls"] = itemObj.imgUrls?itemObj.imgUrls:null
+            returnObj["where"] = {
+              "placeId": itemObj.where,
+              "name": placeName
+            }
+            returnObj["who"] = {
+              "friendId": itemObj.who,
+              "name": friendName
+            }
+            /*
             var returnObj = {
               postid: postid,
               imgUrls: itemObj.imgUrls?itemObj.imgUrls:null,
@@ -60,6 +83,7 @@ export default class PostsManager {
                 "name": friendName
               }
             }
+            */
             postsList.push(returnObj)
             // 全件処理が完了したら実行
             if (snapshotslength == postsList.length) {

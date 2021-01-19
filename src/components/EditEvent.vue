@@ -57,7 +57,8 @@
         </div>
         <div><input type="file" ref="imgInput" @change="onFileChange" accept="image/*" multiple /></div>
         <!-- -->
-        <div><textarea v-model="tagsStr"></textarea></div>
+        <div><textarea placeholder="タグ" v-model="tagsStr"></textarea></div>
+        <div>もしかして <span v-for="tagval in tagSuggestList"><button v-on:click="onAddTagButton(tagval)">{{tagval}}</button></span></div>
         <button v-on:click="getKeywords()">キーワードを抽出してタグ付け</button>
         <!-- -->
         <div><button v-on:click="onSubmit">投稿</button></div>
@@ -123,7 +124,8 @@ export default {
       imageUploadCount: 0,
       failedImgDataList: [],
       filterDoTimer: null,
-      tagsStr: ""
+      tagsStr: "",
+      tagSuggestList: []
     }
   },
   watch: {
@@ -218,6 +220,10 @@ export default {
         }
       })
 
+      this.PSM.fetchalltags().then((res)=>{
+        this.tagSuggestList = res
+      })
+
       if (this.propsPostId != undefined) {
         // editpostからのアクセス。
         this.fillAllFormsFromPostId(this.propsPostId)
@@ -267,6 +273,7 @@ export default {
       this.failedImgDataList = []
       this.filterDoTimer = null
       this.tagsStr = null
+      this.tagSuggestList = []
       this.$refs.imgInput.value = ""
     },
     fillAllFormsFromPostId(postid) {
@@ -501,6 +508,9 @@ export default {
         //onError
         console.log("Firebase Error", error)
       })
+    },
+    onAddTagButton(tagval) {
+      this.tagsStr += tagval+"\n"
     },
     imgUploadChecker() {
       if (this.imageUploadCount+this.failedImgDataList.length == this.uploadPromiseList.length) {

@@ -6,6 +6,7 @@
     <div>場所: {{item.where.name}}</div>
     <div>人: {{item.who.name}}</div>
     <div>したこと: {{item.what}}</div>
+    <div>タグ: <span class="TLItem__tag" v-for="tag in item.tags" :key="key">{{tag}}</span></div>
     <div><img v-bind:src="src" v-for="(src, key) in item.imgUrls" :key="key"></div>
   </div>
 </template>
@@ -46,8 +47,13 @@ button {
 .TLItem {
   margin-top: 10px;
   padding: 20px;
-  background-color: #ffffff;
+  background-color: $white;
   border: solid 1px $main-border;
   border-radius: .25rem;
+  &__tag {
+    padding: 5px;
+    background-color: $main-accent-color;
+    border-radius: .25rem;
+  }
 }
 </style>
