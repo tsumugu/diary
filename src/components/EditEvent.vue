@@ -16,6 +16,16 @@
             <div><button v-on:click="searchNearbyPlaceByGPS">GPSを更新</button></div>
             <div><input type="text" v-model="whereAdd" @keyup.enter="onAddWhereButton" /></div>
             <ul>
+              <!---->
+              <li>
+                <p></p>
+                <ol>
+                  <li>
+                    <label><input type="radio" v-model="where" value="null">設定しない</label>
+                  </li>
+                </ol>
+              </li>
+              <!---->
               <li v-for="places in placeListDisp">
                 <p>{{places.name}}</p>
                 <ol>
@@ -33,6 +43,16 @@
           <div class="editevent__modal__contents">
             <button v-on:click="hideModal('modal-who')">Close</button>
             <ul>
+              <!---->
+              <li>
+                <p></p>
+                <ol>
+                  <li>
+                    <label><input type="radio" v-model="who" value="null">設定しない</label>
+                  </li>
+                </ol>
+              </li>
+              <!---->
               <li v-for="friends in friendsList">
                 <p>{{friends.name}}</p>
                 <ol>
@@ -154,26 +174,36 @@ export default {
       this.filteringPlacesListFromSearchbox()
     },
     who() {
-      var tmpName = null
-      Object.keys(this.friendsList).forEach(k=>{
-        this.friendsList[k].items.forEach(l=>{
-          if (l.friendsId==this.who) {
-            tmpName = l.name
-          }
+      if (this.who != "null") {
+        var tmpName = null
+        Object.keys(this.friendsList).forEach(k=>{
+          this.friendsList[k].items.forEach(l=>{
+            if (l.friendsId==this.who) {
+              tmpName = l.name
+            }
+          })
         })
-      })
-      if (tmpName != null) {
-        this.whoName = tmpName
-        //モーダルを閉じる
+        if (tmpName != null) {
+          this.whoName = tmpName
+          //モーダルを閉じる
+          this.hideModal("modal-who")
+        }
+      } else {
+        this.whoName = null
         this.hideModal("modal-who")
       }
     },
     where() {
-      this.getWhereName().then((name)=>{
-        this.whereName = name
-        //モーダルを閉じる
+      if (this.where != "null") {
+        this.getWhereName().then((name)=>{
+          this.whereName = name
+          //モーダルを閉じる
+          this.hideModal("modal-where")
+        })
+      } else {
+        this.whereName = null
         this.hideModal("modal-where")
-      })
+      }
     },
     whereAdd() {
       this.filteringPlacesListFromSearchbox()
@@ -273,10 +303,18 @@ export default {
       this.failedImgDataList = []
       this.filterDoTimer = null
       this.tagsStr = null
-      this.tagSuggestList = []
+      //this.tagSuggestList = []
       this.$refs.imgInput.value = ""
     },
     fillAllFormsFromPostId(postid) {
+      //
+      /*
+      this.PSM.fetchalltags().then((res)=>{
+        this.tagSuggestList = res
+      })
+      */
+      //
+
       this.PSM.getpostfromid(postid).then((tlitem)=>{
         if (tlitem != null) {
           this.postedItem = tlitem

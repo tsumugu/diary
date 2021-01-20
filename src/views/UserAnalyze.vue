@@ -4,6 +4,14 @@
     <div class="useranalyze__map">
       <div id="map"></div>
     </div>
+    <div class="useranalyze__tag">
+      <div v-show="tagscountList.length==0">タグが付けられた投稿はありません</div>
+      <div v-for="(tag, index) in tagscountList"><small>No.{{index+1}}</small> #{{tag.name}} ({{tag.count}}件)</div>
+    </div>
+    <div class="useranalyze__friends">
+      <div v-show="friendscountList.length==0">同行者の情報が付けられた投稿はありません</div>
+      <div v-for="(friend, index) in friendscountList"><small>No.{{index+1}}</small> {{friend.name}} ({{friend.count}}件)</div>
+    </div>
   </div>
 </template>
 
@@ -28,6 +36,10 @@ export default {
       PSM: null,
       map: null,
       markers: [],
+      tagsinpostList: [],
+      tagscountList: [],
+      friendsinpostList: [],
+      friendscountList: [],
       infowindows: [],
       defaultLocation: {lat: 35.6895014, lng: 139.6917337},
       infoOptions: {
@@ -52,12 +64,71 @@ export default {
 
     this.PSM.fetchallposts().then((posts) => {
       this.PSM.makeArrayWithNames(posts).then((postswithname) => {
-        // アクティビティの統計を作成
-        //console.log(postswithname)
-        // friendsの統計を作成
+        //それぞれ別の配列に格納
         postswithname.forEach(e => {
-          console.log(e.who)
+          if (e.who.friendId!=null&&e.who.friendId!=undefined&&e.who.name!=null&&e.who.name!=undefined) {
+            this.friendsinpostList.push(e.who)
+          }
+          if (e.tags!=undefined) {
+            this.tagsinpostList.push(e.tags)
+          }
         })
+        //タグをカウントしてランキングを作成 (もっと綺麗に書けそう)
+        var tmpTagsCountList = []
+        this.tagsinpostList.forEach(e=>{
+          e.forEach(f=>{
+            if (tmpTagsCountList[f] == undefined) {
+              tmpTagsCountList[f] = 0
+            }
+            tmpTagsCountList[f] += 1
+          })
+        })
+        this.tagscountList = []
+        Object.keys(tmpTagsCountList).forEach(k => {
+          this.tagscountList.push({
+            name: k,
+            count: tmpTagsCountList[k]
+          })
+        })
+        this.tagscountList.sort(function(a, b) {
+          if (a.count < b.count) {
+            return 1
+          } else {
+            return -1
+          }
+        })
+        if (this.tagscountList.length > 5) {
+          this.tagscountList = this.tagscountList.splice(0, 5)
+        }
+        //フレンドのランキングも作成
+        var tmpFriendsCountList = []
+        this.friendsinpostList.forEach(e=>{
+          if (tmpFriendsCountList[e.friendId] == undefined) {
+            tmpFriendsCountList[e.friendId] = 0
+          }
+          tmpFriendsCountList[e.friendId] += 1
+        })
+        this.friendscountList = []
+        Object.keys(tmpFriendsCountList).forEach(k => {
+          this.FM.friendidtoname(k).then(name=>{
+            this.friendscountList.push({
+              friendid: k,
+              name: name,
+              count: tmpFriendsCountList[k]
+            })
+          })
+        })
+        this.friendscountList.sort(function(a, b) {
+          if (a.count > b.count) {
+            return 1
+          } else {
+            return -1
+          }
+        })
+        if (this.friendscountList.length > 5) {
+          this.friendscountList = this.friendscountList.splice(0, 5)
+        }
+        //
       })
     })
 

@@ -25,6 +25,7 @@ export default class PlacesManager {
       return new Promise((resolve) => {
         this.database.ref("places/"+this.userInfo.uid).on('value', (snapshot) =>{
           var placesinfo = snapshot.val()
+          /*
           //もし経度緯度が設定されていなかったら設定する
           var placeids = Object.keys(placesinfo)
           placeids.forEach(pid=>{
@@ -36,6 +37,7 @@ export default class PlacesManager {
             }
           })
           //
+          */
           this.placesinfoCache = placesinfo
           resolve(placesinfo)
         })
@@ -66,6 +68,20 @@ export default class PlacesManager {
         })
       }
       if (placeName == null) {
+        // もし名称が設定されていなかったら設定する
+        console.log("Place Name Not Found", placeId)
+        //
+        /*
+        this.getIDtoLocationAPI(placeId).then((res)=>{
+          this.savemyplace(placeId, res).then(() => {
+            console.log("saved!", placeId)
+          })
+          .catch((error) => {
+            console.log("Firebase Error", error)
+          })
+        })
+        */
+        //
         return null
       } else {
         return placeName
