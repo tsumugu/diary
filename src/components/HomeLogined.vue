@@ -7,9 +7,9 @@
         <div class="HomeLogined__ColumnLeftArea__ReviewthedayArea__ReviewFromKeywordArea"><input type="text" v-model="searchQueryText" placeholder="キーワードを入力 (例: 伊豆旅行2021)"></div>
         <!--<hr class="HomeLogined__ColumnLeftArea__ReviewthedayArea__hr">-->
         <div class="HomeLogined__ColumnLeftArea__ReviewthedayArea__ReviewFromGenleArea">
-          <div>日付 {{this.selectedDate}} <button v-on:click="()=>{ this.selectedDate = null; this.filteringPosts() }">リセット</button></div>
-          <div>場所 {{this.selectedPlaceId}} <button v-on:click="()=>{ this.selectedPlaceId = null; this.filteringPosts() }">リセット</button></div>
-          <div>人物 {{this.selectedFriendId}} <button v-on:click="()=>{ this.selectedFriendId = null; this.filteringPosts() }">リセット</button></div>
+          <div class="icon_img_conteiner">日付 {{this.selectedDate}} <img src="/img/close-black-48dp/2x/outline_close_black_48dp.png" class="icon_img icon_clickable" v-show="this.selectedDate!=null" v-on:click="()=>{ this.selectedDate = null; this.filteringPosts() }"></div>
+          <div class="icon_img_conteiner">場所 {{this.selectedPlaceId}} <img src="/img/close-black-48dp/2x/outline_close_black_48dp.png" class="icon_img icon_clickable" v-show="this.selectedPlaceId!=null" v-on:click="()=>{ this.selectedPlaceId = null; this.filteringPosts() }"></div>
+          <div class="icon_img_conteiner">人物 {{this.selectedFriendId}} <img src="/img/close-black-48dp/2x/outline_close_black_48dp.png" class="icon_img icon_clickable" v-show="this.selectedFriendId!=null" v-on:click="()=>{ this.selectedFriendId = null; this.filteringPosts() }"></div>
           <div class="HomeLogined__ColumnLeftArea__ReviewthedayArea__ReviewFromGenleArea__tabs tabs">
             <div class="HomeLogined__ColumnLeftArea__ReviewthedayArea__ReviewFromGenleArea__tabs__date tabs__wrapper" v-on:click="onClickTab(0)" v-bind:class="{'tabs__wrapper--active': activeNum === 0}"><div class="tabs__wrapper__items"><img src="/img/watch_later-black-48dp/2x/outline_watch_later_black_48dp.png" class="tabs__wrapper__items__img"><p class="tabs__wrapper__items__text">日時</p></div></div>
             <div class="HomeLogined__ColumnLeftArea__ReviewthedayArea__ReviewFromGenleArea__tabs__place tabs__wrapper tabs__wrapper--border" v-on:click="onClickTab(1)" v-bind:class="{'tabs__wrapper--active': activeNum === 1}"><div class="tabs__wrapper__items"><img src="/img/explore-black-48dp/2x/outline_explore_black_48dp.png" class="tabs__wrapper__items__img"><p class="tabs__wrapper__items__text">場所</p></div></div>

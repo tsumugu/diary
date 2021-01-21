@@ -1,13 +1,14 @@
 <template>
   <div class="TLItem">
-    <button @click="removepost(item.postid)">削除</button>
-    <button @click="gotoedit(item.postid)">編集</button>
-    <div>日時: {{item.when}}</div>
-    <div>場所: {{item.where.name}}</div>
-    <div>人: {{item.who.name}}</div>
-    <div>したこと: {{item.what}}</div>
-    <div>タグ: <span class="TLItem__tag" v-for="tag in item.tags" :key="key">{{tag}}</span></div>
+    <div class="TLItem__when">{{item.when.split("T")[1].slice( 0, -3)}}</div>
+    <div>{{item.what}}</div>
     <div><img v-bind:src="src" v-for="(src, key) in item.imgUrls" :key="key"></div>
+    <div v-show="item.where.name!=undefined"><div class="icon_img_conteiner"><img src="/img/explore-black-48dp/2x/outline_explore_black_48dp.png" class="icon_img">: {{item.where.name}}</div></div>
+    <div v-show="item.who.name!=undefined"><div class="icon_img_conteiner"><img src="/img/group-black-48dp/2x/outline_group_black_48dp.png" class="icon_img">: {{item.who.name}}</div></div>
+    <div><div class="icon_img_conteiner"><span class="TLItem__tag" v-for="tag in item.tags" :key="key">#{{tag}}</span></div></div>
+    <hr>
+    <div class="TLItem__button"><div class="icon_img_conteiner"><img src="/img/delete-black-48dp/2x/outline_delete_black_48dp.png" class="icon_img--large icon_clickable" v-on:click="removepost(item.postid)"></div></div>
+    <div class="TLItem__button"><div class="icon_img_conteiner"><img src="/img/edit-black-48dp/2x/outline_edit_black_48dp.png" class="icon_img--large icon_clickable" v-on:click="gotoedit(item.postid)"></div></div>
   </div>
 </template>
 
@@ -40,6 +41,7 @@ export default {
 <style scoped lang="scss">
 img {
   width: 100px;
+  border-radius: .25rem;
 }
 button {
   margin: 10px 10px 10px 0;
@@ -50,10 +52,17 @@ button {
   background-color: $white;
   border: solid 1px $main-border;
   border-radius: .25rem;
+  &__when {
+    font-size: 1.5rem;
+  }
   &__tag {
+    margin: 5px 5px 5px 0;
     padding: 5px;
     background-color: $main-accent-color;
     border-radius: .25rem;
+  }
+  &__button {
+    display: inline-block;
   }
 }
 </style>
