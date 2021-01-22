@@ -302,7 +302,7 @@ export default {
       this.imageUploadCount = 0
       this.failedImgDataList = []
       this.filterDoTimer = null
-      this.tagsStr = null
+      this.tagsStr = ""
       //this.tagSuggestList = []
       this.$refs.imgInput.value = ""
     },
@@ -645,6 +645,8 @@ export default {
           })
         })
         .catch((error) => {
+          // サーバがエラーを吐くなどしてJSONを正常に取得できないことがあるので、その場合はエラーを表示
+          alert("投稿に失敗しました")
           console.log("Firebase Error", error)
         })
       })

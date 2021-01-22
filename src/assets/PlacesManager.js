@@ -13,12 +13,16 @@ export default class PlacesManager {
     }
     savemyplace(placeId, placeInfo) {
       return new Promise((resolve, reject) => {
-        this.database.ref("places/"+this.userInfo.uid+"/"+placeId).set(placeInfo).then(() => {
-          resolve(true)
-        })
-        .catch((error) => {
-          reject(error)
-        })
+        if (typeof placeInfo === 'object') {
+          this.database.ref("places/"+this.userInfo.uid+"/"+placeId).set(placeInfo).then(() => {
+            resolve(true)
+          })
+          .catch((error) => {
+            reject(error)
+          })
+        } else {
+          reject("Not Valid Prms")
+        }
       })
     }
     fetchusersavedplaces() {

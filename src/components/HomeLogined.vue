@@ -142,6 +142,15 @@ export default {
       this.FM = new FriendsManager(axios, database, this.userInfo)
       this.PSM = new PostsManager(axios, database, this.userInfo, this.PM, this.FM)
 
+      /*
+      this.PM.savemyplace("pid_176ab0152cb183", {name: "自宅"}).then(() => {
+        console.log("saved!", placeId)
+      })
+      .catch((error) => {
+        console.log("Firebase Error", error)
+      })
+      */
+
       this.PSM.fetchallposts().then((tlitems)=>{
         this.PSM.makeArrayWithNames(tlitems).then((res)=>{
           this.postsList = res
@@ -231,7 +240,7 @@ export default {
       var tmpRes = this.postsList
       // FIXME: もうちょっと綺麗に書けそう
       if (new MyUtil().isAllValueNotEmpty([this.searchQueryText])) {
-        tmpRes = tmpRes.filter(e=>new MyUtil().isObjectIncludeQureyText([e.what, e.where.name, e.who.name], this.searchQueryText))
+        tmpRes = tmpRes.filter(e=>new MyUtil().isObjectIncludeQureyText([e.what, e.where.name, e.who.name, e.tags].flat(), this.searchQueryText))
       }
       if (new MyUtil().isAllValueNotEmpty([this.selectedDate])) {
         tmpRes = tmpRes.filter(e=>{
@@ -254,6 +263,7 @@ export default {
   mounted() {
     this.userInfo = this.propsUserInfo
     console.log("http://localhost:8080/user/"+this.userInfo.uid)
+
   }
 }
 </script>
