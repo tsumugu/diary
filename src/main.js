@@ -9,6 +9,7 @@ import "firebase/analytics"
 import VCalendar from 'v-calendar'
 import VModal from 'vue-js-modal'
 import LoadScript from 'vue-plugin-load-script'
+import VueAutosuggest from 'vue-autosuggest'
 
 Vue.config.productionTip = false
 
@@ -36,8 +37,8 @@ Array.prototype.unique = function() {
 }
 
 Vue.use(VModal)
-
 Vue.use(LoadScript)
+Vue.use(VueAutosuggest)
 
 new Vue({
   VCalendar,

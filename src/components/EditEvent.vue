@@ -7,9 +7,20 @@
           <LoadingDialog propsMessage="test" :propsLoadingProgress=imgLoadingProgress />
         </modal>
         <!-- -->
-        <div>日時: <DatePicker v-model="whenBeforeFormated" mode="dateTime" is24hr><template v-slot="{ inputValue, inputEvents }"><input :value="inputValue" v-on="inputEvents" /></template></DatePicker></div>
+        <div class="icon_img_conteiner"><img src="/img/watch_later-black-48dp/2x/outline_watch_later_black_48dp.png" class="icon_img"> <DatePicker v-model="whenBeforeFormated" mode="dateTime" is24hr><template v-slot="{ inputValue, inputEvents }"><input class="editevent__body__signined__datepickerInput" :value="inputValue" v-on="inputEvents" /></template></DatePicker></div>
         <!-- -->
-        <div>場所: {{whereName==null?"未入力":whereName}} <button v-on:click="showModal('modal-where')">選択</button></div>
+        <div><textarea placeholder="したこと" v-model="what" /></div>
+        <!-- -->
+        <div class="imgPreview">
+          <div v-for="(src, key) in previewImageList">
+            <button v-on:click="removeImgAtInput(src)">削除</button>
+            <button v-on:click="getEXIFinfo('prev-' + key)">画像に埋め込まれているデータから日時と場所を入力</button>
+            <img v-bind:src="src" v-bind:id="'prev-' + key" :key="key">
+          </div>
+        </div>
+        <div><input type="file" ref="imgInput" @change="onFileChange" accept="image/*" multiple /></div>
+         <!-- -->
+        <div class="icon_img_conteiner" v-on:click="showModal('modal-where')"><img src="/img/location_on-black-48dp/2x/baseline_location_on_black_48dp.png" class="icon_img"> {{whereName==null?"未入力":whereName}}</div>
         <modal class="editevent__modal" name="modal-where" :clickToClose="true" height="95%">
           <div class="editevent__modal__contents">
             <button v-on:click="hideModal('modal-where')">Close</button>
@@ -38,7 +49,7 @@
           </div>
         </modal>
         <!-- -->
-        <div>誰と行ったか: {{whoName==null?"未入力":whoName}}<button v-on:click="showModal('modal-who')">選択</button></div>
+        <div class="icon_img_conteiner" v-on:click="showModal('modal-who')"><img src="/img/group-black-48dp/2x/outline_group_black_48dp.png" class="icon_img"> {{whoName==null?"未入力":whoName}}</div>
         <modal class="editevent__modal" name="modal-who" :clickToClose="true" height="95%">
           <div class="editevent__modal__contents">
             <button v-on:click="hideModal('modal-who')">Close</button>
@@ -66,21 +77,22 @@
           </div>
         </modal>
         <!-- -->
-        <div><textarea placeholder="したこと" v-model="what" /></div>
-        <!-- -->
-        <div class="imgPreview">
-          <div v-for="(src, key) in previewImageList">
-            <button v-on:click="removeImgAtInput(src)">削除</button>
-            <button v-on:click="getEXIFinfo('prev-' + key)">画像に埋め込まれているデータから日時と場所を入力</button>
-            <img v-bind:src="src" v-bind:id="'prev-' + key" :key="key">
-          </div>
-        </div>
-        <div><input type="file" ref="imgInput" @change="onFileChange" accept="image/*" multiple /></div>
-        <!-- -->
-        <div><textarea placeholder="タグ" v-model="tagsStr"></textarea></div>
-        <div>もしかして <span v-for="tagval in tagSuggestList"><button v-on:click="onAddTagButton(tagval)">{{tagval}}</button></span></div>
         <button v-on:click="getKeywords()">キーワードを抽出してタグ付け</button>
+        <div>
+          <vue-autosuggest 
+            v-model="tagsStr" 
+            :suggestions="filteredTagSuggestList">
+          </vue-autosuggest>
+          <!--
+          <cool-select
+            v-model="tagsStr"
+            :items="tagSuggestList">
+            <textarea placeholder="タグ"></textarea>
+          </cool-select>
+          -->
+        </div>
         <!-- -->
+        <hr>
         <div><button v-on:click="onSubmit">投稿</button></div>
       </div>
     </div>
@@ -95,6 +107,7 @@ import ProgressPromise from 'progress-promise'
 import firebase from 'firebase'
 var database = firebase.database()
 import formatISO  from 'date-fns/formatISO'
+import { VueAutosuggest } from 'vue-autosuggest'
 import MyUtil from '../assets/MyUtil.js'
 import ImgUploader from '../assets/ImgUploader.js'
 import PlacesManager from '../assets/PlacesManager.js'
@@ -107,7 +120,8 @@ export default {
   name: "editevent",
   components: {
     LoadingDialog,
-    DatePicker
+    DatePicker,
+    VueAutosuggest
   },
   props: {
     propsPostId: null
@@ -145,7 +159,8 @@ export default {
       failedImgDataList: [],
       filterDoTimer: null,
       tagsStr: "",
-      tagSuggestList: []
+      tagSuggestList: [],
+      filteredTagSuggestList: []
     }
   },
   watch: {
@@ -221,11 +236,15 @@ export default {
           this.previewImageList.push(e.target.result)
         })
       })
+    },
+    tagsStr() {
+      this.filteredTagSuggestList = [{
+        data: this.tagSuggestList.filter(e=>e.indexOf(this.tagsStr) > -1)
+      }]
     }
   },
   methods: {
     initMain() {
-
       this.IU = new ImgUploader(axios)
       this.PM = new PlacesManager(axios, database, this.userInfo)
       this.FM = new FriendsManager(axios, database, this.userInfo)
@@ -679,6 +698,10 @@ export default {
     &__signined {
       width: 100%;
       height: 100%;
+      &__datepickerInput {
+        border: none;
+        font-size: 1.2rem;
+      }
     }
   }
   &__modal {
