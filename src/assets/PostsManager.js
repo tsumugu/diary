@@ -34,15 +34,57 @@ export default class PostsManager {
         })
       })
     }
-    fetchalltags() {
+    fetchalltags(limit=null) {
       return new Promise((resolve) => {
         this.fetchallposts().then(res=>{
+
+          //
+          var tagsinpostList = []
+          Object.keys(res).forEach(k => {
+            var e = res[k]
+            if (e.tags!=undefined) {
+              tagsinpostList.push(e.tags)
+            }
+          })
+          var tmpTagsCountList = []
+          tagsinpostList.forEach(e=>{
+            e.forEach(f=>{
+              if (tmpTagsCountList[f] == undefined) {
+                tmpTagsCountList[f] = 0
+              }
+              tmpTagsCountList[f] += 1
+            })
+          })
+          var tagscountList = []
+          Object.keys(tmpTagsCountList).forEach(k => {
+            tagscountList.push({
+              name: k,
+              count: tmpTagsCountList[k]
+            })
+          })
+          tagscountList.sort(function(a, b) {
+            if (a.count < b.count) {
+              return 1
+            } else {
+              return -1
+            }
+          })
+          if (limit != null) {
+            if (tagscountList.length>=limit) {
+              tagscountList = tagscountList.splice(0, limit)
+            }
+          }
+          resolve(tagscountList)
+          //
+          /*
           var allTags = Object.keys(res).map(postid => res[postid].tags)
           if (allTags.length != 0) {
             allTags = allTags.flat().unique().filter(Boolean)
           }
           resolve(allTags)
+          */
         })
+        
       })
     }
     makeArrayWithNames(snapshots) {

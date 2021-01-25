@@ -7,38 +7,37 @@
           <LoadingDialog propsMessage="test" :propsLoadingProgress=imgLoadingProgress />
         </modal>
         <!-- -->
-        <div class="icon_img_conteiner"><img src="/img/watch_later-black-48dp/2x/outline_watch_later_black_48dp.png" class="icon_img"> <DatePicker v-model="whenBeforeFormated" mode="dateTime" is24hr><template v-slot="{ inputValue, inputEvents }"><input class="editevent__body__signined__datepickerInput" :value="inputValue" v-on="inputEvents" /></template></DatePicker></div>
+        <div class="editevent__body__signined__datepicker"><DatePicker v-model="whenBeforeFormated" mode="dateTime" is24hr><template v-slot="{ inputValue, inputEvents }"><input class="editevent__body__signined__datepicker__input" :value="inputValue" v-on="inputEvents" /></template></DatePicker></div>
         <!-- -->
-        <div><textarea placeholder="したこと" v-model="what" /></div>
+        <div class="editevent__body__signined__what"><textarea class="editevent__body__signined__what__textarea" placeholder="したこと" v-model="what" /></div>
         <!-- -->
-        <div class="imgPreview">
+        <div class="editevent__body__signined__imgpreview">
           <div v-for="(src, key) in previewImageList">
             <button v-on:click="removeImgAtInput(src)">削除</button>
             <button v-on:click="getEXIFinfo('prev-' + key)">画像に埋め込まれているデータから日時と場所を入力</button>
             <img v-bind:src="src" v-bind:id="'prev-' + key" :key="key">
           </div>
         </div>
-        <div><input type="file" ref="imgInput" @change="onFileChange" accept="image/*" multiple /></div>
+        <div class="editevent__body__signined__upload"><input type="file" ref="imgInput" @change="onFileChange" accept="image/*" multiple /></div>
          <!-- -->
-        <div class="icon_img_conteiner" v-on:click="showModal('modal-where')"><img src="/img/location_on-black-48dp/2x/baseline_location_on_black_48dp.png" class="icon_img"> {{whereName==null?"未入力":whereName}}</div>
+        <div class="editevent__body__signined__where"><div class="editevent__body__signined__where__contents"><div class="icon_img_conteiner" v-on:click="showModal('modal-where')"><img src="/img/location_on-black-48dp/2x/baseline_location_on_black_48dp.png" class="icon_img"> {{whereName==null?"未入力":whereName}}</div></div></div>
         <modal class="editevent__modal" name="modal-where" :clickToClose="true" height="95%">
           <div class="editevent__modal__contents">
             <button v-on:click="hideModal('modal-where')">Close</button>
             <div><button v-on:click="searchNearbyPlaceByGPS">GPSを更新</button></div>
             <div><input type="text" v-model="whereAdd" @keyup.enter="onAddWhereButton" /></div>
             <ul>
-              <!---->
               <li>
-                <p></p>
                 <ol>
                   <li>
                     <label><input type="radio" v-model="where" value="null">設定しない</label>
                   </li>
                 </ol>
               </li>
-              <!---->
+            </ul>
+            <ul>
               <li v-for="places in placeListDisp">
-                <p>{{places.name}}</p>
+                <p class="editevent__modal__contents__title">{{places.name}}</p>
                 <ol>
                   <li v-for="item in places.items" :key="item.placeId">
                     <label><input type="radio" v-model="where" v-bind:value="item.placeId">{{item.name!=undefined?item.name:"- 名称未設定 -"}}{{item.location!=undefined?" ("+item.location+")":""}}</label>
@@ -49,7 +48,7 @@
           </div>
         </modal>
         <!-- -->
-        <div class="icon_img_conteiner" v-on:click="showModal('modal-who')"><img src="/img/group-black-48dp/2x/outline_group_black_48dp.png" class="icon_img"> {{whoName==null?"未入力":whoName}}</div>
+        <div class="editevent__body__signined__who"><div class="editevent__body__signined__who__contents"><div class="icon_img_conteiner" v-on:click="showModal('modal-who')"><img src="/img/group-black-48dp/2x/outline_group_black_48dp.png" class="icon_img"> {{whoName==null?"未入力":whoName}}</div></div></div>
         <modal class="editevent__modal" name="modal-who" :clickToClose="true" height="95%">
           <div class="editevent__modal__contents">
             <button v-on:click="hideModal('modal-who')">Close</button>
@@ -65,7 +64,7 @@
               </li>
               <!---->
               <li v-for="friends in friendsList">
-                <p>{{friends.name}}</p>
+                <p class="editevent__modal__contents__title">{{friends.name}}</p>
                 <ol>
                   <li v-for="item in friends.items" :key="item.friendsId">
                     <label><input type="radio" v-model="who" v-bind:value="item.friendsId">{{item.name}}</label>
@@ -77,23 +76,15 @@
           </div>
         </modal>
         <!-- -->
-        <button v-on:click="getKeywords()">キーワードを抽出してタグ付け</button>
-        <div>
-          <vue-autosuggest 
-            v-model="tagsStr" 
-            :suggestions="filteredTagSuggestList">
-          </vue-autosuggest>
-          <!--
-          <cool-select
-            v-model="tagsStr"
-            :items="tagSuggestList">
-            <textarea placeholder="タグ"></textarea>
-          </cool-select>
-          -->
+        <div class="editevent__body__signined__tags">
+          <div><span v-for="tag in tags" @mouseover="onTagHovered" @mouseleave="onTagHoverLeaved" v-on:click="onTagClicked">#{{tag}} </span> #<input type="text" class="taginput" ref="taginput" @keyup.enter="onEnterTagInput"></div>
+          <div>
+            <div>もしかして: <button class="tagSuggestButton" v-for="(tag, index) in tagSuggestList" v-on:click="onAddTagButton(tag)" :ref="'tagSuggest_'+index">#{{tag}}</button></div>
+            <button class="tagSuggestButton--keyword" v-on:click="getKeywords()">文章からタグの候補を抽出する</button>
+          </div>
         </div>
         <!-- -->
-        <hr>
-        <div><button v-on:click="onSubmit">投稿</button></div>
+        <div class="editevent__body__signined__submit"><button v-on:click="onSubmit">投稿</button></div>
       </div>
     </div>
   </div>
@@ -158,9 +149,8 @@ export default {
       imageUploadCount: 0,
       failedImgDataList: [],
       filterDoTimer: null,
-      tagsStr: "",
-      tagSuggestList: [],
-      filteredTagSuggestList: []
+      tags: [],
+      tagSuggestList: []
     }
   },
   watch: {
@@ -237,10 +227,8 @@ export default {
         })
       })
     },
-    tagsStr() {
-      this.filteredTagSuggestList = [{
-        data: this.tagSuggestList.filter(e=>e.indexOf(this.tagsStr) > -1)
-      }]
+    tags() {
+      this.onTagsListChange()
     }
   },
   methods: {
@@ -255,7 +243,7 @@ export default {
       this.PM.fetchusersavedplaces().then((placesinfo) => {
         if (new MyUtil().isObjNotEmpty(placesinfo)) {
           this.userAddedPlaceList = [{
-            name: "-- User Saved Place --",
+            name: "以前に入力したことがある場所",
             items: Object.keys(placesinfo).filter(e=>e!="null"&&e!=null).map(pid => {
               return { "placeId": pid, "name": placesinfo[pid].name }
             })
@@ -269,8 +257,12 @@ export default {
         }
       })
 
-      this.PSM.fetchalltags().then((res)=>{
-        this.tagSuggestList = res
+      this.PSM.fetchalltags(5).then((res)=>{
+        this.tagSuggestList = res.map(e=>e.name)
+        //描画が終わったら
+        this.$nextTick(function() {
+          this.onTagsListChange()
+        })
       })
 
       if (this.propsPostId != undefined) {
@@ -285,7 +277,7 @@ export default {
       this.FM.fetchfriendsgroup().then((friedsgroupinfo) => {
         if (new MyUtil().isObjNotEmpty(friedsgroupinfo)) {
           this.friendsList.push({
-            name: "-- Friends Groups --",
+            name: "フレンド リスト",
             items: Object.keys(friedsgroupinfo).filter(e=>e!="null"&&e!=null).map(fid => {
               return { "friendsId": "fg - "+fid, "name": friedsgroupinfo[fid].name }
             })
@@ -296,7 +288,7 @@ export default {
       this.FM.fetchsavedfriends().then((friedsinfo) => {
         if (new MyUtil().isObjNotEmpty(friedsinfo)) {
           this.friendsList.push({
-            name: "-- Friends --",
+            name: "フレンド",
             items: Object.keys(friedsinfo).filter(e=>e!="null"&&e!=null).map(fid => {
               return { "friendsId": fid, "name": friedsinfo[fid].name }
             })
@@ -321,8 +313,8 @@ export default {
       this.imageUploadCount = 0
       this.failedImgDataList = []
       this.filterDoTimer = null
-      this.tagsStr = ""
       //this.tagSuggestList = []
+      this.tags = []
       this.$refs.imgInput.value = ""
     },
     fillAllFormsFromPostId(postid) {
@@ -343,7 +335,7 @@ export default {
           this.previewImageList = tlitem.imgUrls==undefined ? [] : tlitem.imgUrls
           this.where = tlitem.where
           this.who = tlitem.who
-          this.tagsStr = tlitem.tags.join("\n")
+          this.tags = tlitem.tags
         } else {
           alert("投稿が存在しないようです。")
         }
@@ -424,11 +416,21 @@ export default {
       }
     },
     getKeywords() {
-      new MyUtil().getKeywordsFromSentence(this.what).then((res)=>{
-        res.forEach(e => {
-          this.tagsStr += Object.keys(e)[0]+"\n"
+      if (new MyUtil().isAllValueNotEmpty([this.what])) {
+        new MyUtil().getKeywordsFromSentence(this.what).then((res)=>{
+          console.log(res)
+          if (res.length > 0) {
+            res.forEach(e => {
+              var keyword = Object.keys(e)[0]
+              if (!this.tagSuggestList.includes(keyword)) {
+                this.tagSuggestList.unshift(keyword)
+              }
+            })
+          } else {
+            alert("タグの候補が見つかりませんでした")
+          }
         })
-      })
+      }
     },
     setFormFromEXIFinfo(InfoFromEXIF) {
       if (InfoFromEXIF.date != undefined) {
@@ -438,7 +440,7 @@ export default {
       }
       if (InfoFromEXIF.latitude != undefined && InfoFromEXIF.longitude != undefined) {
         this.PM.searchnearbyplacesbylatlon(InfoFromEXIF.latitude, InfoFromEXIF.longitude).then((response) => {
-          this.nearbyPlaceList = [{name: "-- EXIF Result -- (なかったら自分で検索してね)", items: response.data }]
+          this.nearbyPlaceList = [{name: "画像に埋め込まれていた情報からの検索結果", items: response.data }]
           new MyUtil().confirmExPromise("位置情報が埋め込まれていました。それを基に場所を入力しますか？").then(()=>{
             this.showModal("modal-where")
           })
@@ -456,7 +458,7 @@ export default {
 	        var lat = data.latitude
 	        var lon = data.longitude
           this.PM.searchnearbyplacesbylatlon(lat, lon).then((response) => {
-            this.nearbyPlaceList = [{name: "-- GPS Result --", items: response.data }]
+            this.nearbyPlaceList = [{name: "GPSからの検索結果", items: response.data }]
           }).catch((error) => {
             console.log("Places Manager Error", error)
           })
@@ -532,6 +534,23 @@ export default {
     hideModal(name) {
       this.$modal.hide(name)
     },
+    onTagsListChange() {
+      for (var i=0;i<this.tagSuggestList.length;i++) {
+        var button = this.$refs['tagSuggest_'+i][0]
+        var value = button.innerText.slice(1)
+        if (this.tags.includes(value)) {
+          button.disabled = true
+        } else {
+          button.disabled = false
+        }
+      }
+    },
+    onEnterTagInput(e) {
+      if (new MyUtil().isAllValueNotEmpty([this.$refs.taginput.value]) && !this.tags.includes(this.$refs.taginput.value)) {
+        this.tags.push(this.$refs.taginput.value)
+        this.$refs.taginput.value = ""
+      }
+    },
     onFileChange(e) {
       const files = e.target.files || e.dataTransfer.files
       this.uploadFiles = files
@@ -550,8 +569,8 @@ export default {
     onAddWhereButton() {
       this.PM.searchplacesbyname(this.whereAdd).then((response) => {
         this.searchResultPlaceList = []
-        this.searchResultPlaceList.push({name: "-- New User Add --", items: [{name: this.whereAdd, placeId: "pid_"+new MyUtil().uniqueStr()}]})
-        this.searchResultPlaceList.push({name: "-- Search Result --", items: response.data})
+        this.searchResultPlaceList.push({name: "検索しても見つからなかった場合はこれを選択", items: [{name: this.whereAdd, placeId: "pid_"+new MyUtil().uniqueStr()}]})
+        this.searchResultPlaceList.push({name: "検索結果", items: response.data})
       }).catch((error) => {
         console.log("Places Manager Error", error)
       })
@@ -566,8 +585,21 @@ export default {
         console.log("Firebase Error", error)
       })
     },
+    onTagHovered(e) {
+      e.target.innerHTML = "<s>"+e.target.innerHTML+"</s>"
+    },
+    onTagHoverLeaved(e) {
+      e.target.innerHTML = e.target.innerHTML.replace(/<s>|<\/s>/g, "")
+    },
+    onTagClicked(e) {
+      var text = e.target.innerText.slice(1).replace(" ", "")
+      var index = this.tags.indexOf(text)
+      if (index > -1) {
+        this.tags.splice(index, 1)
+      }
+    },
     onAddTagButton(tagval) {
-      this.tagsStr += tagval+"\n"
+      this.tags.push(tagval)
     },
     imgUploadChecker() {
       if (this.imageUploadCount+this.failedImgDataList.length == this.uploadPromiseList.length) {
@@ -635,7 +667,7 @@ export default {
             who: this.who,
             what: this.what,
             imgUrls: this.submitImageUrlList,
-            tags: this.tagsStr.split("\n").filter(Boolean)
+            tags: this.tags
           }
           //DBに保存
           if (this.postedItem != null) {
@@ -685,6 +717,13 @@ export default {
 </script>
 
 <style scoped lang="scss">
+img {
+  width: 200px;
+}
+ul {
+  padding: 0;
+  list-style: none;
+}
 .editevent {
   width: 100%;
   height: 100%;
@@ -696,11 +735,31 @@ export default {
     width: 100%;
     height: 100%;
     &__signined {
+      padding: 20px;
       width: 100%;
       height: 100%;
-      &__datepickerInput {
-        border: none;
-        font-size: 1.2rem;
+      &__datepicker{
+        &__input {
+          border: none;
+          font-size: 1.5rem;
+        }
+      }
+      &__what {
+        &__textarea {
+          width: 300px;
+          resize: none;
+          font-size: 1rem;
+        }
+      }
+      &__where {
+        &__contents {
+          display: inline-block;
+        }
+      }
+      &__who {
+        &__contents {
+          display: inline-block;
+        }
       }
     }
   }
@@ -710,10 +769,38 @@ export default {
       width: 100%;
       height: 100%;
       overflow: scroll;
+      &__title {
+        font-size: 1.2rem;
+      }
     }
   }
 }
-img {
+.taginput {
   width: 200px;
+  padding: 0;
+  font-size: 100%;
+  border: none;
+  border-radius: 0;
+  border-bottom: 1px solid $main-accent-color;
+  outline: 0;
+  &:hover {
+    box-shadow: none;
+  }
+}
+.tagSuggestButton {
+  margin-right: 5px;
+  padding: 1px;
+  background-color: transparent;
+  font-size: 100%;
+  &--keyword {
+    margin-right: 5px;
+    padding: 1px;
+    background-color: transparent;
+    font-size: 100%;
+    background-color: $main-accent-color;
+  }
+}
+.alignleft {
+  text-align: left;
 }
 </style>
