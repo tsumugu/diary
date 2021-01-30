@@ -30,6 +30,11 @@ const routes = [
     component: () => import('../views/EditFriends.vue')
   },
   {
+    path: '/postlist',
+    name: 'editpostlist',
+    component: () => import('../views/EditPostList.vue')
+  },
+  {
     path: '/signup',
     name: 'signup',
     component: () => import('../views/SignUp.vue')

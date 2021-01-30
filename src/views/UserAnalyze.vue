@@ -1,14 +1,37 @@
 <template>
   <div class="useranalyze">
-    {{userId}}
     <div class="useranalyze__map">
       <div id="map"></div>
     </div>
+    <div class="useranalyze__postlist">
+      <p class="useranalyze__postlist__title">リスト</p>
+      <div class="useranalyze__postlist__list">
+        <!---->
+        <div class="useranalyze__postlist__list__itemwrapper" v-for="list in publicPostListsListDivided.first">
+          <div class="useranalyze__postlist__list__itemwrapper__img" :style="'background-image: url('+list.thumbnail+')'"></div>
+          <div class="useranalyze__postlist__list__itemwrapper__titlewrapper">
+            <p class="useranalyze__postlist__list__itemwrapper__titlewrapper__title">{{list.name}} ({{list.posts!=undefined?list.posts.length:"-"}}件)</p>
+          </div>
+        </div>
+        <!---->
+        <button v-show="publicPostListsListDivided.count>5" v-on:click="onClickMoreShowButton">もっと見る</button>
+        <!---->
+        <div class="useranalyze__postlist__list__itemwrapper" v-show="isShowPostListSecondZone" v-for="list in publicPostListsListDivided.second">
+          <div class="useranalyze__postlist__list__itemwrapper__img" :style="'background-image: url('+list.thumbnail+')'"></div>
+          <div class="useranalyze__postlist__list__itemwrapper__titlewrapper">
+            <p class="useranalyze__postlist__list__itemwrapper__titlewrapper__title">{{list.name}} ({{list.posts!=undefined?list.posts.length:"-"}}件)</p>
+          </div>
+        </div>
+        <!---->
+      </div>
+    </div>
     <div class="useranalyze__tag">
+      <p class="useranalyze__tag__title">タグランキング</p>
       <div v-show="tagscountList.length==0">タグが付けられた投稿はありません</div>
       <div v-for="(tag, index) in tagscountList"><small>No.{{index+1}}</small> #{{tag.name}} ({{tag.count}}件)</div>
     </div>
     <div class="useranalyze__friends">
+      <p class="useranalyze__friends__title">同行者ランキング</p>
       <div v-show="friendscountList.length==0">同行者の情報が付けられた投稿はありません</div>
       <div v-for="(friend, index) in friendscountList"><small>No.{{index+1}}</small> {{friend.name}} ({{friend.count}}件)</div>
     </div>
@@ -36,6 +59,10 @@ export default {
       PSM: null,
       map: null,
       markers: [],
+      postsList: [],
+      publicPostListsList: [],
+      publicPostListsListDivided: [],
+      isShowPostListSecondZone: false,
       tagsinpostList: [],
       tagscountList: [],
       friendsinpostList: [],
@@ -50,7 +77,35 @@ export default {
       },
     }
   },
+  watch: {
+    publicPostListsList() {
+      /*
+        this.publicPostListsListのうち、最初の5こだけを表示して、ぜんぶ見るボタンが押されたらすべて表示
+        そのために5個+残りという形の配列にする
+      */
+      const range = (start, stop) => Array.from({ length: (stop - start) + 1}, (_, i) => start + i);
+      if (this.publicPostListsList.length > 5) {
+        // 0~4, 5~(this.publicPostListsList.length-1)
+        this.publicPostListsListDivided = {
+          count: this.publicPostListsList.length,
+          first: [...Array(5).keys()].map(n=>this.publicPostListsList[n]),
+          second: range(5, this.publicPostListsList.length-1).map(n=>this.publicPostListsList[n])
+        }
+      } else {
+        this.publicPostListsListDivided = {
+          count: this.publicPostListsList.length,
+          first: this.publicPostListsList,
+          second: null
+        }
+      }
+      console.log(this.publicPostListsListDivided)
+    }
+  },
   methods: {
+    onClickMoreShowButton(e) {
+      e.target.style.display = "none"
+      this.isShowPostListSecondZone = true
+    },
     onClickedPin(e) {
       console.log(e)
     }
@@ -64,6 +119,7 @@ export default {
 
     this.PSM.fetchallposts().then((posts) => {
       this.PSM.makeArrayWithNames(posts).then((postswithname) => {
+        this.postsList = postswithname
         //それぞれ別の配列に格納
         postswithname.forEach(e => {
           if (e.who.friendId!=null&&e.who.friendId!=undefined&&e.who.name!=null&&e.who.name!=undefined) {
@@ -128,6 +184,33 @@ export default {
         if (this.friendscountList.length > 5) {
           this.friendscountList = this.friendscountList.splice(0, 5)
         }
+        // リストを読み込み
+        database.ref("postlist/"+this.userId).on('value', (snapshot) =>{
+          var lists = snapshot.val()
+          this.publicPostListsList = Object.keys(lists).map(k=>{
+            if (lists[k].status=="public") {
+              var tmpList = lists[k]
+              // IDをつっこむ
+              tmpList["listid"] = k
+              //投稿を配列に入れる
+              var tmpDispPostList = []
+              var tmpTagsList = lists[k].tags==undefined?[]:lists[k].tags
+              Object.keys(this.postsList).forEach(k => {
+                var tags = this.postsList[k].tags
+                if (tags != undefined) {
+                  var doubleCount = tmpTagsList.filter(t=>tags.includes(t)).length   
+                  if (doubleCount == tmpTagsList.length) {
+                    tmpDispPostList.push(this.postsList[k])
+                  }
+                }
+              })
+              tmpList["posts"] = tmpDispPostList
+              //最初の1枚をサムネとして設定
+              tmpList["thumbnail"] = tmpDispPostList.map(e=>e.imgUrls).flat().filter(Boolean)[0]
+              return tmpList
+            }
+          }).filter(Boolean)
+        })
         //
       })
     })
@@ -179,6 +262,61 @@ export default {
 .useranalyze {
   width: 100%;
   height: 100%;
+  &__postlist {
+    &__title {
+      margin:  0 0 0 0;
+      font-size: 1.5rem;
+    }
+    &__list {
+      display:inline-block;
+      &__itemwrapper {
+        /*
+        display: flex;
+        flex-basis: auto;
+        justify-content: left;
+        align-items: center;
+        align-content: center;
+        */
+        display: grid;
+        grid-template-columns: 80px 1fr;
+        margin: 5px;
+        border: 1px solid $main-border;
+        border-radius: 0.25rem;
+        &:hover {
+          cursor: pointer;
+          opacity: 0.5;
+        }
+        &__titlewrapper {
+          display: flex;
+          align-items: center;
+          margin: 5px;
+          &__title {
+            word-break: break-all;
+          }
+        }
+        &__img {
+          width: 80px;
+          height: 80px;
+          background-color: $main-mainarea-bg;
+          background-position: center center;
+          background-size: cover;
+          border-radius: 0.25rem;
+        }
+      }
+    }
+  }
+  &__tag {
+    &__title {
+      margin:  0 0 0 0;
+      font-size: 1.5rem;
+    }
+  }
+  &__friends {
+    &__title {
+      margin: 0;
+      font-size: 1.5rem;
+    }
+  }
 }
 #map {
   width: 500px;
