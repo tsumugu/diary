@@ -77,7 +77,7 @@
         </modal>
         <!-- -->
         <div class="editevent__body__signined__tags">
-          <div><span v-for="tag in tags" @mouseover="onTagHovered" @mouseleave="onTagHoverLeaved" v-on:click="onTagClicked">#{{tag}} </span> #<input type="text" class="taginput" ref="taginput" @keyup.enter="onEnterTagInput"></div>
+          <div><span v-for="tag in tags" @mouseover="onTagHovered" @mouseleave="onTagHoverLeaved" v-on:click="onTagClicked" :key="tag">#{{tag}} </span> #<input type="text" class="taginput" ref="taginput" @keyup.enter="onEnterTagInput"></div>
           <div>
             <div>もしかして: <button class="tagSuggestButton" v-for="(tag, index) in tagSuggestList" v-on:click="onAddTagButton(tag)" :ref="'tagSuggest_'+index">#{{tag}}</button></div>
             <button class="tagSuggestButton--keyword" v-on:click="getKeywords()">文章からタグの候補を抽出する</button>

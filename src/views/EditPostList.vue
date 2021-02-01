@@ -11,7 +11,7 @@
             <!-- -->
             <p>タグを選択</p>
             <div class="editpostlist__body__signined__tags">
-              <div><span v-for="tag in tagsList" @mouseover="onTagHovered" @mouseleave="onTagHoverLeaved" v-on:click="onTagClicked">#{{tag}} </span> #<input type="text" class="taginput" ref="taginput" @keyup.enter="onEnterTagInput"></div>
+              <div><span v-for="tag in tagsList" @mouseover="onTagHovered" @mouseleave="onTagHoverLeaved" v-on:click="onTagClicked" :key="tag">#{{tag}} </span></div>
               <div>
                 <div><button class="tagSuggestButton" v-for="(tag, index) in tagSuggestList" v-on:click="onAddTagButton(tag)" :ref="'tagSuggest_'+index">#{{tag}}</button></div>
               </div>

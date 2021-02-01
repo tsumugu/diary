@@ -1,25 +1,27 @@
 <template>
   <div class="useranalyze">
     <div class="useranalyze__map">
+      <p class="useranalyze__map__title">行ったことがある場所</p>
       <div id="map"></div>
     </div>
     <div class="useranalyze__postlist">
       <p class="useranalyze__postlist__title">リスト</p>
+      <div v-show="publicPostListsListDivided.count==0">リストはありません</div>
       <div class="useranalyze__postlist__list">
         <!---->
-        <div class="useranalyze__postlist__list__itemwrapper" v-for="list in publicPostListsListDivided.first">
+        <div class="useranalyze__postlist__list__itemwrapper" v-on:click="onClickPostList(list)" v-for="list in publicPostListsListDivided.first">
           <div class="useranalyze__postlist__list__itemwrapper__img" :style="'background-image: url('+list.thumbnail+')'"></div>
           <div class="useranalyze__postlist__list__itemwrapper__titlewrapper">
-            <p class="useranalyze__postlist__list__itemwrapper__titlewrapper__title">{{list.name}} ({{list.posts!=undefined?list.posts.length:"-"}}件)</p>
+            <p class="useranalyze__postlist__list__itemwrapper__titlewrapper__title">{{list.name}}</p>
           </div>
         </div>
         <!---->
         <button v-show="publicPostListsListDivided.count>5" v-on:click="onClickMoreShowButton">もっと見る</button>
         <!---->
-        <div class="useranalyze__postlist__list__itemwrapper" v-show="isShowPostListSecondZone" v-for="list in publicPostListsListDivided.second">
+        <div class="useranalyze__postlist__list__itemwrapper" v-on:click="onClickPostList(list)" v-show="isShowPostListSecondZone" v-for="list in publicPostListsListDivided.second">
           <div class="useranalyze__postlist__list__itemwrapper__img" :style="'background-image: url('+list.thumbnail+')'"></div>
           <div class="useranalyze__postlist__list__itemwrapper__titlewrapper">
-            <p class="useranalyze__postlist__list__itemwrapper__titlewrapper__title">{{list.name}} ({{list.posts!=undefined?list.posts.length:"-"}}件)</p>
+            <p class="useranalyze__postlist__list__itemwrapper__titlewrapper__title">{{list.name}}</p>
           </div>
         </div>
         <!---->
@@ -106,6 +108,9 @@ export default {
       e.target.style.display = "none"
       this.isShowPostListSecondZone = true
     },
+    onClickPostList(list) {
+      this.$router.push({path: '/', query: { listid: list.listid}})
+    },
     onClickedPin(e) {
       console.log(e)
     }
@@ -190,23 +195,7 @@ export default {
           this.publicPostListsList = Object.keys(lists).map(k=>{
             if (lists[k].status=="public") {
               var tmpList = lists[k]
-              // IDをつっこむ
               tmpList["listid"] = k
-              //投稿を配列に入れる
-              var tmpDispPostList = []
-              var tmpTagsList = lists[k].tags==undefined?[]:lists[k].tags
-              Object.keys(this.postsList).forEach(k => {
-                var tags = this.postsList[k].tags
-                if (tags != undefined) {
-                  var doubleCount = tmpTagsList.filter(t=>tags.includes(t)).length   
-                  if (doubleCount == tmpTagsList.length) {
-                    tmpDispPostList.push(this.postsList[k])
-                  }
-                }
-              })
-              tmpList["posts"] = tmpDispPostList
-              //最初の1枚をサムネとして設定
-              tmpList["thumbnail"] = tmpDispPostList.map(e=>e.imgUrls).flat().filter(Boolean)[0]
               return tmpList
             }
           }).filter(Boolean)
@@ -262,6 +251,12 @@ export default {
 .useranalyze {
   width: 100%;
   height: 100%;
+  &__map {
+    &__title {
+      margin:  0 0 0 0;
+      font-size: 1.5rem;
+    }
+  }
   &__postlist {
     &__title {
       margin:  0 0 0 0;
@@ -289,7 +284,7 @@ export default {
         &__titlewrapper {
           display: flex;
           align-items: center;
-          margin: 5px;
+          margin: 10px;
           &__title {
             word-break: break-all;
           }
@@ -300,7 +295,7 @@ export default {
           background-color: $main-mainarea-bg;
           background-position: center center;
           background-size: cover;
-          border-radius: 0.25rem;
+          border-radius: 0.25rem 0 0 0.25rem;
         }
       }
     }
@@ -319,7 +314,6 @@ export default {
   }
 }
 #map {
-  width: 500px;
   height: 300px;
 }
 </style>

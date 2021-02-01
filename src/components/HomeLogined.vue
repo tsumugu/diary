@@ -7,22 +7,29 @@
         <div class="HomeLogined__ColumnLeftArea__ReviewthedayArea__ReviewFromKeywordArea"><input type="text" v-model="searchQueryText" placeholder="キーワードを入力 (例: 伊豆旅行2021)"></div>
         <!--<hr class="HomeLogined__ColumnLeftArea__ReviewthedayArea__hr">-->
         <div class="HomeLogined__ColumnLeftArea__ReviewthedayArea__ReviewFromGenleArea">
-          <div class="icon_img_conteiner">日付 {{this.selectedDate}} <img src="/img/close-black-48dp/2x/outline_close_black_48dp.png" class="icon_img icon_clickable" v-show="this.selectedDate!=null" v-on:click="()=>{ this.selectedDate = null; this.filteringPosts() }"></div>
-          <div class="icon_img_conteiner">場所 {{this.selectedPlaceName}} <img src="/img/close-black-48dp/2x/outline_close_black_48dp.png" class="icon_img icon_clickable" v-show="this.selectedPlaceId!=null" v-on:click="()=>{ this.selectedPlaceId = null; this.selectedPlaceName = null; this.filteringPosts() }"></div>
-          <div class="icon_img_conteiner">人物 {{this.selectedFriendName}} <img src="/img/close-black-48dp/2x/outline_close_black_48dp.png" class="icon_img icon_clickable" v-show="this.selectedFriendId!=null" v-on:click="()=>{ this.selectedFriendId = null; this.selectedFriendName = null; this.filteringPosts() }"></div>
+          <div class="icon_img_conteiner">日付:{{this.selectedDate}} <img src="/img/close-black-48dp/2x/outline_close_black_48dp.png" class="icon_img icon_clickable" v-show="this.selectedDate!=null" v-on:click="()=>{ this.selectedDate = null; this.filteringPosts() }"></div>
+          <div class="icon_img_conteiner">場所:{{this.selectedPlaceName}} <img src="/img/close-black-48dp/2x/outline_close_black_48dp.png" class="icon_img icon_clickable" v-show="this.selectedPlaceId!=null" v-on:click="()=>{ this.selectedPlaceId = null; this.selectedPlaceName = null; this.filteringPosts() }"></div>
+          <div class="icon_img_conteiner">人物:{{this.selectedFriendName}} <img src="/img/close-black-48dp/2x/outline_close_black_48dp.png" class="icon_img icon_clickable" v-show="this.selectedFriendId!=null" v-on:click="()=>{ this.selectedFriendId = null; this.selectedFriendName = null; this.filteringPosts() }"></div>
+          <div>タグ:<div class="tag__wrapper" v-for="tag in tagsList" :key="tag"><div class="icon_img_conteiner">#{{tag}}<img src="/img/close-black-48dp/2x/outline_close_black_48dp.png" class="icon_img icon_clickable" v-on:click="onTagClicked"></div></div></div>
           <div class="HomeLogined__ColumnLeftArea__ReviewthedayArea__ReviewFromGenleArea__tabs tabs">
             <div class="HomeLogined__ColumnLeftArea__ReviewthedayArea__ReviewFromGenleArea__tabs__date tabs__wrapper" v-on:click="onClickTab(0)" v-bind:class="{'tabs__wrapper--active': activeNum === 0}"><div class="tabs__wrapper__items"><img src="/img/watch_later-black-48dp/2x/outline_watch_later_black_48dp.png" class="tabs__wrapper__items__img"><p class="tabs__wrapper__items__text">日時</p></div></div>
-            <div class="HomeLogined__ColumnLeftArea__ReviewthedayArea__ReviewFromGenleArea__tabs__place tabs__wrapper tabs__wrapper--border" v-on:click="onClickTab(1)" v-bind:class="{'tabs__wrapper--active': activeNum === 1}"><div class="tabs__wrapper__items"><img src="/img/location_on-black-48dp/2x/baseline_location_on_black_48dp.png" class="tabs__wrapper__items__img"><p class="tabs__wrapper__items__text">場所</p></div></div>
-            <div class="HomeLogined__ColumnLeftArea__ReviewthedayArea__ReviewFromGenleArea__tabs__friends tabs__wrapper" v-on:click="onClickTab(2)" v-bind:class="{'tabs__wrapper--active': activeNum === 2}"><div class="tabs__wrapper__items"><img src="/img/group-black-48dp/2x/outline_group_black_48dp.png" class="tabs__wrapper__items__img"><p class="tabs__wrapper__items__text">人物</p></div></div>
+            <div class="HomeLogined__ColumnLeftArea__ReviewthedayArea__ReviewFromGenleArea__tabs__tag tabs__wrapper tabs__wrapper--border" v-on:click="onClickTab(1)" v-bind:class="{'tabs__wrapper--active': activeNum === 1}"><div class="tabs__wrapper__items"><img src="/img/sell-black-48dp/2x/outline_sell_black_48dp.png" class="tabs__wrapper__items__img"><p class="tabs__wrapper__items__text">タグ</p></div></div>
+            <div class="HomeLogined__ColumnLeftArea__ReviewthedayArea__ReviewFromGenleArea__tabs__place tabs__wrapper tabs__wrapper--border" v-on:click="onClickTab(2)" v-bind:class="{'tabs__wrapper--active': activeNum === 2}"><div class="tabs__wrapper__items"><img src="/img/location_on-black-48dp/2x/baseline_location_on_black_48dp.png" class="tabs__wrapper__items__img"><p class="tabs__wrapper__items__text">場所</p></div></div>
+            <div class="HomeLogined__ColumnLeftArea__ReviewthedayArea__ReviewFromGenleArea__tabs__friends tabs__wrapper" v-on:click="onClickTab(3)" v-bind:class="{'tabs__wrapper--active': activeNum === 3}"><div class="tabs__wrapper__items"><img src="/img/group-black-48dp/2x/outline_group_black_48dp.png" class="tabs__wrapper__items__img"><p class="tabs__wrapper__items__text">人物</p></div></div>
           </div>
           <div class="HomeLogined__ColumnLeftArea__ReviewthedayArea__ReviewFromGenleArea__contents">
             <div v-show="activeNum === 0"><DatePicker :available-dates="availableDates" :attributes="calenderAttrs" v-model='SelectedDateOnCalendar' /></div>
             <div v-show="activeNum === 1">
               <ul>
-                <li v-for="(name, id) in placesInPostsList"><label><input type="radio" v-model="selectedPlaceId" :value="id">{{name}}</label></li>
+                <li v-for="(tag, index) in tagSuggestList"><button class="tagSuggestButton" v-on:click="onAddTagButton(tag)" :ref="'tagSuggest_'+index">#{{tag}}</button></li>
               </ul>
             </div>
             <div v-show="activeNum === 2">
+              <ul>
+                <li v-for="(name, id) in placesInPostsList"><label><input type="radio" v-model="selectedPlaceId" :value="id">{{name}}</label></li>
+              </ul>
+            </div>
+            <div v-show="activeNum === 3">
               <ul>
                 <li v-for="(info, id) in friendsList"><label><input type="radio" v-model="selectedFriendId" :value="id">{{info.name}}</label></li>
               </ul>
@@ -31,8 +38,19 @@
         </div>
       </div>
     </div>
+    <modal class="HomeLogined__modal" name="modal-editpostlist" :clickToClose="true" height="95%">
+      <p>リストのタイトルを入力</p>
+      <input type="text" v-model="PostListName">
+      <p>公開範囲設定</p>
+      <div class="editpostlist__body__signined__publicconf">
+        <label><input type="radio" v-model="listPublicStatus" value="public">公開</label>
+        <label><input type="radio" v-model="listPublicStatus" value="private">非公開</label>
+      </div>
+      <button v-on:click="onPostListSubmit">保存</button>
+    </modal>
     <div class="HomeLogined__MainArea">
       <div class="HomeLogined__MainArea__postbutton">
+        <button v-on:click="openPostListModal">リスト</button>
         <button v-on:click="gotoRegist">投稿</button>
       </div>
       <div class="HomeLogined__MainArea__mesnopost" v-show="TLItemsListDisp.length==0">{{notFoundMes}}</div>
@@ -85,11 +103,15 @@ export default {
       friendsList: {},
       calenderAttrs: [],
       availableDates: [],
+      tagsList: [],
+      tagSuggestList: [],
       SelectedDateOnCalendar: null,
       selectedDate: null,
       selectedFriendId: null,
       searchQueryText: null,
-      notFoundMes: "今日はまだ投稿がありません"
+      notFoundMes: "今日はまだ投稿がありません",
+      PostListName: null,
+      listPublicStatus: "public"
     }
   },
   watch: {
@@ -99,6 +121,7 @@ export default {
       }
     },
     SelectedDateOnCalendar(e) {
+      console.log(e)
       this.selectedDate = formatISO(e).split("T")[0]
       this.filteringPosts()
     },
@@ -123,6 +146,10 @@ export default {
     },
     searchQueryText() {
       this.filteringPosts()
+    },
+    tagsList() {
+      this.filteringPosts()
+      this.onTagsListChange()
     }
   },
   methods: {
@@ -134,7 +161,7 @@ export default {
     },
     removepost(postid) {
       new MyUtil().confirmExPromise("この投稿を本当に削除しますか?").then(() => {
-        firebase.database().ref("posts/"+this.userInfo.uid+"/"+postid).remove().then(function(){
+        database.ref("posts/"+this.userInfo.uid+"/"+postid).remove().then(function(){
           alert('削除しました！')
           // reload処理
         })
@@ -168,10 +195,43 @@ export default {
           }
           //カレンダーに印を表示
           this.genCalenderDots()
+          // タグを準備
+          this.PSM.fetchalltags().then((res)=>{
+            this.tagSuggestList = res.map(e=>e.name)
+              //描画が終わったら
+              this.$nextTick(function() {
+                this.onTagsListChange()
+              })
+            })
           //場所を取得
           this.genPlacesList()
           //フレンドを取得
           this.genFriendsList()
+          // listidが指定されていたらそのリストの条件を絞り込みの条件に設定
+          if (new MyUtil().isAllValueNotEmpty([this.$route.query.listid])) {
+            database.ref("postlist/"+this.userInfo.uid+"/"+this.$route.query.listid).on('value', (snapshot) =>{
+              // パラメータをいいかんじに設定
+              var prms = snapshot.val().parms
+              console.log(prms)
+              Object.keys(prms).forEach(k => {
+                if (k == "keyword") {
+                  this.searchQueryText = prms[k]
+                } else if (k == "when") {
+                  this.selectedDate = prms[k]
+                  // TODO: SelectedDateOnCalendarを設定
+                  //this.SelectedDateOnCalendar = prms[k]
+                } else if (k == "where") {
+                  this.selectedPlaceId = prms[k]
+                } else if (k == "who") {
+                  this.selectedFriendId = prms[k]
+                } else if (k == "tags") {
+                  this.tagsList = prms[k]
+                }
+              })
+              this.filteringPosts()
+            })
+          }
+          //
         })
       })
     },
@@ -258,10 +318,96 @@ export default {
       if (new MyUtil().isAllValueNotEmpty([this.selectedFriendId])) {
         tmpRes = tmpRes.filter(e=>e.who.friendId==this.selectedFriendId)
       }
+      if (new MyUtil().isAllValueNotEmpty([this.tagsList])) {
+        tmpRes = tmpRes.filter(e=>{
+          return this.tagsList.filter(t=>{
+            if (e.tags != undefined) {
+              return e.tags.includes(t)
+            }
+          }).length == this.tagsList.length
+        })
+      }
       //
       this.TLItemsList = tmpRes
       this.changeMes()
-    }
+    },
+    openPostListModal() {
+      this.showModal("modal-editpostlist")
+    },
+    showModal(name) {
+      this.$modal.show(name)
+    },
+    hideModal(name) {
+      this.$modal.hide(name)
+    },
+    onPostListSubmit() {
+      if (new MyUtil().isAllValueNotEmpty([this.PostListName, this.listPublicStatus])) {
+        var items = {
+          "name": this.PostListName,
+          "status": this.listPublicStatus,
+          "thumbnail": this.TLItemsList.map(e=>e.imgUrls).flat().filter(Boolean)[0],
+          "parms":{
+            "keyword": this.searchQueryText,
+            "when": this.selectedDate,
+            "where": this.selectedPlaceId,
+            "who": this.selectedFriendId,
+            "tags": this.tagsList
+          }
+        }
+        // 値が設定されていないパラメータは削除する
+        Object.keys(items).forEach(k=>{
+          if (items[k] === null || items[k] === undefined) {
+            delete items[k]
+          } else {
+            if (typeof items[k] === 'object') {
+              Object.keys(items[k]).forEach(l=>{
+                if (items[k][l] === null || items[k][l] === undefined || items[k][l].length == 0) {
+                  delete items[k][l]
+                }
+              })
+            }
+          }
+        })
+        //
+        database.ref("postlist/"+this.userInfo.uid).push(items).then(() => {
+          alert("保存しました")
+        })
+      } else {
+        alert("未入力の項目があります")
+      }
+    },
+    onTagClicked(e) {
+      var text = e.target.parentElement.innerText.slice(1).replace(" ", "")
+      var index = this.tagsList.indexOf(text)
+      if (index > -1) {
+        this.tagsList.splice(index, 1)
+      }
+    },
+    onAddTagButton(tagval) {
+      this.tagsList.push(tagval)
+    },
+    onTagsListChange() {
+      for (var i=0;i<this.tagSuggestList.length;i++) {
+        var button = this.$refs['tagSuggest_'+i][0]
+        var value = button.innerText.slice(1)
+        if (this.tagsList.includes(value)) {
+          button.disabled = true
+        } else {
+          button.disabled = false
+        }
+      }
+
+      this.dispPostList = []
+      Object.keys(this.postsList).forEach(k => {
+        var tags = this.postsList[k].tags
+        if (tags != undefined) {
+          var doubleCount = this.tagsList.filter(t=>tags.includes(t)).length   
+          if (doubleCount == this.tagsList.length) {
+            this.dispPostList.push(this.postsList[k])
+          }
+        }
+      })
+    },
   },
   mounted() {
     this.userInfo = this.propsUserInfo
@@ -351,11 +497,15 @@ export default {
 }
 .tabs {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
   border-bottom: solid 5px $main-accent-color;
   &__wrapper {
+    /*
     margin: auto;
     padding: 0 27px 0 28.3px;
+    */
+    display: flex;
+    justify-content: center; 
     border-radius: .25rem .25rem 0 0;
     &--border {
       border: solid $main-border;
@@ -382,5 +532,9 @@ export default {
 }
 .tabs__wrapper:hover:not(.tabs__wrapper--active) {
   background-color: $main-accent-color-hover;
+}
+.tag__wrapper {
+  display: inline-block;
+  margin-right: 5px;
 }
 </style>
