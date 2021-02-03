@@ -28,9 +28,14 @@
       </div>
     </div>
     <div class="useranalyze__tag">
+      <img class="useranalyze__tag__img" :src="tagWordcloudUrl">
+      <!--
+      <div v-for="(tag, index) in tagsWithFontsizeList" :style="'font-size: '+tag.fontsize+'px;'">#{{tag.name}}</div>
+
       <p class="useranalyze__tag__title">タグランキング</p>
       <div v-show="tagscountList.length==0">タグが付けられた投稿はありません</div>
       <div v-for="(tag, index) in tagscountList"><small>No.{{index+1}}</small> #{{tag.name}} ({{tag.count}}件)</div>
+      -->
     </div>
     <div class="useranalyze__friends">
       <p class="useranalyze__friends__title">同行者ランキング</p>
@@ -67,9 +72,11 @@ export default {
       isShowPostListSecondZone: false,
       tagsinpostList: [],
       tagscountList: [],
+      tagWordcloudUrl: [],
       friendsinpostList: [],
       friendscountList: [],
       infowindows: [],
+      tagsWithFontsizeList: [],
       defaultLocation: {lat: 35.6895014, lng: 139.6917337},
       infoOptions: {
         pixelOffset: {
@@ -100,7 +107,6 @@ export default {
           second: null
         }
       }
-      console.log(this.publicPostListsListDivided)
     }
   },
   methods: {
@@ -121,7 +127,28 @@ export default {
     this.PM = new PlacesManager(axios, database, {uid: this.userId})
     this.FM = new FriendsManager(axios, database, {uid: this.userId})
     this.PSM = new PostsManager(axios, database, {uid: this.userId}, this.PM, this.FM)
-
+    this.PSM.fetchalltags().then((tags) => {
+      var tagUrlObj = {}
+      Object.keys(tags).forEach(k => {
+        var e = tags[k]
+        tagUrlObj[e.name] = e.count
+      })
+      var tagUrlStr = JSON.stringify(tagUrlObj)
+      this.tagWordcloudUrl = "https://tsumugu.tech/wordcloud/gen.php?words="+encodeURI(tagUrlStr)
+    })
+    // リストを読み込み
+    database.ref("postlist/"+this.userId).on('value', (snapshot) =>{
+      var lists = snapshot.val()
+      this.publicPostListsList = Object.keys(lists).map(k=>{
+        if (lists[k].status=="public") {
+          var tmpList = lists[k]
+          tmpList["listid"] = k
+          return tmpList
+        }
+      }).filter(Boolean)
+    })
+    //
+    /*
     this.PSM.fetchallposts().then((posts) => {
       this.PSM.makeArrayWithNames(posts).then((postswithname) => {
         this.postsList = postswithname
@@ -203,7 +230,7 @@ export default {
         //
       })
     })
-
+    */
     // Google Maps JavaScript APIをロード
     this.$loadScript("https://maps.googleapis.com/maps/api/js?key=AIzaSyCmhvC49uN8fqrGEVOeMwAX-IglON8rcsQ")
     .then(() => {
@@ -304,6 +331,9 @@ export default {
     &__title {
       margin:  0 0 0 0;
       font-size: 1.5rem;
+    }
+    &__img {
+      width: 100%;
     }
   }
   &__friends {
