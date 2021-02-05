@@ -207,8 +207,9 @@ export default {
           this.genPlacesList()
           //フレンドを取得
           this.genFriendsList()
-          // listidが指定されていたらそのリストの条件を絞り込みの条件に設定
+          // パラメータが指定されていたらそのリストの条件を絞り込みの条件に設定
           if (new MyUtil().isAllValueNotEmpty([this.$route.query.listid])) {
+            // ListIDが指定されていたとき
             database.ref("postlist/"+this.userInfo.uid+"/"+this.$route.query.listid).on('value', (snapshot) =>{
               // パラメータをいいかんじに設定
               var prms = snapshot.val().parms
@@ -230,6 +231,10 @@ export default {
               })
               this.filteringPosts()
             })
+          } else if (new MyUtil().isAllValueNotEmpty([this.$route.query.placeid])) {
+            // PlaceIDが指定されていたとき
+            this.selectedPlaceId = this.$route.query.placeid
+            this.filteringPosts()
           }
           //
         })

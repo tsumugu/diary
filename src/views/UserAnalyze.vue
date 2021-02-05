@@ -1,46 +1,27 @@
 <template>
   <div class="useranalyze">
-    <div class="useranalyze__map">
-      <p class="useranalyze__map__title">行ったことがある場所</p>
-      <div id="map"></div>
+    <div class="useranalyze__tag">
+      <img class="useranalyze__tag__img" :src="tagWordcloudUrl">
     </div>
-    <div class="useranalyze__postlist">
-      <p class="useranalyze__postlist__title">リスト</p>
-      <div v-show="publicPostListsListDivided.count==0">リストはありません</div>
+    <div class="useranalyze__postlist" v-show="publicPostListsListDivided.count>0">
+      <p class="useranalyze__postlist__title">投稿まとめ</p>
       <div class="useranalyze__postlist__list">
         <!---->
-        <div class="useranalyze__postlist__list__itemwrapper" v-on:click="onClickPostList(list)" v-for="list in publicPostListsListDivided.first">
-          <div class="useranalyze__postlist__list__itemwrapper__img" :style="'background-image: url('+list.thumbnail+')'"></div>
-          <div class="useranalyze__postlist__list__itemwrapper__titlewrapper">
-            <p class="useranalyze__postlist__list__itemwrapper__titlewrapper__title">{{list.name}}</p>
-          </div>
-        </div>
+        <UAPostListItem :propsItem="publicPostListsListDivided.first" @onClickPostList="onClickPostList" />
         <!---->
         <button v-show="publicPostListsListDivided.count>5" v-on:click="onClickMoreShowButton">もっと見る</button>
         <!---->
-        <div class="useranalyze__postlist__list__itemwrapper" v-on:click="onClickPostList(list)" v-show="isShowPostListSecondZone" v-for="list in publicPostListsListDivided.second">
-          <div class="useranalyze__postlist__list__itemwrapper__img" :style="'background-image: url('+list.thumbnail+')'"></div>
-          <div class="useranalyze__postlist__list__itemwrapper__titlewrapper">
-            <p class="useranalyze__postlist__list__itemwrapper__titlewrapper__title">{{list.name}}</p>
-          </div>
-        </div>
+        <UAPostListItem v-show="isShowPostListSecondZone" :propsItem="publicPostListsListDivided.second" @onClickPostList="onClickPostList" />
         <!---->
       </div>
     </div>
-    <div class="useranalyze__tag">
-      <img class="useranalyze__tag__img" :src="tagWordcloudUrl">
-      <!--
-      <div v-for="(tag, index) in tagsWithFontsizeList" :style="'font-size: '+tag.fontsize+'px;'">#{{tag.name}}</div>
-
-      <p class="useranalyze__tag__title">タグランキング</p>
-      <div v-show="tagscountList.length==0">タグが付けられた投稿はありません</div>
-      <div v-for="(tag, index) in tagscountList"><small>No.{{index+1}}</small> #{{tag.name}} ({{tag.count}}件)</div>
-      -->
-    </div>
-    <div class="useranalyze__friends">
+    <div class="useranalyze__friends" v-show="friendscountList.length>0">
       <p class="useranalyze__friends__title">同行者ランキング</p>
-      <div v-show="friendscountList.length==0">同行者の情報が付けられた投稿はありません</div>
       <div v-for="(friend, index) in friendscountList"><small>No.{{index+1}}</small> {{friend.name}} ({{friend.count}}件)</div>
+    </div>
+    <div class="useranalyze__map">
+      <p class="useranalyze__map__title">マップ</p>
+      <div id="map"></div>
     </div>
   </div>
 </template>
@@ -53,10 +34,12 @@ import MarkerClusterer from '@googlemaps/markerclustererplus'
 import PlacesManager from '../assets/PlacesManager.js'
 import FriendsManager from '../assets/FriendsManager.js'
 import PostsManager from '../assets/PostsManager.js'
+import UAPostListItem from '@/components/UAPostListItem.vue'
 
 export default {
   name: "useranalyze",
   components: {
+    UAPostListItem
   },
   data() {
     return {
@@ -88,17 +71,18 @@ export default {
   },
   watch: {
     publicPostListsList() {
+      var splitNum = 6
       /*
-        this.publicPostListsListのうち、最初の5こだけを表示して、ぜんぶ見るボタンが押されたらすべて表示
-        そのために5個+残りという形の配列にする
+        this.publicPostListsListのうち、最初の{splitNum}こだけを表示して、ぜんぶ見るボタンが押されたらすべて表示
+        そのために{splitNum}個+残りという形の配列にする
       */
       const range = (start, stop) => Array.from({ length: (stop - start) + 1}, (_, i) => start + i);
-      if (this.publicPostListsList.length > 5) {
+      if (this.publicPostListsList.length > splitNum) {
         // 0~4, 5~(this.publicPostListsList.length-1)
         this.publicPostListsListDivided = {
           count: this.publicPostListsList.length,
-          first: [...Array(5).keys()].map(n=>this.publicPostListsList[n]),
-          second: range(5, this.publicPostListsList.length-1).map(n=>this.publicPostListsList[n])
+          first: [...Array(splitNum).keys()].map(n=>this.publicPostListsList[n]),
+          second: range(splitNum, this.publicPostListsList.length-1).map(n=>this.publicPostListsList[n])
         }
       } else {
         this.publicPostListsListDivided = {
@@ -114,11 +98,15 @@ export default {
       e.target.style.display = "none"
       this.isShowPostListSecondZone = true
     },
-    onClickPostList(list) {
-      this.$router.push({path: '/', query: { listid: list.listid}})
+    onClickPostList(listid) {
+      //this.$router.push({path: '/', query: { listid: listid}})
+      let routeData = this.$router.resolve({path: '/', query: { listid: listid}})
+      window.open(routeData.href, '_blank')
     },
-    onClickedPin(e) {
-      console.log(e)
+    onClickInfoWindow(placeId) {
+      //this.$router.push({path: '/', query: { placeid: placeId}})
+      let routeData = this.$router.resolve({path: '/', query: {placeid: placeId}})
+      window.open(routeData.href, '_blank')
     }
   },
   mounted() {
@@ -134,7 +122,7 @@ export default {
         tagUrlObj[e.name] = e.count
       })
       var tagUrlStr = JSON.stringify(tagUrlObj)
-      this.tagWordcloudUrl = "https://tsumugu.tech/wordcloud/gen.php?words="+encodeURI(tagUrlStr)
+      this.tagWordcloudUrl = "https://tsumugu.tech/wordcloud/gen.php?uid="+this.userId+"&words="+encodeURI(tagUrlStr)
     })
     // リストを読み込み
     database.ref("postlist/"+this.userId).on('value', (snapshot) =>{
@@ -147,90 +135,6 @@ export default {
         }
       }).filter(Boolean)
     })
-    //
-    /*
-    this.PSM.fetchallposts().then((posts) => {
-      this.PSM.makeArrayWithNames(posts).then((postswithname) => {
-        this.postsList = postswithname
-        //それぞれ別の配列に格納
-        postswithname.forEach(e => {
-          if (e.who.friendId!=null&&e.who.friendId!=undefined&&e.who.name!=null&&e.who.name!=undefined) {
-            this.friendsinpostList.push(e.who)
-          }
-          if (e.tags!=undefined) {
-            this.tagsinpostList.push(e.tags)
-          }
-        })
-        //タグをカウントしてランキングを作成 (もっと綺麗に書けそう)
-        var tmpTagsCountList = []
-        this.tagsinpostList.forEach(e=>{
-          e.forEach(f=>{
-            if (tmpTagsCountList[f] == undefined) {
-              tmpTagsCountList[f] = 0
-            }
-            tmpTagsCountList[f] += 1
-          })
-        })
-        this.tagscountList = []
-        Object.keys(tmpTagsCountList).forEach(k => {
-          this.tagscountList.push({
-            name: k,
-            count: tmpTagsCountList[k]
-          })
-        })
-        this.tagscountList.sort(function(a, b) {
-          if (a.count < b.count) {
-            return 1
-          } else {
-            return -1
-          }
-        })
-        if (this.tagscountList.length > 5) {
-          this.tagscountList = this.tagscountList.splice(0, 5)
-        }
-        //フレンドのランキングも作成
-        var tmpFriendsCountList = []
-        this.friendsinpostList.forEach(e=>{
-          if (tmpFriendsCountList[e.friendId] == undefined) {
-            tmpFriendsCountList[e.friendId] = 0
-          }
-          tmpFriendsCountList[e.friendId] += 1
-        })
-        this.friendscountList = []
-        Object.keys(tmpFriendsCountList).forEach(k => {
-          this.FM.friendidtoname(k).then(name=>{
-            this.friendscountList.push({
-              friendid: k,
-              name: name,
-              count: tmpFriendsCountList[k]
-            })
-          })
-        })
-        this.friendscountList.sort(function(a, b) {
-          if (a.count > b.count) {
-            return 1
-          } else {
-            return -1
-          }
-        })
-        if (this.friendscountList.length > 5) {
-          this.friendscountList = this.friendscountList.splice(0, 5)
-        }
-        // リストを読み込み
-        database.ref("postlist/"+this.userId).on('value', (snapshot) =>{
-          var lists = snapshot.val()
-          this.publicPostListsList = Object.keys(lists).map(k=>{
-            if (lists[k].status=="public") {
-              var tmpList = lists[k]
-              tmpList["listid"] = k
-              return tmpList
-            }
-          }).filter(Boolean)
-        })
-        //
-      })
-    })
-    */
     // Google Maps JavaScript APIをロード
     this.$loadScript("https://maps.googleapis.com/maps/api/js?key=AIzaSyCmhvC49uN8fqrGEVOeMwAX-IglON8rcsQ")
     .then(() => {
@@ -251,18 +155,33 @@ export default {
                 lng: places[placeid].lon
               },
               name: places[placeid].name,
-              content: places[placeid].name,
+              content: '<button id="infowindowbutton_'+placeid+'" style="margin:0; padding:0; background-color:transparent; border:none; font-size:1rem;">'+places[placeid].name+'</button>',
               pid: placeid
             }
             var marker = new google.maps.Marker(tmpInfo)
             marker.addListener("click", () => {
-              new google.maps.InfoWindow(tmpInfo).open(this.map, marker)
+              var infoWindow = new google.maps.InfoWindow(tmpInfo)
+              infoWindow.open(this.map, marker)
+              infoWindow.addListener('domready', () => {
+                document.getElementById('infowindowbutton_'+infoWindow.pid).addEventListener('click', () => {
+                  this.onClickInfoWindow(infoWindow.pid)
+                })
+              })
             })
             this.markers.push(marker)
           }
         })
         // MarkerClustererに渡して表示
-        new MarkerClusterer(this.map, this.markers, {imagePath: "https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m"})
+        const markerClusterer = new MarkerClusterer(this.map, this.markers, {
+          imagePath: "https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m"
+          //imagePath: "/img/markerclusterer/m"
+        })
+        const styles = markerClusterer.getStyles();
+        for (let i=0; i<styles.length; i++) {
+          styles[i].textSize = 14;
+          // これがないとマーカーがずれる
+          styles[i].backgroundPosition = "-1 0";
+        }
       })
       //
     })
@@ -290,40 +209,9 @@ export default {
       font-size: 1.5rem;
     }
     &__list {
-      display:inline-block;
       &__itemwrapper {
-        /*
-        display: flex;
-        flex-basis: auto;
-        justify-content: left;
-        align-items: center;
-        align-content: center;
-        */
         display: grid;
-        grid-template-columns: 80px 1fr;
-        margin: 5px;
-        border: 1px solid $main-border;
-        border-radius: 0.25rem;
-        &:hover {
-          cursor: pointer;
-          opacity: 0.5;
-        }
-        &__titlewrapper {
-          display: flex;
-          align-items: center;
-          margin: 10px;
-          &__title {
-            word-break: break-all;
-          }
-        }
-        &__img {
-          width: 80px;
-          height: 80px;
-          background-color: $main-mainarea-bg;
-          background-position: center center;
-          background-size: cover;
-          border-radius: 0.25rem 0 0 0.25rem;
-        }
+        grid-template-columns: 1fr 1fr;
       }
     }
   }
