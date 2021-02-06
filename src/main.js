@@ -9,7 +9,7 @@ import "firebase/analytics"
 import VCalendar from 'v-calendar'
 import VModal from 'vue-js-modal'
 import LoadScript from 'vue-plugin-load-script'
-import VueAutosuggest from 'vue-autosuggest'
+import VueLazyload from 'vue-lazyload'
 
 Vue.config.productionTip = false
 
@@ -38,7 +38,12 @@ Array.prototype.unique = function() {
 
 Vue.use(VModal)
 Vue.use(LoadScript)
-Vue.use(VueAutosuggest)
+Vue.use(VueLazyload, {
+  preLoad: 1.3,
+  error: '/img/notfound.png',
+  loading: '/img/loading.png',
+  attempt: 1
+})
 
 new Vue({
   VCalendar,

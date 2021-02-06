@@ -17,10 +17,8 @@ export default class PostsManager {
     }
     getpostfromid(postid) {
       return new Promise((resolve) => {
-        //this.database.ref("posts/"+this.userInfo.uid+"/"+postid).on('value', (snapshot) =>{
         this.FirebaseManager.on("posts/"+this.userInfo.uid+"/"+postid).then((snapshot) =>{
           resolve(snapshot)
-            //.val())
         })
       })
     }
@@ -33,18 +31,14 @@ export default class PostsManager {
     }
     fetchallposts() {
       return new Promise((resolve) => {
-        //this.database.ref("posts/"+this.userInfo.uid).on('value', (snapshot) =>{
         this.FirebaseManager.on("posts/"+this.userInfo.uid).then((snapshot) =>{
           resolve(snapshot)
-            //.val())
         })
       })
     }
     fetchalltags(limit=null) {
       return new Promise((resolve) => {
         this.fetchallposts().then(res=>{
-
-          //
           var tagsinpostList = []
           Object.keys(res).forEach(k => {
             var e = res[k]
@@ -81,14 +75,6 @@ export default class PostsManager {
             }
           }
           resolve(tagscountList)
-          //
-          /*
-          var allTags = Object.keys(res).map(postid => res[postid].tags)
-          if (allTags.length != 0) {
-            allTags = allTags.flat().unique().filter(Boolean)
-          }
-          resolve(allTags)
-          */
         })
         
       })
@@ -116,22 +102,6 @@ export default class PostsManager {
               "friendId": itemObj.who,
               "name": friendName
             }
-            /*
-            var returnObj = {
-              postid: postid,
-              imgUrls: itemObj.imgUrls?itemObj.imgUrls:null,
-              what: itemObj.what,
-              when: itemObj.when,
-              where: {
-                "placeId": itemObj.where,
-                "name": placeName
-              },
-              who: {
-                "friendId": itemObj.who,
-                "name": friendName
-              }
-            }
-            */
             postsList.push(returnObj)
             // 全件処理が完了したら実行
             if (snapshotslength == postsList.length) {

@@ -98,7 +98,6 @@ import ProgressPromise from 'progress-promise'
 import firebase from 'firebase'
 var database = firebase.database()
 import formatISO  from 'date-fns/formatISO'
-import { VueAutosuggest } from 'vue-autosuggest'
 import MyUtil from '../assets/MyUtil.js'
 import ImgUploader from '../assets/ImgUploader.js'
 import PlacesManager from '../assets/PlacesManager.js'
@@ -111,8 +110,7 @@ export default {
   name: "editevent",
   components: {
     LoadingDialog,
-    DatePicker,
-    VueAutosuggest
+    DatePicker
   },
   props: {
     propsPostId: null
