@@ -1,4 +1,4 @@
-input[type="text"] {
+input[type="text"], input[type="email"], input[type="password"] {
   width: 300px;
   padding: 10px;
   border: solid 1px $form-main;

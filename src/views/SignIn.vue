@@ -1,15 +1,19 @@
 <template>
   <div class="signin">
-    <h1>SING IN</h1>
     <div>
-      <h3>E-mail</h3>
-      <input type="text" placeholder="E-mail" v-model="email" />
+      <h1>ログイン</h1>
     </div>
     <div>
-      <h3>Password</h3>
-      <input type="text" placeholder="Password" v-model="password" />
+      <h2>E-mail</h2>
+      <input type="email" v-model="email" />
     </div>
-    <button @click="userSingIn">Sing in Now!!</button>
+    <div>
+      <h2>Password</h2>
+      <input type="password" v-model="password" />
+    </div>
+    <div>
+      <button @click="userSingIn">ログインする</button>
+    </div>
   </div>
 </template>
 
@@ -19,12 +23,15 @@ import firebase from 'firebase'
 export default {
   methods: {
     userSingIn() {
-      firebase
-        .auth()
-        .signInWithEmailAndPassword(this.email, this.password)
-        .then(() => {
-          alert("ログイン成功!");
-        });
+      firebase.auth().signInWithEmailAndPassword(this.email, this.password)
+      .then(() => {
+        alert("ログインしました")
+        this.$router.push({path:'/'})
+      })
+      .catch(error => {
+        alert(error.message)
+        console.error(error.message)
+      })
     }
   },
   data () {
@@ -37,4 +44,10 @@ export default {
 </script>
 
 <style scoped>
+h1, h2 {
+  margin: 0;
+}
+.signin > div {
+  margin: 10px;
+}
 </style>

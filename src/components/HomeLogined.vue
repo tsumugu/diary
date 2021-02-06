@@ -49,9 +49,9 @@
       <button v-on:click="onPostListSubmit">保存</button>
     </modal>
     <div class="HomeLogined__MainArea">
-      <div class="HomeLogined__MainArea__postbutton">
-        <button v-on:click="openPostListModal">リスト</button>
-        <button v-on:click="gotoRegist">投稿</button>
+      <div class="HomeLogined__MainArea__buttons">
+        <div><img src="/img/create_new_folder-black-48dp/2x/outline_create_new_folder_black_48dp.png" class="HomeLogined__MainArea__buttons__button" v-on:click="openPostListModal"></div>
+        <div><img src="/img/edit-black-48dp/2x/outline_edit_black_48dp.png" class="HomeLogined__MainArea__buttons__button" v-on:click="gotoRegist"></div>
       </div>
       <div class="HomeLogined__MainArea__mesnopost" v-show="TLItemsListDisp.length==0">{{notFoundMes}}</div>
       <div class="HomeLogined__MainArea__Post" v-for="postsList in TLItemsListDisp">
@@ -478,10 +478,18 @@ export default {
     padding: 20px;
     background-color: $main-mainarea-bg;
     overflow: scroll;
-    &__postbutton {
+    &__buttons {
       position: absolute;
-      bottom: 20px;
-      right: 20px;
+      bottom: 10px;
+      right: 10px;
+      &__button {
+        width: 70px;
+        height: 70px;
+        &:hover {
+          background-color: $icon-color-hover;
+          border-radius: 0.25rem;
+        }
+      }
     }
     &__mesnopost {
       display: flex;

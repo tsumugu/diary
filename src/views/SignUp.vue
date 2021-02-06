@@ -1,15 +1,19 @@
 <template>
   <div class="signup">
-    <h1>SING UP</h1>
     <div>
-      <h3>E-mail</h3>
-      <input type="text" placeholder="E-mail" v-model="email" />
+      <h1>新規登録</h1>
     </div>
     <div>
-      <h3>Password</h3>
-      <input type="text" placeholder="Password" v-model="password" />
+      <h2>E-mail</h2>
+      <input type="email" v-model="email" />
     </div>
-    <button @click="createUserAccount">Sing UP!!</button>
+    <div>
+      <h2>Password</h2>
+      <input type="password" v-model="password" />
+    </div>
+    <div>
+      <button @click="createUserAccount">登録する</button>
+    </div>
   </div>
 </template>
 
@@ -19,16 +23,15 @@ import firebase from 'firebase'
 export default {
   methods: {
     createUserAccount() {
-      firebase
-        .auth()
-        .createUserWithEmailAndPassword(this.email, this.password)
-        .then(() => {
-          alert("Create Account");
-        })
-        .catch(error => {
-          alert("Error!", error.message);
-          console.error("Account Regeister Error", error.message);
-        });
+      firebase.auth().createUserWithEmailAndPassword(this.email, this.password)
+      .then(() => {
+        alert("アカウントを作成しました！")
+        this.$router.push({path:'/signin'})
+      })
+      .catch(error => {
+        alert(error.message)
+        console.error(error.message)
+      })
     }
   },
   data () {
@@ -41,4 +44,10 @@ export default {
 </script>
 
 <style scoped>
+h1, h2 {
+  margin: 0;
+}
+.signup > div {
+  margin: 10px;
+}
 </style>

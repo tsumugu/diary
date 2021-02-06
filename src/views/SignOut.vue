@@ -1,7 +1,5 @@
 <template>
   <div class="signout">
-    <h1>SING OUT</h1>
-    <button @click="singout">Sing out Now!!</button>
   </div>
 </template>
 
@@ -11,21 +9,18 @@ import firebase from 'firebase'
 export default {
   methods: {
     singout() {
-      firebase
-        .auth()
-        .signOut()
-        .then(() => {
-          alert("Logout!");
-        })
-        .catch(error => {
-          alert(error);
-        });
+      firebase.auth().signOut()
+      .then(() => {
+        this.$router.push({path:'/'})
+      })
+      .catch(error => {
+        alert(error)
+        this.$router.push({path:'/'})
+      })
     }
   },
-  data () {
-    return {
-      msg: 'Welcome to Your Vue.js App'
-    }
+  mounted() {
+    this.singout()
   }
 }
 </script>
