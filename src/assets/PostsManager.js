@@ -1,8 +1,10 @@
+import FirebaseManager from '../assets/FirebaseManager.js'
 export default class PostsManager {
     constructor(arg_axios, arg_database, arg_userinfo, arg_pm, arg_fm) {
       this.axios = arg_axios
       this.database = arg_database
       this.userInfo = arg_userinfo
+      this.FirebaseManager = new FirebaseManager(this.database)
       this.PM = arg_pm
       this.FM = arg_fm
     }
@@ -15,8 +17,10 @@ export default class PostsManager {
     }
     getpostfromid(postid) {
       return new Promise((resolve) => {
-        this.database.ref("posts/"+this.userInfo.uid+"/"+postid).on('value', (snapshot) =>{
-          resolve(snapshot.val())
+        //this.database.ref("posts/"+this.userInfo.uid+"/"+postid).on('value', (snapshot) =>{
+        this.FirebaseManager.on("posts/"+this.userInfo.uid+"/"+postid).then((snapshot) =>{
+          resolve(snapshot)
+            //.val())
         })
       })
     }
@@ -29,8 +33,10 @@ export default class PostsManager {
     }
     fetchallposts() {
       return new Promise((resolve) => {
-        this.database.ref("posts/"+this.userInfo.uid).on('value', (snapshot) =>{
-          resolve(snapshot.val())
+        //this.database.ref("posts/"+this.userInfo.uid).on('value', (snapshot) =>{
+        this.FirebaseManager.on("posts/"+this.userInfo.uid).then((snapshot) =>{
+          resolve(snapshot)
+            //.val())
         })
       })
     }

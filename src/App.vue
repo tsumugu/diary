@@ -4,6 +4,19 @@
   </div>
 </template>
 
+<script>
+export default {
+  mounted() {
+    /*
+    var _this = this
+    window.alert = function(mes) {
+      console.log(mes)
+    }
+    */
+  }
+}
+</script>
+
 <style lang="scss">
 @import './assets/forms.scss';
 

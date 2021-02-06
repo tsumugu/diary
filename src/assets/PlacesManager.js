@@ -1,9 +1,11 @@
+import FirebaseManager from '../assets/FirebaseManager.js'
 export default class PlacesManager {
     constructor(arg_axios, arg_firebase_database, arg_userinfo) {
       this.axios = arg_axios
       this.database = arg_firebase_database
       this.userInfo = arg_userinfo
-      this.placesinfoCache = null
+      //this.placesinfoCache = null
+      this.FirebaseManager = new FirebaseManager(this.database)
     }
     searchnearbyplacesbylatlon(lat, lon) {
       return this.axios.get('https://secure.tsumugu2626.xyz/placessearch/nearby.php?lat='+lat+'&lon='+lon)
@@ -27,8 +29,10 @@ export default class PlacesManager {
     }
     fetchusersavedplaces() {
       return new Promise((resolve) => {
-        this.database.ref("places/"+this.userInfo.uid).on('value', (snapshot) =>{
-          var placesinfo = snapshot.val()
+        //this.database.ref("places/"+this.userInfo.uid).on('value', (snapshot) =>{
+        this.FirebaseManager.on("places/"+this.userInfo.uid).then((snapshot) =>{
+          var placesinfo = snapshot
+          //.val()
           /*
           //もし経度緯度が設定されていなかったら設定する
           var placeids = Object.keys(placesinfo)
@@ -42,7 +46,7 @@ export default class PlacesManager {
           })
           //
           */
-          this.placesinfoCache = placesinfo
+          //this.placesinfoCache = placesinfo
           resolve(placesinfo)
         })
       })
@@ -61,8 +65,9 @@ export default class PlacesManager {
         })
       })
     }
+          /*
     getNameFromPlaceId(placeId) {
-      var placesInfo = this.placesinfoCache
+      //var placesInfo = this.placesinfoCache
       var placeName = null
       if (placesInfo != null) {
         Object.keys(placesInfo).forEach(pid => {
@@ -75,7 +80,7 @@ export default class PlacesManager {
         // もし名称が設定されていなかったら設定する
         console.log("Place Name Not Found", placeId)
         //
-        /*
+        ////
         this.getIDtoLocationAPI(placeId).then((res)=>{
           this.savemyplace(placeId, res).then(() => {
             console.log("saved!", placeId)
@@ -84,18 +89,28 @@ export default class PlacesManager {
             console.log("Firebase Error", error)
           })
         })
-        */
+        ////
         //
         return null
       } else {
         return placeName
       }
     }
+          */
     placeidtoname(placeId) {
       return new Promise((resolve) => {
         if (placeId == undefined || placeId == null) {
           resolve(null);
         }
+        this.fetchusersavedplaces().then((placesInfo)=>{
+          Object.keys(placesInfo).forEach(pid => {
+            if (pid == placeId) {
+              resolve(placesInfo[pid].name)
+            }
+          })
+          //resolve(this.getNameFromPlaceId(placeId))
+        })
+        /*
         if (this.placesinfoCache == null) {
           this.fetchusersavedplaces().then(()=>{
             resolve(this.getNameFromPlaceId(placeId))
@@ -103,6 +118,7 @@ export default class PlacesManager {
         } else {
           resolve(this.getNameFromPlaceId(placeId))
         }
+        */
       })
     }
   }
