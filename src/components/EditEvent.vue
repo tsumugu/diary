@@ -3,7 +3,7 @@
     <div class="editevent__loading" v-if="isNowLoading"><!-- Loading --></div>
     <div class="editevent__body" v-else>
       <div class="editevent__body__signined" v-if="isSignIn">
-        <modal class="editevent__modal" name="modal-loading" :clickToClose="false">
+        <modal class="editevent__modal" name="modal-loading" :clickToClose="false" width="250px" height="250px">
           <LoadingDialog propsMessage="test" :propsLoadingProgress=imgLoadingProgress />
         </modal>
         <!-- -->
@@ -80,7 +80,7 @@
           <div><span v-for="tag in tags" @mouseover="onTagHovered" @mouseleave="onTagHoverLeaved" v-on:click="onTagClicked" :key="tag">#{{tag}} </span> #<input type="text" class="taginput" ref="taginput" @keyup.enter="onEnterTagInput"></div>
           <div>
             <div>もしかして: <button class="tagSuggestButton" v-for="(tag, index) in tagSuggestList" v-on:click="onAddTagButton(tag)" :ref="'tagSuggest_'+index">#{{tag}}</button></div>
-            <button class="tagSuggestButton--keyword" v-on:click="getKeywords()">文章からタグの候補を抽出する</button>
+            <div style="display: inline-block;"><div class="icon_img_conteiner"><button class="tagSuggestButton--keyword" v-on:click="getKeywordsFromSentence()">文章からタグの候補を抽出する</button><img src="/img/svg-loading-spinner.svg" class="icon_img" v-show="isLoadingGetKeywords"></div></div>
           </div>
         </div>
         <!-- -->
@@ -150,7 +150,8 @@ export default {
       failedImgDataList: [],
       filterDoTimer: null,
       tags: [],
-      tagSuggestList: []
+      tagSuggestList: [],
+      isLoadingGetKeywords: false
     }
   },
   watch: {
@@ -233,6 +234,7 @@ export default {
   },
   methods: {
     initMain() {
+
       this.IU = new ImgUploader(axios)
       this.PM = new PlacesManager(axios, database, this.userInfo)
       this.FM = new FriendsManager(axios, database, this.userInfo)
@@ -415,10 +417,11 @@ export default {
         console.log("exif-js Error", e)
       }
     },
-    getKeywords() {
+    getKeywordsFromSentence() {
       if (new MyUtil().isAllValueNotEmpty([this.what])) {
+        this.isLoadingGetKeywords = true
         new MyUtil().getKeywordsFromSentence(this.what).then((res)=>{
-          console.log(res)
+          this.isLoadingGetKeywords = false
           if (res.length > 0) {
             res.forEach(e => {
               var keyword = Object.keys(e)[0]
@@ -761,6 +764,9 @@ ul {
           display: inline-block;
         }
       }
+      &__submit {
+        margin: 5px;
+      }
     }
   }
   &__modal {
@@ -795,9 +801,9 @@ ul {
   &--keyword {
     margin-right: 5px;
     padding: 1px;
-    background-color: transparent;
     font-size: 100%;
-    background-color: $main-accent-color;
+    background-color: $main-mainarea-bg;
+    border: solid 1px $form-main-darker;
   }
 }
 .alignleft {

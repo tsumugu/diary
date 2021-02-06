@@ -106,12 +106,16 @@ export default {
 
 <style scoped lang="scss">
 #LoadingDialog {
-  border: solid 1px blue;
+  position: relative;
+  width: 250px;
+  height: 250px;
   &__container {
-    margin: 20px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform : translate(-50%,-50%);
     width: 200px;
     height: 200px;
-    position: relative;
   }
 }
 </style>
