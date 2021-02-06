@@ -44,13 +44,18 @@ export default class MyUtil {
       }
       return true
     }
-    isObjectIncludeQureyText(obj, text) {
+    isObjectIncludeQureyText(obj, queryText) {
+      var queryTextSplitedBySpace = queryText.split(/\s+/g)
       for (var i=0;i<obj.length;i++) {
         var item = obj[i]
         if (item != null && item != undefined && item.replace(/\s+/g,'').length > 0) {
-          if (item.indexOf(text) != -1) {
-            return true
+          // queryTextSplitedBySpaceのすべてと一致した場合にtrueを返す
+          for (var j=0;j<queryTextSplitedBySpace.length;j++) {
+            if (item.indexOf(queryTextSplitedBySpace[j]) == -1) {
+              return false
+            }
           }
+          return true
         }
       }
       return false

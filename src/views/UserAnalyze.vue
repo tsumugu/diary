@@ -107,43 +107,8 @@ export default {
       //this.$router.push({path: '/', query: { placeid: placeId}})
       let routeData = this.$router.resolve({path: '/', query: {placeid: placeId}})
       window.open(routeData.href, '_blank')
-    }
-  },
-  mounted() {
-    this.userId = this.$route.params.userid
-    var test = {uid: this.userId}
-    this.PM = new PlacesManager(axios, database, {uid: this.userId})
-    this.FM = new FriendsManager(axios, database, {uid: this.userId})
-    this.PSM = new PostsManager(axios, database, {uid: this.userId}, this.PM, this.FM)
-    this.PSM.fetchalltags().then((tags) => {
-      var tagUrlObj = {}
-      Object.keys(tags).forEach(k => {
-        var e = tags[k]
-        tagUrlObj[e.name] = e.count
-      })
-      var tagUrlStr = JSON.stringify(tagUrlObj)
-      this.tagWordcloudUrl = "https://tsumugu.tech/wordcloud/gen.php?uid="+this.userId+"&words="+encodeURI(tagUrlStr)
-    })
-    // リストを読み込み
-    database.ref("postlist/"+this.userId).on('value', (snapshot) =>{
-      var lists = snapshot.val()
-      this.publicPostListsList = Object.keys(lists).map(k=>{
-        if (lists[k].status=="public") {
-          var tmpList = lists[k]
-          tmpList["listid"] = k
-          return tmpList
-        }
-      }).filter(Boolean)
-    })
-    // Google Maps JavaScript APIをロード
-    this.$loadScript("https://maps.googleapis.com/maps/api/js?key=AIzaSyCmhvC49uN8fqrGEVOeMwAX-IglON8rcsQ")
-    .then(() => {
-      // mapを生成
-      this.map = new google.maps.Map(document.getElementById("map"), {
-        center: this.defaultLocation,
-        zoom: 6,
-      })
-      // ピンを生成
+    },
+    genPins() {
       this.PM.fetchusersavedplaces().then((places)=>{
         // google.maps.Markerを生成
         this.markers = []
@@ -183,7 +148,44 @@ export default {
           styles[i].backgroundPosition = "-1 0";
         }
       })
-      //
+    }
+  },
+  mounted() {
+    this.userId = this.$route.params.userid
+    var test = {uid: this.userId}
+    this.PM = new PlacesManager(axios, database, {uid: this.userId})
+    this.FM = new FriendsManager(axios, database, {uid: this.userId})
+    this.PSM = new PostsManager(axios, database, {uid: this.userId}, this.PM, this.FM)
+    this.PSM.fetchalltags().then((tags) => {
+      var tagUrlObj = {}
+      Object.keys(tags).forEach(k => {
+        var e = tags[k]
+        tagUrlObj[e.name] = e.count
+      })
+      var tagUrlStr = JSON.stringify(tagUrlObj)
+      this.tagWordcloudUrl = "https://tsumugu.tech/wordcloud/gen.php?uid="+this.userId+"&words="+encodeURI(tagUrlStr)
+    })
+    // リストを読み込み
+    database.ref("postlist/"+this.userId).on('value', (snapshot) =>{
+      var lists = snapshot.val()
+      this.publicPostListsList = Object.keys(lists).map(k=>{
+        if (lists[k].status=="public") {
+          var tmpList = lists[k]
+          tmpList["listid"] = k
+          return tmpList
+        }
+      }).filter(Boolean)
+    })
+    // Google Maps JavaScript APIをロード
+    this.$loadScript("https://maps.googleapis.com/maps/api/js?key=AIzaSyCmhvC49uN8fqrGEVOeMwAX-IglON8rcsQ")
+    .then(() => {
+      // mapを生成
+      this.map = new google.maps.Map(document.getElementById("map"), {
+        center: this.defaultLocation,
+        zoom: 6,
+      })
+      // ピンを生成
+      this.genPins()
     })
     .catch(() => {
       // Failed to fetch script
