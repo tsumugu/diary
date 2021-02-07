@@ -39,76 +39,84 @@ export default class PostsManager {
     fetchalltags(limit=null) {
       return new Promise((resolve) => {
         this.fetchallposts().then(res=>{
-          var tagsinpostList = []
-          Object.keys(res).forEach(k => {
-            var e = res[k]
-            if (e.tags!=undefined) {
-              tagsinpostList.push(e.tags)
-            }
-          })
-          var tmpTagsCountList = []
-          tagsinpostList.forEach(e=>{
-            e.forEach(f=>{
-              if (tmpTagsCountList[f] == undefined) {
-                tmpTagsCountList[f] = 0
+          if (res == null || res == undefined) {
+            resolve([])
+          } else {
+            var tagsinpostList = []
+            Object.keys(res).forEach(k => {
+              var e = res[k]
+              if (e.tags!=undefined) {
+                tagsinpostList.push(e.tags)
               }
-              tmpTagsCountList[f] += 1
             })
-          })
-          var tagscountList = []
-          Object.keys(tmpTagsCountList).forEach(k => {
-            tagscountList.push({
-              name: k,
-              count: tmpTagsCountList[k]
+            var tmpTagsCountList = []
+            tagsinpostList.forEach(e=>{
+              e.forEach(f=>{
+                if (tmpTagsCountList[f] == undefined) {
+                  tmpTagsCountList[f] = 0
+                }
+                tmpTagsCountList[f] += 1
+              })
             })
-          })
-          tagscountList.sort(function(a, b) {
-            if (a.count < b.count) {
-              return 1
-            } else {
-              return -1
+            var tagscountList = []
+            Object.keys(tmpTagsCountList).forEach(k => {
+              tagscountList.push({
+                name: k,
+                count: tmpTagsCountList[k]
+              })
+            })
+            tagscountList.sort(function(a, b) {
+              if (a.count < b.count) {
+                return 1
+              } else {
+                return -1
+              }
+            })
+            if (limit != null) {
+              if (tagscountList.length>=limit) {
+                tagscountList = tagscountList.splice(0, limit)
+              }
             }
-          })
-          if (limit != null) {
-            if (tagscountList.length>=limit) {
-              tagscountList = tagscountList.splice(0, limit)
-            }
+            resolve(tagscountList)
           }
-          resolve(tagscountList)
         })
         
       })
     }
     makeArrayWithNames(snapshots) {
       return new Promise((resolve) => {
-        var snapshotslength = Object.keys(snapshots).length
-        var postsList = []
-        Object.keys(snapshots).forEach(postid => {
-          var itemObj = snapshots[postid]
-          //nameを取得していく
-          var placeNamePromise = this.PM.placeidtoname(itemObj.where)
-          var friendNamePromise = this.FM.friendidtoname(itemObj.who)
-          Promise.all([placeNamePromise, friendNamePromise]).then((names) => {
-            var placeName = names[0]
-            var friendName = names[1]
-            var returnObj = itemObj
-            returnObj["postid"] = postid
-            returnObj["imgUrls"] = itemObj.imgUrls?itemObj.imgUrls:null
-            returnObj["where"] = {
-              "placeId": itemObj.where,
-              "name": placeName
-            }
-            returnObj["who"] = {
-              "friendId": itemObj.who,
-              "name": friendName
-            }
-            postsList.push(returnObj)
-            // 全件処理が完了したら実行
-            if (snapshotslength == postsList.length) {
-              resolve(postsList)
-            }
+        if (snapshots == null || snapshots == undefined) {
+          resolve([])
+        } else {
+          var snapshotslength = Object.keys(snapshots).length
+          var postsList = []
+          Object.keys(snapshots).forEach(postid => {
+            var itemObj = snapshots[postid]
+            //nameを取得していく
+            var placeNamePromise = this.PM.placeidtoname(itemObj.where)
+            var friendNamePromise = this.FM.friendidtoname(itemObj.who)
+            Promise.all([placeNamePromise, friendNamePromise]).then((names) => {
+              var placeName = names[0]
+              var friendName = names[1]
+              var returnObj = itemObj
+              returnObj["postid"] = postid
+              returnObj["imgUrls"] = itemObj.imgUrls?itemObj.imgUrls:null
+              returnObj["where"] = {
+                "placeId": itemObj.where,
+                "name": placeName
+              }
+              returnObj["who"] = {
+                "friendId": itemObj.who,
+                "name": friendName
+              }
+              postsList.push(returnObj)
+              // 全件処理が完了したら実行
+              if (snapshotslength == postsList.length) {
+                resolve(postsList)
+              }
+            })
           })
-        })
+        }
       })
     }
   }

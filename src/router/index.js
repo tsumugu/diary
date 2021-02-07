@@ -30,13 +30,19 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
+    path: '/editfriendslist',
+    name: 'editfriendslist',
+    component: () => import('../views/EditFriendsList.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/editfriends',
     name: 'editfriends',
     component: () => import('../views/EditFriends.vue'),
     meta: { requiresAuth: true }
   },
   {
-    path: '/postlist',
+    path: '/editpostlist',
     name: 'editpostlist',
     component: () => import('../views/EditPostList.vue'),
     meta: { requiresAuth: true }

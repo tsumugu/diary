@@ -19,7 +19,7 @@
       <p class="useranalyze__friends__title">同行者ランキング</p>
       <div v-for="(friend, index) in friendscountList"><small>No.{{index+1}}</small> {{friend.name}} ({{friend.count}}件)</div>
     </div>
-    <div class="useranalyze__map">
+    <div class="useranalyze__map" v-show="markers.length>0">
       <p class="useranalyze__map__title">マップ</p>
       <div id="map"></div>
     </div>
@@ -55,7 +55,7 @@ export default {
       isShowPostListSecondZone: false,
       tagsinpostList: [],
       tagscountList: [],
-      tagWordcloudUrl: [],
+      tagWordcloudUrl: "https://tsumugu.tech/wordcloud/notfound.png",
       friendsinpostList: [],
       friendscountList: [],
       infowindows: [],
@@ -110,42 +110,44 @@ export default {
     },
     genPins() {
       this.PM.fetchusersavedplaces().then((places)=>{
-        // google.maps.Markerを生成
-        this.markers = []
-        Object.keys(places).forEach(placeid => {
-          if (places[placeid].lat != undefined && places[placeid].lon != undefined) {
-            var tmpInfo = {
-              position: {
-                lat: places[placeid].lat, 
-                lng: places[placeid].lon
-              },
-              name: places[placeid].name,
-              content: '<button id="infowindowbutton_'+placeid+'" style="margin:0; padding:0; background-color:transparent; border:none; font-size:1rem;">'+places[placeid].name+'</button>',
-              pid: placeid
-            }
-            var marker = new google.maps.Marker(tmpInfo)
-            marker.addListener("click", () => {
-              var infoWindow = new google.maps.InfoWindow(tmpInfo)
-              infoWindow.open(this.map, marker)
-              infoWindow.addListener('domready', () => {
-                document.getElementById('infowindowbutton_'+infoWindow.pid).addEventListener('click', () => {
-                  this.onClickInfoWindow(infoWindow.pid)
+        if (places != null && places != undefined) {
+          // google.maps.Markerを生成
+          this.markers = []
+          Object.keys(places).forEach(placeid => {
+            if (places[placeid].lat != undefined && places[placeid].lon != undefined) {
+              var tmpInfo = {
+                position: {
+                  lat: places[placeid].lat, 
+                  lng: places[placeid].lon
+                },
+                name: places[placeid].name,
+                content: '<button id="infowindowbutton_'+placeid+'" style="margin:0; padding:0; background-color:transparent; border:none; font-size:1rem;">'+places[placeid].name+'</button>',
+                pid: placeid
+              }
+              var marker = new google.maps.Marker(tmpInfo)
+              marker.addListener("click", () => {
+                var infoWindow = new google.maps.InfoWindow(tmpInfo)
+                infoWindow.open(this.map, marker)
+                infoWindow.addListener('domready', () => {
+                  document.getElementById('infowindowbutton_'+infoWindow.pid).addEventListener('click', () => {
+                    this.onClickInfoWindow(infoWindow.pid)
+                  })
                 })
               })
-            })
-            this.markers.push(marker)
+              this.markers.push(marker)
+            }
+          })
+          // MarkerClustererに渡して表示
+          const markerClusterer = new MarkerClusterer(this.map, this.markers, {
+            imagePath: "https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m"
+            //imagePath: "/img/markerclusterer/m"
+          })
+          const styles = markerClusterer.getStyles();
+          for (let i=0; i<styles.length; i++) {
+            styles[i].textSize = 14;
+            // これがないとマーカーがずれる
+            styles[i].backgroundPosition = "-1 0";
           }
-        })
-        // MarkerClustererに渡して表示
-        const markerClusterer = new MarkerClusterer(this.map, this.markers, {
-          imagePath: "https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m"
-          //imagePath: "/img/markerclusterer/m"
-        })
-        const styles = markerClusterer.getStyles();
-        for (let i=0; i<styles.length; i++) {
-          styles[i].textSize = 14;
-          // これがないとマーカーがずれる
-          styles[i].backgroundPosition = "-1 0";
         }
       })
     }
@@ -162,19 +164,23 @@ export default {
         var e = tags[k]
         tagUrlObj[e.name] = e.count
       })
-      var tagUrlStr = JSON.stringify(tagUrlObj)
-      this.tagWordcloudUrl = "https://tsumugu.tech/wordcloud/gen.php?uid="+this.userId+"&words="+encodeURI(tagUrlStr)
+      if (Object.keys(tagUrlObj).length > 0) {
+        var tagUrlStr = JSON.stringify(tagUrlObj)
+        this.tagWordcloudUrl = "https://tsumugu.tech/wordcloud/gen.php?uid="+this.userId+"&words="+encodeURI(tagUrlStr)
+      }
     })
     // リストを読み込み
     database.ref("postlist/"+this.userId).on('value', (snapshot) =>{
       var lists = snapshot.val()
-      this.publicPostListsList = Object.keys(lists).map(k=>{
-        if (lists[k].status=="public") {
-          var tmpList = lists[k]
-          tmpList["listid"] = k
-          return tmpList
-        }
-      }).filter(Boolean)
+      if (lists != null || lists != undefined) {
+        this.publicPostListsList = Object.keys(lists).map(k=>{
+          if (lists[k].status=="public") {
+            var tmpList = lists[k]
+            tmpList["listid"] = k
+            return tmpList
+          }
+        }).filter(Boolean)
+      }
     })
     // Google Maps JavaScript APIをロード
     this.$loadScript("https://maps.googleapis.com/maps/api/js?key=AIzaSyCmhvC49uN8fqrGEVOeMwAX-IglON8rcsQ")

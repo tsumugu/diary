@@ -161,9 +161,16 @@ export default {
     },
     removepost(postid) {
       new MyUtil().confirmExPromise("この投稿を本当に削除しますか?").then(() => {
-        database.ref("posts/"+this.userInfo.uid+"/"+postid).remove().then(function(){
-          alert('削除しました！')
+        database.ref("posts/"+this.userInfo.uid+"/"+postid).remove().then(()=>{
           // reload処理
+          this.PSM.fetchallposts().then((tlitems)=>{
+            this.PSM.makeArrayWithNames(tlitems).then((res)=>{
+              this.postsList = res
+              this.genPostsOrderedbyDateList()
+              this.filteringPosts()
+            })
+          })
+          alert('削除しました！')
         })
       });
     },
@@ -188,6 +195,7 @@ export default {
           this.genPostsOrderedbyDateList()
           // 今日のものがあったらそれを表示
           var today = formatISO(new Date()).split("T")[0]
+          this.selectedDate = today
           var todayPosts = this.postsOrderedbyDateList[today]
           if (todayPosts != undefined) {
             this.TLItemsList = todayPosts

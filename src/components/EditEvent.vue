@@ -302,8 +302,8 @@ export default {
       this.previewImageList = []
       this.submitImageUrlList = []
       this.whoAdd = null
-      this.when = null
-      this.whenBeforeFormated = new Date()
+      //this.when = null
+      //this.whenBeforeFormated = new Date()
       this.where = null
       this.whereName = null
       this. who = null

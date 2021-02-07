@@ -68,6 +68,20 @@ export default class FriendsManager {
         })
       })
     }
+    updatefriendname(friendid, friendName) {
+      return new Promise((resolve) => {
+        this.database.ref("friends/"+this.userInfo.uid+"/"+friendid).update({"name": friendName}).then(() => {
+          resolve(true)
+        })
+      })
+    }
+    removefriend(friendid) {
+      return new Promise((resolve) => {
+        this.database.ref("friends/"+this.userInfo.uid+"/"+friendid).remove().then(()=>{
+          resolve(true)
+        })
+      })
+    }
     fetchsavedfriends() {
       return new Promise((resolve) => {
         this.FirebaseManager.on("friends/"+this.userInfo.uid).then((snapshot) =>{
@@ -86,6 +100,20 @@ export default class FriendsManager {
         })
       })
     }
+    updatefriendsgroup(listid, friendsGroupName, friendsGroupMemberList) {
+      return new Promise((resolve) => {
+        this.database.ref("friendsGroup/"+this.userInfo.uid+"/"+listid).update({"name":friendsGroupName, "member": friendsGroupMemberList}).then(() => {
+          resolve(true)
+        })
+      })
+    }
+    removefriendsgroup(listid) {
+      return new Promise((resolve) => {
+        this.database.ref("friendsGroup/"+this.userInfo.uid+"/"+listid).remove().then(()=>{
+          resolve(true)
+        })
+      })
+    }
     fetchfriendsgroup() {
       return new Promise((resolve) => {
         this.FirebaseManager.on("friendsGroup/"+this.userInfo.uid).then((snapshot) =>{
@@ -93,22 +121,25 @@ export default class FriendsManager {
           var returnObj = {}
           var groupInfo = snapshot
           this.friendsgroupinfoCache = snapshot
-          //.val()
           if (groupInfo != null) {
             Object.keys(groupInfo).forEach(gid => {
-              var memberInfo = groupInfo[gid].member
-              var memberListWithName = []
-              Object.keys(memberInfo).forEach(fid => {
-                this.friendidtoname(memberInfo[fid]).then((res)=>{
-                  memberListWithName.push({
-                    "id": memberInfo[fid],
-                    "name": res
+              if (groupInfo[gid]!=null && groupInfo[gid]!=undefined) {
+                var memberInfo = groupInfo[gid].member
+                if (memberInfo!=null && memberInfo!=undefined) {
+                  var memberListWithName = []
+                  Object.keys(memberInfo).forEach(fid => {
+                    this.friendidtoname(memberInfo[fid]).then((res)=>{
+                      memberListWithName.push({
+                        "id": memberInfo[fid],
+                        "name": res
+                      })
+                    })
                   })
-                })
-              })
-              returnObj[gid] = {
-                member: memberListWithName,
-                name: groupInfo[gid].name
+                  returnObj[gid] = {
+                    member: memberListWithName,
+                    name: groupInfo[gid].name
+                  }
+                }
               }
             })
           }
