@@ -10,14 +10,20 @@
         <!---->
         <UAPostListItem :propsItem="publicPostListsListDivided.first" @onClickPostList="onClickPostList" />
         <!---->
-        <button v-show="publicPostListsListDivided.count>5" v-on:click="onClickMoreShowButton">もっと見る</button>
+        <button v-show="publicPostListsListDivided.count>6" v-on:click="onClickMoreShowButton">もっと見る</button>
         <!---->
         <UAPostListItem v-show="isShowPostListSecondZone" :propsItem="publicPostListsListDivided.second" @onClickPostList="onClickPostList" />
         <!---->
       </div>
     </div>
+    <div class="useranalyze__photos" v-show="imagesinpostListDisp.count>0">
+      <p class="useranalyze__photos__title">写真</p>
+      <div><img :src="src" v-for="src in imagesinpostListDisp.first" style="width: 100px;"></div>
+      <button v-show="imagesinpostListDisp.count>6&&this.isMoreShowImg==false" v-on:click="()=>{this.isMoreShowImg=true}">もっと見る</button>
+      <div><img :src="src" v-for="src in imagesinpostListDisp.second" v-show="isMoreShowImg" style="width: 100px;"></div>
+    </div>
     <div class="useranalyze__friends" v-show="friendscountList.length>0">
-      <p class="useranalyze__friends__title">同行者ランキング</p>
+      <p class="useranalyze__friends__title">フレンドランキング</p>
       <div v-for="(friend, index) in friendscountList"><small>No.{{index+1}}</small> {{friend.name}} ({{friend.count}}件)</div>
     </div>
     <div class="useranalyze__map" v-show="markers.length>0">
@@ -56,6 +62,8 @@ export default {
       isShowPostListSecondZone: false,
       tagsinpostList: [],
       tagscountList: [],
+      imagesinpostList: [],
+      imagesinpostListDisp: [],
       tagWordcloudUrl: "https://tsumugu.tech/wordcloud/notfound.png",
       friendsinpostList: [],
       friendscountList: [],
@@ -69,34 +77,38 @@ export default {
         }
       },
       isLoadingTagImg: true,
-      loadingTagImgCount: 0
+      loadingTagImgCount: 0,
+      isMoreShowImg: false
     }
   },
   watch: {
     publicPostListsList() {
-      var splitNum = 6
       /*
         this.publicPostListsListのうち、最初の{splitNum}こだけを表示して、ぜんぶ見るボタンが押されたらすべて表示
         そのために{splitNum}個+残りという形の配列にする
       */
-      const range = (start, stop) => Array.from({ length: (stop - start) + 1}, (_, i) => start + i);
-      if (this.publicPostListsList.length > splitNum) {
-        // 0~4, 5~(this.publicPostListsList.length-1)
-        this.publicPostListsListDivided = {
-          count: this.publicPostListsList.length,
-          first: [...Array(splitNum).keys()].map(n=>this.publicPostListsList[n]),
-          second: range(splitNum, this.publicPostListsList.length-1).map(n=>this.publicPostListsList[n])
-        }
-      } else {
-        this.publicPostListsListDivided = {
-          count: this.publicPostListsList.length,
-          first: this.publicPostListsList,
-          second: null
-        }
-      }
+      this.publicPostListsListDivided = this.divideList(this.publicPostListsList)
     }
   },
   methods: {
+    divideList(argList) {
+      var splitNum = 6
+      const range = (start, stop) => Array.from({ length: (stop - start) + 1}, (_, i) => start + i);
+      if (argList.length > splitNum) {
+        // 0~4, 5~(this.publicPostListsList.length-1)
+        return {
+          count: argList.length,
+          first: [...Array(splitNum).keys()].map(n=>argList[n]),
+          second: range(splitNum, argList.length-1).map(n=>argList[n])
+        }
+      } else {
+        return {
+          count: argList.length,
+          first: argList,
+          second: null
+        }
+      }
+    },
     onClickMoreShowButton(e) {
       e.target.style.display = "none"
       this.isShowPostListSecondZone = true
@@ -161,6 +173,7 @@ export default {
     this.PM = new PlacesManager(axios, database, {uid: this.userId})
     this.FM = new FriendsManager(axios, database, {uid: this.userId})
     this.PSM = new PostsManager(axios, database, {uid: this.userId}, this.PM, this.FM)
+    //
     this.PSM.fetchalltags().then((tags) => {
       var tagUrlObj = {}
       Object.keys(tags).forEach(k => {
@@ -174,7 +187,49 @@ export default {
         this.isLoadingTagImg = true
       }
     })
-    // リストを読み込み
+    //フレンドのランキング作成
+    this.PSM.fetchallposts().then((posts) => {
+      this.PSM.makeArrayWithNames(posts).then((postswithname) => {
+        postswithname.forEach(e => {
+          if (e.imgUrls!=null&&e.imgUrls!=undefined) {
+            this.imagesinpostList.push(e.imgUrls)
+          }
+          if (e.who.friendId!="null"&&e.who.friendId!=null&&e.who.friendId!=undefined&&e.who.name!="null"&&e.who.name!=null&&e.who.name!=undefined) {
+            this.friendsinpostList.push(e.who)
+          }
+        })
+        this.imagesinpostListDisp = this.divideList(this.imagesinpostList.flat())
+        var tmpFriendsCountList = []
+        this.friendsinpostList.forEach(e=>{
+          if (tmpFriendsCountList[e.friendId] == undefined) {
+            tmpFriendsCountList[e.friendId] = 0
+          }
+          tmpFriendsCountList[e.friendId] += 1
+        })
+        this.friendscountList = []
+        Object.keys(tmpFriendsCountList).forEach(k => {
+          this.FM.friendidtoname(k).then(name=>{
+            this.friendscountList.push({
+              friendid: k,
+              name: name,
+              count: tmpFriendsCountList[k]
+            })
+          })
+        })
+        
+        this.friendscountList.sort(function(a, b) {
+          if (a.count > b.count) {
+            return 1
+          } else {
+            return -1
+          }
+        })
+        if (this.friendscountList.length > 5) {
+          this.friendscountList = this.friendscountList.splice(0, 5)
+        }
+      })
+    })
+    // 投稿まとめを読み込み
     database.ref("postlist/"+this.userId).on('value', (snapshot) =>{
       var lists = snapshot.val()
       if (lists != null || lists != undefined) {
