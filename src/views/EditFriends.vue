@@ -15,10 +15,14 @@
             </div>
           </modal>
           <div>
+            <h1>フレンド追加</h1>
+            <input type="text" v-model="whoAdd" /><button v-on:click="onClickedAddWhoButton">+</button>
+          </div>
+          <div>
             <h1>フレンド一覧</h1>
             <ul>
               <li v-for="(friend, id) in friendsList">
-                <div class="editfriends__body__signined__listitem"><p>{{friend.name}}</p><img src="/img/edit-black-48dp/2x/outline_edit_black_48dp.png" v-on:click="onClickedEditButton(id)"><!--<img src="/img/delete-black-48dp/2x/outline_delete_black_48dp.png" v-on:click="onClickedDeleteButton(id)">--></div>
+                <div class="editfriends__body__signined__listitem"><p>{{friend.name}}</p><img src="/img/edit-black-48dp/2x/outline_edit_black_48dp.png" v-on:click="onClickedEditButton(id)"><img src="/img/delete-black-48dp/2x/outline_delete_black_48dp.png" v-on:click="onClickedDeleteButton(id)"></div>
               </li>
             </ul>
           </div>
@@ -44,7 +48,8 @@ export default {
       FM: null,
       friendName: null,
       friendsId: null,
-      friendsList: []
+      friendsList: [],
+      whoAdd: null
     }
   },
   watch: {
@@ -84,13 +89,29 @@ export default {
     },
     onClickedDeleteButton(friendid) {
       new MyUtil().confirmExPromise("このフレンドを本当に削除しますか?").then(() => {
+        /*
         this.FM.removefriend(friendid).then(()=>{
+        */
+        this.FM.updatefriendname(friendid, "【削除済み】").then((result)=>{
           this.FM.fetchsavedfriends().then((result)=>{
             this.friendsList = result
           })
           alert('削除しました！')
         })
       });
+    },
+    onClickedAddWhoButton() {
+      this.FM.savemyfriend(this.whoAdd).then(() => {
+        this.whoAdd = null
+        this.FM.fetchsavedfriends().then((result)=>{
+          this.friendsList = result
+        })
+        alert("追加しました！")
+      })
+      .catch((error) => {
+        //onError
+        console.log("Firebase Error", error)
+      })
     }
   },
   mounted() {

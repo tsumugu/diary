@@ -275,6 +275,7 @@ export default {
     loadFriends() {
       this.friendsList = []
       this.FM.fetchfriendsgroup().then((friedsgroupinfo) => {
+        console.log(friedsgroupinfo)
         if (new MyUtil().isObjNotEmpty(friedsgroupinfo)) {
           this.friendsList.push({
             name: "フレンド リスト",

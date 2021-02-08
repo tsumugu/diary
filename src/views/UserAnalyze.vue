@@ -1,7 +1,8 @@
 <template>
   <div class="useranalyze">
     <div class="useranalyze__tag">
-      <img class="useranalyze__tag__img" :src="tagWordcloudUrl">
+      <div class="useranalyze__tag__loader" v-show="isLoadingTagImg"><img src="/img/svg-loading-spinner.svg" class="useranalyze__tag__loader__img"></div>
+      <img class="useranalyze__tag__img" :src="tagWordcloudUrl" v-on:load="()=>{if(this.loadingTagImgCount > 0){this.isLoadingTagImg = false;} this.loadingTagImgCount+=1;}">
     </div>
     <div class="useranalyze__postlist" v-show="publicPostListsListDivided.count>0">
       <p class="useranalyze__postlist__title">投稿まとめ</p>
@@ -67,6 +68,8 @@ export default {
           height: -35
         }
       },
+      isLoadingTagImg: true,
+      loadingTagImgCount: 0
     }
   },
   watch: {
@@ -167,6 +170,8 @@ export default {
       if (Object.keys(tagUrlObj).length > 0) {
         var tagUrlStr = JSON.stringify(tagUrlObj)
         this.tagWordcloudUrl = "https://tsumugu.tech/wordcloud/gen.php?uid="+this.userId+"&words="+encodeURI(tagUrlStr)
+      } else {
+        this.isLoadingTagImg = true
       }
     })
     // リストを読み込み
@@ -224,12 +229,25 @@ export default {
     }
   }
   &__tag {
+    display: relative;
     &__title {
       margin:  0 0 0 0;
       font-size: 1.5rem;
     }
     &__img {
       width: 100%;
+    }
+    &__loader {
+      position: absolute;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      height: 100%;
+      &__img {
+        width: 100px;
+        height: 100px;
+      }
     }
   }
   &__friends {

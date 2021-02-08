@@ -39,14 +39,26 @@
       </div>
     </div>
     <modal class="HomeLogined__modal" name="modal-editpostlist" :clickToClose="true" height="95%">
-      <p>リストのタイトルを入力</p>
-      <input type="text" v-model="PostListName">
-      <p>公開範囲設定</p>
-      <div class="editpostlist__body__signined__publicconf">
-        <label><input type="radio" v-model="listPublicStatus" value="public">公開</label>
-        <label><input type="radio" v-model="listPublicStatus" value="private">非公開</label>
+      <div class="HomeLogined__modal__contents">
+        <h1 class="HomeLogined__modal__contents__title">投稿まとめを作成</h1>
+        <div class="HomeLogined__modal__contents__div">
+          <h2 class="HomeLogined__modal__contents__title">タイトル</h2>
+          <input type="text" v-model="PostListName">
+        </div>
+        <div class="HomeLogined__modal__contents__div">
+          <h2 class="HomeLogined__modal__contents__title">このまとめに含まれる投稿数: {{this.TLItemsList.length}}件</h2>
+        </div>
+        <div class="HomeLogined__modal__contents__div">
+          <h2 class="HomeLogined__modal__contents__title">公開範囲設定</h2>
+          <div class="editpostlist__body__signined__publicconf">
+            <label><input type="radio" v-model="listPublicStatus" value="public">公開</label>
+            <label><input type="radio" v-model="listPublicStatus" value="private">非公開</label>
+          </div>
+        </div>
+        <div class="HomeLogined__modal__contents__div">
+          <button v-on:click="onPostListSubmit">保存</button>
+        </div>
       </div>
-      <button v-on:click="onPostListSubmit">保存</button>
     </modal>
     <div class="HomeLogined__MainArea">
       <div class="HomeLogined__MainArea__buttons">
@@ -221,7 +233,7 @@ export default {
             database.ref("postlist/"+this.userInfo.uid+"/"+this.$route.query.listid).on('value', (snapshot) =>{
               // パラメータをいいかんじに設定
               var prms = snapshot.val().parms
-              console.log(prms)
+              this.selectedDate = null
               Object.keys(prms).forEach(k => {
                 if (k == "keyword") {
                   this.searchQueryText = prms[k]
@@ -354,11 +366,13 @@ export default {
       this.$modal.hide(name)
     },
     onPostListSubmit() {
-      if (new MyUtil().isAllValueNotEmpty([this.PostListName, this.listPublicStatus])) {
+      if (new MyUtil().isAllValueNotEmpty([this.PostListName, this.listPublicStatus, this.TLItemsList])) {
         var items = {
           "name": this.PostListName,
           "status": this.listPublicStatus,
           "thumbnail": this.TLItemsList.map(e=>e.imgUrls).flat().filter(Boolean)[0],
+          "sincedate": Object.keys(this.TLItemsListDisp[0])[0],
+          "untildate": Object.keys(this.TLItemsListDisp[this.TLItemsListDisp.length-1])[0],
           "parms":{
             "keyword": this.searchQueryText,
             "when": this.selectedDate,
@@ -386,7 +400,7 @@ export default {
           alert("保存しました")
         })
       } else {
-        alert("未入力の項目があります")
+        alert("未入力の項目がある、またはまとめに含まれる投稿が0件の可能性があります")
       }
     },
     onTagClicked(e) {
@@ -437,6 +451,17 @@ export default {
   height: 100%;
   overflow: hidden;
   text-align: left;
+  &__modal {
+    &__contents {
+      padding: 20px;
+      &__title {
+        margin: 0 !important;
+      }
+      &__div {
+        margin: 10px !important;
+      }
+    }
+  }
   &__ColumnLeftArea {
     border: solid 1px $main-border;
     &__HeaderArea {

@@ -3,21 +3,27 @@
     <div class="UAPostListItem" v-on:click="onClickPostList(list)" v-for="list in item" :key="list.listid">
       <div class="UAPostListItem__img" :style="'background-image: url('+list.thumbnail+')'"></div>
       <div class="UAPostListItem__titlewrapper">
-        <p class="UAPostListItem__titlewrapper__title">{{list.name}}</p>
+        <img src="/img/lock-white-48dp.svg" style="width: 1.5rem;" v-show='list.status=="private"'>
+        <p class="UAPostListItem__titlewrapper__title">{{MU.genPostListDate(list.sincedate, list.untildate)}}{{list.name}}</p>
+        <img src="/img/edit-black-48dp/2x/outline_edit_black_48dp.png" style="width: 1.5rem;" v-show="isDispIcon">
+        <img src="/img/delete-black-48dp/2x/outline_delete_black_48dp.png" style="width: 1.5rem;" v-show="isDispIcon">
       </div>
     </div>
   </div>
 </template>
 
 <script>
+import MyUtil from '../assets/MyUtil.js'
 export default {
   name: 'UAPostListItem',
   props: {
-    propsItem: null
+    propsItem: null,
+    isDispIcon: null
   },
   data() {
     return {
-      item: null
+      item: null,
+      MU: null
     }
   },
   methods: {
@@ -31,6 +37,7 @@ export default {
     }
   },
   mounted() {
+    this.MU = new MyUtil()
   }
 }
 </script>

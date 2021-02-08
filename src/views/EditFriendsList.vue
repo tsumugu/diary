@@ -3,10 +3,10 @@
     <div class="editfriendslist__loading" v-if="isNowLoading"><!-- Loading --></div>
       <div class="editfriendslist__body" v-else>
         <div class="editfriendslist__body__signined" v-if="isSignIn">
-          <button v-on:click="onClickedMakeListButton">リスト新規作成</button>
+          <button v-on:click="onClickedMakeListButton">グループ新規作成</button>
           <modal name="modal-makefriendslist" :clickToClose="true" height="95%">
             <div style="padding: 20px;">
-              <h1>{{isMakeListMode?"リスト新規作成":"リスト編集"}}</h1>
+              <h1>{{isMakeListMode?"グループ新規作成":"グループ編集"}}</h1>
               <div>
                 <h2>タイトル</h2>
                 <input type="text" v-model="friendsGroupName">
@@ -21,7 +21,7 @@
             </div>
           </modal>
           <div>
-            <h1>リスト一覧</h1>
+            <h1>フレンドグループ一覧</h1>
             <div v-for="(group, id) in friendsGroupList">
               <div class="editfriendslist__body__signined__listitem"><h2>{{group.name}}</h2><img src="/img/edit-black-48dp/2x/outline_edit_black_48dp.png" v-on:click="onClickedEditButton(id)"><img src="/img/delete-black-48dp/2x/outline_delete_black_48dp.png" v-on:click="onClickedDeleteButton(id)"></div>
               <ul>
@@ -126,7 +126,7 @@ export default {
       this.$modal.show("modal-makefriendslist")
     },
     onClickedDeleteButton(listid) {
-      new MyUtil().confirmExPromise("このリストを本当に削除しますか?").then(() => {
+      new MyUtil().confirmExPromise("このグループを本当に削除しますか?").then(() => {
         this.FM.removefriendsgroup(listid).then(()=>{
           this.FM.fetchfriendsgroup().then((result)=>{
             this.friendsGroupList = result

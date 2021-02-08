@@ -13,6 +13,23 @@ export default class MyUtil {
     isString(obj) {
       return typeof (obj) == "string" || obj instanceof String;
     }
+    formatisotostrdate(isodate) {
+      if (isodate == undefined || isodate == null) {
+        return "不明"
+      }
+      return isodate.split("T")[0].replaceAll("-", "/")+" "+isodate.split("T")[1].split(":")[0]+":"+isodate.split("T")[1].split(":")[1]
+    }
+    genPostListDate(since, until) {
+      if (since == undefined || since == null || until == undefined || until == null) {
+        return null
+      }
+      var sinceFormated = since.replaceAll("-", "/")
+      var untilFormated = until.replaceAll("-", "/")
+      if (since == until) {
+        return "【"+sinceFormated+"】"
+      }
+      return "【"+sinceFormated+" ~ "+untilFormated+"】"
+    }
     isAllValueNotEmpty(objArr) {
       // foreachだと意図した挙動にならないので注意。
       if (objArr.length == 0) {
