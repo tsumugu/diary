@@ -3,7 +3,7 @@
     <div class="HomeLogined__ColumnLeftArea">
       <div class="HomeLogined__ColumnLeftArea__HeaderArea"><div class="HomeLogined__ColumnLeftArea__HeaderArea__title">Diary</div><div class="HomeLogined__ColumnLeftArea__HeaderArea__menubutton"><img src="/img/more_horiz-white-48dp/2x/outline_more_horiz_white_48dp.png" class="HomeLogined__ColumnLeftArea__HeaderArea__menubutton__img"></div></div>
       <div class="HomeLogined__ColumnLeftArea__ReviewthedayArea">
-        <div class="HomeLogined__ColumnLeftArea__ReviewthedayArea__title">絞り込む ({{this.postsList.length}}件中{{this.TLItemsList.length}}件表示中)</div>
+        <div class="HomeLogined__ColumnLeftArea__ReviewthedayArea__title">絞り込む ({{this.postsList.length}}件中{{dispItemCount}}件表示中)</div>
         <div class="HomeLogined__ColumnLeftArea__ReviewthedayArea__ReviewFromKeywordArea"><input type="text" v-model="searchQueryText" placeholder="キーワードを入力 (例: 伊豆旅行2021)"></div>
         <!--<hr class="HomeLogined__ColumnLeftArea__ReviewthedayArea__hr">-->
         <div class="HomeLogined__ColumnLeftArea__ReviewthedayArea__ReviewFromGenleArea">
@@ -65,13 +65,7 @@
         <div><img src="/img/create_new_folder-black-48dp/2x/outline_create_new_folder_black_48dp.png" class="HomeLogined__MainArea__buttons__button" v-on:click="openPostListModal"></div>
         <div><img src="/img/edit-black-48dp/2x/outline_edit_black_48dp.png" class="HomeLogined__MainArea__buttons__button" v-on:click="gotoRegist"></div>
       </div>
-      <div class="HomeLogined__MainArea__mesnopost" v-show="TLItemsListDisp.length==0">{{notFoundMes}}</div>
-      <div class="HomeLogined__MainArea__Post" v-for="postsList in TLItemsListDisp">
-        <div class="HomeLogined__MainArea__Post__Contents" v-for="(posts, day) in postsList">
-          <div class="HomeLogined__MainArea__Post__Contents__title">{{day.replaceAll("-", "/")}}</div>
-          <div v-for="post in posts"><TLItem :propsItem=post @removepost='removepost' :key="post.when" /></div>
-        </div>
-      </div>
+      <TimeLine :propsPosts="postsList" :propsPostsOrderedbyDateList="postsOrderedbyDateList" :propsParams="filteringParams" :propsNotFoundMes="notFoundMes" @removepost='removepost' @onChangedDispItemCount="onChangedDispItemCount"></TimeLine>
     </div>
   </div>
 </template>
@@ -85,14 +79,14 @@ import PlacesManager from '../assets/PlacesManager.js'
 import FriendsManager from '../assets/FriendsManager.js'
 import PostsManager from '../assets/PostsManager.js'
 import MyUtil from '../assets/MyUtil.js'
-import TLItem from '@/components/TLItem.vue'
+import TimeLine from '@/components/TimeLine.vue'
 import DatePicker from 'v-calendar/lib/components/date-picker.umd'
 
 export default {
   name: 'HomeLogined',
   components: {
     DatePicker,
-    TLItem
+    TimeLine
   },
   props: {
     propsUserInfo: null
@@ -123,7 +117,9 @@ export default {
       searchQueryText: null,
       notFoundMes: "今日はまだ投稿がありません",
       PostListName: null,
-      listPublicStatus: "public"
+      listPublicStatus: "public",
+      filteringParams: null,
+      dispItemCount: 0
     }
   },
   watch: {
@@ -144,17 +140,6 @@ export default {
     selectedFriendId() {
       this.selectedFriendName = this.friendsList[this.selectedFriendId].name
       this.filteringPosts()
-    },
-    TLItemsList() {
-      var dispPostIdsList = this.TLItemsList.map(e=>e.postid)
-      this.TLItemsListDisp = []
-      Object.keys(this.postsOrderedbyDateList).forEach(k=>{
-        var placeItems = this.postsOrderedbyDateList[k]
-        var filteredItems = placeItems.filter(e=>dispPostIdsList.includes(e.postid))
-        if (filteredItems.length != 0) {
-          this.TLItemsListDisp.push({[k]: filteredItems})
-        }
-      })
     },
     searchQueryText() {
       this.filteringPosts()
@@ -186,6 +171,9 @@ export default {
         })
       });
     },
+    onChangedDispItemCount(count) {
+      this.dispItemCount = count
+    },
     initMain() {
       this.PM = new PlacesManager(axios, database, this.userInfo)
       this.FM = new FriendsManager(axios, database, this.userInfo)
@@ -211,6 +199,7 @@ export default {
           var todayPosts = this.postsOrderedbyDateList[today]
           if (todayPosts != undefined) {
             this.TLItemsList = todayPosts
+            this.filteringPosts()
             this.changeMes()
           }
           //カレンダーに印を表示
@@ -261,32 +250,7 @@ export default {
       })
     },
     genPostsOrderedbyDateList() {
-      this.postsOrderedbyDateList = {}
-      this.postsList.forEach(post => {
-        if (post.when != undefined) {
-          var tmpDayString = post.when.split("T")[0]
-          if (this.postsOrderedbyDateList[tmpDayString] == undefined) {
-            this.postsOrderedbyDateList[tmpDayString] = []
-          }
-          this.postsOrderedbyDateList[tmpDayString].push(post)
-        } else {
-          // 日付は必須項目だが、バグで抜けていることがある。
-          console.log("Something went wrong!", post)
-        }
-      })
-      // 中身を時系列にsort (デフォルトはDB書き込み順)
-      Object.keys(this.postsOrderedbyDateList).forEach(date => {
-        this.postsOrderedbyDateList[date].sort(function(a, b) {
-          // 00:00:00 と 00:00 が混在してるので戦闘から4文字までにして合わせる
-          const dateA = parseInt(a.when.split("T")[1].replace(":", "").slice(0, 4))
-          const dateB = parseInt(b.when.split("T")[1].replace(":", "").slice(0, 4))
-          if (dateA > dateB) {
-            return 1;
-          } else {
-            return -1;
-          }
-        })
-      })
+      this.postsOrderedbyDateList = this.PSM.makeArrayOrderedbyDate(this.postsList)
     },
     genCalenderDots() {
       this.calenderAttrs = []
@@ -325,35 +289,13 @@ export default {
       this.notFoundMes = "検索結果はありません"
     },
     filteringPosts() {
-      var tmpRes = this.postsList
-      // FIXME: もうちょっと綺麗に書けそう
-      if (new MyUtil().isAllValueNotEmpty([this.searchQueryText])) {
-        tmpRes = tmpRes.filter(e=>new MyUtil().isObjectIncludeQureyText([e.what, e.where.name, e.who.name, e.tags].flat(), this.searchQueryText))
+      this.filteringParams = {
+        "keyword": this.searchQueryText,
+        "when": this.selectedDate,
+        "where": this.selectedPlaceId,
+        "who": this.selectedFriendId,
+        "tags": this.tagsList
       }
-      if (new MyUtil().isAllValueNotEmpty([this.selectedDate])) {
-        tmpRes = tmpRes.filter(e=>{
-          if (e.when != undefined) {
-            return e.when.split("T")[0]==this.selectedDate
-          }
-        })
-      }
-      if (new MyUtil().isAllValueNotEmpty([this.selectedPlaceId])) {
-        tmpRes = tmpRes.filter(e=>e.where.placeId==this.selectedPlaceId)
-      }
-      if (new MyUtil().isAllValueNotEmpty([this.selectedFriendId])) {
-        tmpRes = tmpRes.filter(e=>e.who.friendId==this.selectedFriendId)
-      }
-      if (new MyUtil().isAllValueNotEmpty([this.tagsList])) {
-        tmpRes = tmpRes.filter(e=>{
-          return this.tagsList.filter(t=>{
-            if (e.tags != undefined) {
-              return e.tags.includes(t)
-            }
-          }).length == this.tagsList.length
-        })
-      }
-      //
-      this.TLItemsList = tmpRes
       this.changeMes()
     },
     openPostListModal() {
@@ -524,21 +466,6 @@ export default {
         }
       }
     }
-    &__mesnopost {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      width: 100%;
-      height: 100%;
-      font-size: 170%;
-    }
-    &__Post {
-      &__Contents {
-        &__title {
-          font-size: 170%;
-        }
-      }
-    }
   }
 }
 .tabs {
@@ -546,10 +473,6 @@ export default {
   grid-template-columns: 1fr 1fr 1fr 1fr;
   border-bottom: solid 5px $main-accent-color;
   &__wrapper {
-    /*
-    margin: auto;
-    padding: 0 27px 0 28.3px;
-    */
     display: flex;
     justify-content: center; 
     border-radius: .25rem .25rem 0 0;

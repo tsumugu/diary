@@ -4,7 +4,7 @@
       <div class="useranalyze__tag__loader" v-show="isLoadingTagImg"><img src="/img/svg-loading-spinner.svg" class="useranalyze__tag__loader__img"></div>
       <img class="useranalyze__tag__img" :src="tagWordcloudUrl" v-on:load="()=>{if(this.loadingTagImgCount > 0){this.isLoadingTagImg = false;} this.loadingTagImgCount+=1;}">
     </div>
-    <div class="useranalyze__postlist" v-show="publicPostListsListDivided.count>0">
+    <div class="useranalyze__postlist useranalyze__margin" v-show="publicPostListsListDivided.count>0">
       <p class="useranalyze__postlist__title">投稿まとめ</p>
       <div class="useranalyze__postlist__list">
         <!---->
@@ -16,19 +16,28 @@
         <!---->
       </div>
     </div>
-    <div class="useranalyze__photos" v-show="imagesinpostListDisp.count>0">
-      <p class="useranalyze__photos__title">写真</p>
-      <div><img :src="src" v-for="src in imagesinpostListDisp.first" style="width: 100px;"></div>
-      <button v-show="imagesinpostListDisp.count>6&&this.isMoreShowImg==false" v-on:click="()=>{this.isMoreShowImg=true}">もっと見る</button>
-      <div><img :src="src" v-for="src in imagesinpostListDisp.second" v-show="isMoreShowImg" style="width: 100px;"></div>
+    <div class="useranalyze__map useranalyze__margin" v-show="markers.length>0">
+      <p class="useranalyze__map__title">マップ</p>
+      <div id="map"></div>
     </div>
-    <div class="useranalyze__friends" v-show="friendscountList.length>0">
+    <div class="useranalyze__friends useranalyze__margin" v-show="friendscountList.length>0">
       <p class="useranalyze__friends__title">フレンドランキング</p>
       <div v-for="(friend, index) in friendscountList"><small>No.{{index+1}}</small> {{friend.name}} ({{friend.count}}件)</div>
     </div>
-    <div class="useranalyze__map" v-show="markers.length>0">
-      <p class="useranalyze__map__title">マップ</p>
-      <div id="map"></div>
+    <div class="useranalyze__photos" v-show="imagesinpostListDisp.count>0">
+      <p class="useranalyze__photos__title">写真</p>
+      <div>
+        <SquareImageViewer :propsSrc="src" :propsKey="key" v-for="(src,key) in imagesinpostListDisp.all"></SquareImageViewer>
+      </div>
+      <!--
+      <div v-show="this.isMoreShowImg==false">
+        <SquareImageViewer :propsSrc="src" :propsKey="key" v-for="(src,key) in imagesinpostListDisp.first"></SquareImageViewer>
+      </div>
+      <button v-show="imagesinpostListDisp.count>6&&this.isMoreShowImg==false" v-on:click="()=>{this.isMoreShowImg=true}">もっと見る</button>
+      <div>
+        <SquareImageViewer :propsSrc="src" :propsKey="key" v-for="(src,key) in imagesinpostListDisp.all" v-show="isMoreShowImg"></SquareImageViewer>
+      </div>
+      -->
     </div>
   </div>
 </template>
@@ -42,11 +51,13 @@ import PlacesManager from '../assets/PlacesManager.js'
 import FriendsManager from '../assets/FriendsManager.js'
 import PostsManager from '../assets/PostsManager.js'
 import UAPostListItem from '@/components/UAPostListItem.vue'
+import SquareImageViewer from '@/components/SquareImageViewer.vue'
 
 export default {
   name: "useranalyze",
   components: {
-    UAPostListItem
+    UAPostListItem,
+    SquareImageViewer
   },
   data() {
     return {
@@ -96,16 +107,19 @@ export default {
       const range = (start, stop) => Array.from({ length: (stop - start) + 1}, (_, i) => start + i);
       if (argList.length > splitNum) {
         // 0~4, 5~(this.publicPostListsList.length-1)
-        return {
+        var retObj = {
           count: argList.length,
           first: [...Array(splitNum).keys()].map(n=>argList[n]),
-          second: range(splitNum, argList.length-1).map(n=>argList[n])
+          second: range(splitNum, argList.length-1).map(n=>argList[n]),
         }
+        retObj["all"] = retObj.first.concat(retObj.second)
+        return retObj
       } else {
         return {
           count: argList.length,
           first: argList,
-          second: null
+          second: null,
+          all: argList
         }
       }
     },
@@ -114,11 +128,13 @@ export default {
       this.isShowPostListSecondZone = true
     },
     onClickPostList(listid) {
+      //TODO: modalでTLを表示
       //this.$router.push({path: '/', query: { listid: listid}})
       let routeData = this.$router.resolve({path: '/', query: { listid: listid}})
       window.open(routeData.href, '_blank')
     },
     onClickInfoWindow(placeId) {
+      //TODO: modalでTLを表示
       //this.$router.push({path: '/', query: { placeid: placeId}})
       let routeData = this.$router.resolve({path: '/', query: {placeid: placeId}})
       window.open(routeData.href, '_blank')
@@ -190,15 +206,30 @@ export default {
     //フレンドのランキング作成
     this.PSM.fetchallposts().then((posts) => {
       this.PSM.makeArrayWithNames(posts).then((postswithname) => {
+        //
+        var postsOrderedbyDate = this.PSM.makeArrayOrderedbyDate(postswithname)
+        Object.keys(postsOrderedbyDate).forEach(k => {
+          Object.keys(postsOrderedbyDate[k]).forEach(i => {
+            //console.log(postsOrderedbyDate[k][i])
+            var imgurls = postsOrderedbyDate[k][i].imgUrls
+            if (imgurls!=null&&imgurls!=undefined) {
+              this.imagesinpostList.push(imgurls)
+            }
+          })
+        })
+        this.imagesinpostListDisp = this.divideList(this.imagesinpostList.flat())
+        //
+        //
         postswithname.forEach(e => {
+          /*
           if (e.imgUrls!=null&&e.imgUrls!=undefined) {
             this.imagesinpostList.push(e.imgUrls)
           }
+          */
           if (e.who.friendId!="null"&&e.who.friendId!=null&&e.who.friendId!=undefined&&e.who.name!="null"&&e.who.name!=null&&e.who.name!=undefined) {
             this.friendsinpostList.push(e.who)
           }
         })
-        this.imagesinpostListDisp = this.divideList(this.imagesinpostList.flat())
         var tmpFriendsCountList = []
         this.friendsinpostList.forEach(e=>{
           if (tmpFriendsCountList[e.friendId] == undefined) {
@@ -262,19 +293,23 @@ export default {
 </script>
 
 <style scoped lang="scss">
+$title-fontsize: 1.8rem;
 .useranalyze {
   width: 100%;
   height: 100%;
+  &__margin {
+    margin: 30px 0 30px 0;
+  }
   &__map {
     &__title {
       margin:  0 0 0 0;
-      font-size: 1.5rem;
+      font-size: $title-fontsize;
     }
   }
   &__postlist {
     &__title {
       margin:  0 0 0 0;
-      font-size: 1.5rem;
+      font-size: $title-fontsize;
     }
     &__list {
       &__itemwrapper {
@@ -287,7 +322,7 @@ export default {
     display: relative;
     &__title {
       margin:  0 0 0 0;
-      font-size: 1.5rem;
+      font-size: $title-fontsize;
     }
     &__img {
       width: 100%;
@@ -305,10 +340,16 @@ export default {
       }
     }
   }
+  &__photos {
+    &__title {
+      margin:  0 0 0 0;
+      font-size: $title-fontsize;
+    }
+  }
   &__friends {
     &__title {
       margin: 0;
-      font-size: 1.5rem;
+      font-size: $title-fontsize;
     }
   }
 }

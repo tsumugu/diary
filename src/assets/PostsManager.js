@@ -119,4 +119,36 @@ export default class PostsManager {
         }
       })
     }
+    makeArrayOrderedbyDate(postsList) {
+      var postsOrderedbyDateList = {}
+      postsList.forEach(post => {
+        if (post.when != undefined) {
+          var tmpDayString = post.when.split("T")[0]
+          if (postsOrderedbyDateList[tmpDayString] == undefined) {
+            postsOrderedbyDateList[tmpDayString] = []
+          }
+          postsOrderedbyDateList[tmpDayString].push(post)
+        } else {
+          // 日付は必須項目だが、バグで抜けていることがある。
+          console.log("Something went wrong!", post)
+        }
+      })
+      if (postsOrderedbyDateList.length<=0) {
+        return []
+      }
+      // 中身を時系列にsort (デフォルトはDB書き込み順)
+      Object.keys(postsOrderedbyDateList).forEach(date => {
+        postsOrderedbyDateList[date].sort(function(a, b) {
+          // 00:00:00 と 00:00 が混在してるので先頭から4文字までにして合わせる
+          const dateA = parseInt(a.when.split("T")[1].replace(":", "").slice(0, 4))
+          const dateB = parseInt(b.when.split("T")[1].replace(":", "").slice(0, 4))
+          if (dateA > dateB) {
+            return 1;
+          } else {
+            return -1;
+          }
+        })
+      })
+      return postsOrderedbyDateList
+    }
   }
