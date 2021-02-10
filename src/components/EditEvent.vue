@@ -547,10 +547,14 @@ export default {
       for (var i=0;i<this.tagSuggestList.length;i++) {
         var button = this.$refs['tagSuggest_'+i][0]
         var value = button.innerText.slice(1)
-        if (this.tags.includes(value)) {
-          button.disabled = true
-        } else {
+        if (this.tags == null || this.tags == undefined) {
           button.disabled = false
+        } else {
+          if (this.tags.includes(value)) {
+            button.disabled = true
+          } else {
+            button.disabled = false
+          }
         }
       }
     },
@@ -608,6 +612,9 @@ export default {
       }
     },
     onAddTagButton(tagval) {
+      if (!new MyUtil().isAllValueNotEmpty([this.tags])) {
+        this.tags = []
+      }
       this.tags.push(tagval)
     },
     imgUploadChecker() {

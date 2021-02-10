@@ -3,7 +3,7 @@
     <div class="HomeLogined__ColumnLeftArea">
       <div class="HomeLogined__ColumnLeftArea__HeaderArea"><div class="HomeLogined__ColumnLeftArea__HeaderArea__title">Diary</div><div class="HomeLogined__ColumnLeftArea__HeaderArea__menubutton"><img src="/img/more_horiz-white-48dp/2x/outline_more_horiz_white_48dp.png" class="HomeLogined__ColumnLeftArea__HeaderArea__menubutton__img"></div></div>
       <div class="HomeLogined__ColumnLeftArea__ReviewthedayArea">
-        <div class="HomeLogined__ColumnLeftArea__ReviewthedayArea__title">絞り込む ({{this.postsList.length}}件中{{dispItemCount}}件表示中)</div>
+        <div class="HomeLogined__ColumnLeftArea__ReviewthedayArea__title">絞り込む ({{this.postsList.length}}件中{{this.TLItemsListDisp.length}}件表示中)</div>
         <div class="HomeLogined__ColumnLeftArea__ReviewthedayArea__ReviewFromKeywordArea"><input type="text" v-model="searchQueryText" placeholder="キーワードを入力 (例: 伊豆旅行2021)"></div>
         <!--<hr class="HomeLogined__ColumnLeftArea__ReviewthedayArea__hr">-->
         <div class="HomeLogined__ColumnLeftArea__ReviewthedayArea__ReviewFromGenleArea">
@@ -65,7 +65,7 @@
         <div><img src="/img/create_new_folder-black-48dp/2x/outline_create_new_folder_black_48dp.png" class="HomeLogined__MainArea__buttons__button" v-on:click="openPostListModal"></div>
         <div><img src="/img/edit-black-48dp/2x/outline_edit_black_48dp.png" class="HomeLogined__MainArea__buttons__button" v-on:click="gotoRegist"></div>
       </div>
-      <TimeLine :propsPosts="postsList" :propsPostsOrderedbyDateList="postsOrderedbyDateList" :propsParams="filteringParams" :propsNotFoundMes="notFoundMes" @removepost='removepost' @onChangedDispItemCount="onChangedDispItemCount"></TimeLine>
+      <TimeLine :propsPosts="postsList" :propsPostsOrderedbyDateList="postsOrderedbyDateList" :propsParams="filteringParams" :propsNotFoundMes="notFoundMes" @removepost='removepost' @onChangedDispItem="onChangedDispItem"></TimeLine>
     </div>
   </div>
 </template>
@@ -118,8 +118,7 @@ export default {
       notFoundMes: "今日はまだ投稿がありません",
       PostListName: null,
       listPublicStatus: "public",
-      filteringParams: null,
-      dispItemCount: 0
+      filteringParams: null
     }
   },
   watch: {
@@ -140,6 +139,17 @@ export default {
     selectedFriendId() {
       this.selectedFriendName = this.friendsList[this.selectedFriendId].name
       this.filteringPosts()
+    },
+    TLItemsList() {
+      var dispPostIdsList = this.TLItemsList.map(e=>e.postid)
+      this.TLItemsListDisp = []
+      Object.keys(this.postsOrderedbyDateList).forEach(k=>{
+        var placeItems = this.postsOrderedbyDateList[k]
+        var filteredItems = placeItems.filter(e=>dispPostIdsList.includes(e.postid))
+        if (filteredItems.length != 0) {
+          this.TLItemsListDisp.push({[k]: filteredItems})
+        }
+      })
     },
     searchQueryText() {
       this.filteringPosts()
@@ -169,10 +179,10 @@ export default {
           })
           alert('削除しました！')
         })
-      });
+      })
     },
-    onChangedDispItemCount(count) {
-      this.dispItemCount = count
+    onChangedDispItem(item) {
+      this.TLItemsList = item
     },
     initMain() {
       this.PM = new PlacesManager(axios, database, this.userInfo)
@@ -198,7 +208,7 @@ export default {
           this.selectedDate = today
           var todayPosts = this.postsOrderedbyDateList[today]
           if (todayPosts != undefined) {
-            this.TLItemsList = todayPosts
+            //this.TLItemsList = todayPosts
             this.filteringPosts()
             this.changeMes()
           }

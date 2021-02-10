@@ -10,7 +10,7 @@ export default class FriendsManager {
     }
     getNameFromFriendId(friendId) {
       var friendsInfo = this.friendsinfoCache
-      var friendName = "【削除済み】"
+      var friendName = null
       if (friendsInfo != null) {
         Object.keys(friendsInfo).forEach(fid => {
           if (fid == friendId) {

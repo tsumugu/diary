@@ -1,5 +1,5 @@
 <template>
-  <div class="squareimg" v-lazy:background-image="propsSrc" :key="propsKey"></div>
+  <div class="squareimg" v-lazy:background-image="propsSrc" :key="propsKey" v-on:click="onClick(propsSrc)"></div>
 </template>
 
 <script>
@@ -8,6 +8,11 @@ export default {
   props: {
     propsSrc: null,
     propsKey: null
+  },
+  methods: {
+    onClick(url) {
+      this.$emit("onClick", url)
+    }
   }
 }
 </script>

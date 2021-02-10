@@ -123,12 +123,12 @@ export default {
         }
       })
     },
-    onClickPostList(listid) {
+    onClickPostList(list) {
+      var listid = list.listid
       this.postListId = listid
       this.postListName = this.postsListsList[listid].name
       this.listPublicStatus = this.postsListsList[listid].status
       this.$modal.show("modal-editpostlist")
-      console.log(this.postsListsList[listid])
     },
     onClickedDeleteButton() {
       // delete

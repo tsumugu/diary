@@ -3,7 +3,7 @@
     <modal class="useranalyze__modal" name="modal-timeline" :clickToClose="true" height="95%">
       <div class="useranalyze__modal__contents">
         <div class="useranalyze__modal__contents__placeName">{{placeName}}</div>
-        <TimeLine :propsPosts="postsList" :propsPostsOrderedbyDateList="postsOrderedbyDate" :propsParams="filteringParams" propsNotFoundMes="投稿はありません" @removepost='removepost'></TimeLine>
+        <TimeLine :propsPosts="postsList" :propsPostsOrderedbyDateList="postsOrderedbyDate" :propsParams="filteringParams" propsNotFoundMes="このリストに含まれている投稿はありません" @removepost='removepost'></TimeLine>
       </div>
     </modal>
     <div class="useranalyze__tag">
@@ -11,7 +11,7 @@
       <img class="useranalyze__tag__img" :src="tagWordcloudUrl" v-on:load="()=>{if(this.loadingTagImgCount > 0){this.isLoadingTagImg = false;} this.loadingTagImgCount+=1;}">
     </div>
     <div class="useranalyze__postlist useranalyze__margin" v-show="publicPostListsListDivided.count>0">
-      <p class="useranalyze__postlist__title">投稿まとめ</p>
+      <p class="useranalyze__postlist__title">投稿まとめ<img src="/img/edit-black-48dp/2x/outline_edit_black_48dp.png" class="editicon" v-on:click="gotoedit()"></p>
       <div class="useranalyze__postlist__list">
         <!---->
         <UAPostListItem :propsItem="publicPostListsListDivided.first" @onClickPostList="onClickPostList" />
@@ -33,7 +33,7 @@
     <div class="useranalyze__photos" v-show="imagesinpostListDisp.count>0">
       <p class="useranalyze__photos__title">写真</p>
       <div>
-        <SquareImageViewer :propsSrc="src" :propsKey="key" v-for="(src,key) in imagesinpostListDisp.all"></SquareImageViewer>
+        <SquareImageViewer :propsSrc="src" :propsKey="key" v-for="(src,key) in imagesinpostListDisp.all" @onClick="onClickImage"></SquareImageViewer>
       </div>
     </div>
   </div>
@@ -50,6 +50,7 @@ import PostsManager from '../assets/PostsManager.js'
 import UAPostListItem from '@/components/UAPostListItem.vue'
 import SquareImageViewer from '@/components/SquareImageViewer.vue'
 import TimeLine from '@/components/TimeLine.vue'
+import MyUtil from '../assets/MyUtil.js'
 
 export default {
   name: "useranalyze",
@@ -130,7 +131,7 @@ export default {
       this.isShowPostListSecondZone = true
     },
     onClickPostList(list) {
-      this.placeName = null
+      this.placeName = list.name
       this.filteringParams = list.parms
       this.$modal.show("modal-timeline")
     },
@@ -141,8 +142,22 @@ export default {
       }
       this.$modal.show("modal-timeline")
     },
-    removepost() {
-      //remove
+    onClickImage(imgUrl) {
+      this.placeName = null
+      this.filteringParams = {
+        imgUrl: imgUrl
+      }
+      this.$modal.show("modal-timeline")
+    },
+    gotoedit(postid) {
+      window.open('https://diary.tsumugu2626.xyz/editpostlist')
+    },
+    removepost(postid) {
+      new MyUtil().confirmExPromise("この投稿を本当に削除しますか?").then(() => {
+        database.ref("posts/"+this.userId+"/"+postid).remove().then(()=>{
+          alert('削除しました！')
+        })
+      })
     },
     genPins() {
       this.PM.fetchusersavedplaces().then((places)=>{
@@ -327,6 +342,9 @@ $title-fontsize: 1.8rem;
   }
   &__postlist {
     &__title {
+      display: flex;
+      justify-content: center;
+      align-items: center;
       margin:  0 0 0 0;
       font-size: $title-fontsize;
     }
@@ -374,5 +392,9 @@ $title-fontsize: 1.8rem;
 }
 #map {
   height: 300px;
+}
+.editicon {
+  width: $title-fontsize;
+  height: $title-fontsize;
 }
 </style>

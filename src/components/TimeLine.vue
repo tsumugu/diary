@@ -32,7 +32,8 @@ export default {
       selectedDate: null,
       selectedPlaceId: null,
       selectedFriendId: null,
-      tagsList: []
+      tagsList: [],
+      imgUrl: null
     }
   },
   watch: {
@@ -46,7 +47,7 @@ export default {
           this.TLItemsListDisp.push({[k]: filteredItems})
         }
       })
-      this.$emit("onChangedDispItemCount", this.TLItemsList.length)
+      this.$emit("onChangedDispItem", this.TLItemsList)
     },
     propsParams() {
       this.filterItems()
@@ -58,11 +59,12 @@ export default {
       this.$emit("removepost", postid)
     },
     filterItems() {
-            this.searchQueryText = this.propsParams.keyword
+      this.searchQueryText = this.propsParams.keyword
       this.selectedDate = this.propsParams.when
       this.selectedPlaceId = this.propsParams.where
       this.selectedFriendId = this.propsParams.who
       this.tagsList = this.propsParams.tags
+      this.imgUrl = this.propsParams.imgUrl
       //フィルタリング
       var tmpRes = this.propsPosts
       if (new MyUtil().isAllValueNotEmpty([this.searchQueryText])) {
@@ -88,6 +90,18 @@ export default {
               return e.tags.includes(t)
             }
           }).length == this.tagsList.length
+        })
+      }
+      if (new MyUtil().isAllValueNotEmpty([this.imgUrl])) {
+        tmpRes = tmpRes.filter(e=>{
+          var imgUrls = e.imgUrls
+          if (new MyUtil().isAllValueNotEmpty([imgUrls])) {
+            for (var i=0;i<imgUrls.length;i++) {
+              if (imgUrls[i] == this.imgUrl) {
+                return true
+              }
+            }
+          }
         })
       }
       this.TLItemsList = tmpRes
