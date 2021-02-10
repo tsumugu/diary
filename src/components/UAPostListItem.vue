@@ -28,7 +28,8 @@ export default {
   },
   methods: {
     onClickPostList(list) {
-      this.$emit('onClickPostList', list.listid)
+      //this.$emit('onClickPostList', list.listid)
+      this.$emit('onClickPostList', list)
     }
   },
   watch: {

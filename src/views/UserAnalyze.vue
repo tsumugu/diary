@@ -1,5 +1,11 @@
 <template>
   <div class="useranalyze">
+    <modal class="useranalyze__modal" name="modal-timeline" :clickToClose="true" height="95%">
+      <div class="useranalyze__modal__contents">
+        <div class="useranalyze__modal__contents__placeName">{{placeName}}</div>
+        <TimeLine :propsPosts="postsList" :propsPostsOrderedbyDateList="postsOrderedbyDate" :propsParams="filteringParams" propsNotFoundMes="投稿はありません" @removepost='removepost'></TimeLine>
+      </div>
+    </modal>
     <div class="useranalyze__tag">
       <div class="useranalyze__tag__loader" v-show="isLoadingTagImg"><img src="/img/svg-loading-spinner.svg" class="useranalyze__tag__loader__img"></div>
       <img class="useranalyze__tag__img" :src="tagWordcloudUrl" v-on:load="()=>{if(this.loadingTagImgCount > 0){this.isLoadingTagImg = false;} this.loadingTagImgCount+=1;}">
@@ -29,15 +35,6 @@
       <div>
         <SquareImageViewer :propsSrc="src" :propsKey="key" v-for="(src,key) in imagesinpostListDisp.all"></SquareImageViewer>
       </div>
-      <!--
-      <div v-show="this.isMoreShowImg==false">
-        <SquareImageViewer :propsSrc="src" :propsKey="key" v-for="(src,key) in imagesinpostListDisp.first"></SquareImageViewer>
-      </div>
-      <button v-show="imagesinpostListDisp.count>6&&this.isMoreShowImg==false" v-on:click="()=>{this.isMoreShowImg=true}">もっと見る</button>
-      <div>
-        <SquareImageViewer :propsSrc="src" :propsKey="key" v-for="(src,key) in imagesinpostListDisp.all" v-show="isMoreShowImg"></SquareImageViewer>
-      </div>
-      -->
     </div>
   </div>
 </template>
@@ -52,12 +49,14 @@ import FriendsManager from '../assets/FriendsManager.js'
 import PostsManager from '../assets/PostsManager.js'
 import UAPostListItem from '@/components/UAPostListItem.vue'
 import SquareImageViewer from '@/components/SquareImageViewer.vue'
+import TimeLine from '@/components/TimeLine.vue'
 
 export default {
   name: "useranalyze",
   components: {
     UAPostListItem,
-    SquareImageViewer
+    SquareImageViewer,
+    TimeLine
   },
   data() {
     return {
@@ -68,6 +67,7 @@ export default {
       map: null,
       markers: [],
       postsList: [],
+      postsOrderedbyDate: [],
       publicPostListsList: [],
       publicPostListsListDivided: [],
       isShowPostListSecondZone: false,
@@ -89,7 +89,9 @@ export default {
       },
       isLoadingTagImg: true,
       loadingTagImgCount: 0,
-      isMoreShowImg: false
+      isMoreShowImg: false,
+      filteringParams: null,
+      placeName: null
     }
   },
   watch: {
@@ -127,17 +129,20 @@ export default {
       e.target.style.display = "none"
       this.isShowPostListSecondZone = true
     },
-    onClickPostList(listid) {
-      //TODO: modalでTLを表示
-      //this.$router.push({path: '/', query: { listid: listid}})
-      let routeData = this.$router.resolve({path: '/', query: { listid: listid}})
-      window.open(routeData.href, '_blank')
+    onClickPostList(list) {
+      this.placeName = null
+      this.filteringParams = list.parms
+      this.$modal.show("modal-timeline")
     },
-    onClickInfoWindow(placeId) {
-      //TODO: modalでTLを表示
-      //this.$router.push({path: '/', query: { placeid: placeId}})
-      let routeData = this.$router.resolve({path: '/', query: {placeid: placeId}})
-      window.open(routeData.href, '_blank')
+    onClickInfoWindow(placeId, name) {
+      this.placeName = name
+      this.filteringParams = {
+        where: placeId
+      }
+      this.$modal.show("modal-timeline")
+    },
+    removepost() {
+      //remove
     },
     genPins() {
       this.PM.fetchusersavedplaces().then((places)=>{
@@ -157,13 +162,16 @@ export default {
               }
               var marker = new google.maps.Marker(tmpInfo)
               marker.addListener("click", () => {
+                this.onClickInfoWindow(tmpInfo.pid, tmpInfo.name)
                 var infoWindow = new google.maps.InfoWindow(tmpInfo)
                 infoWindow.open(this.map, marker)
+                /*
                 infoWindow.addListener('domready', () => {
                   document.getElementById('infowindowbutton_'+infoWindow.pid).addEventListener('click', () => {
                     this.onClickInfoWindow(infoWindow.pid)
                   })
                 })
+                */
               })
               this.markers.push(marker)
             }
@@ -206,12 +214,13 @@ export default {
     //フレンドのランキング作成
     this.PSM.fetchallposts().then((posts) => {
       this.PSM.makeArrayWithNames(posts).then((postswithname) => {
+        this.postsList = postswithname
         //
-        var postsOrderedbyDate = this.PSM.makeArrayOrderedbyDate(postswithname)
-        Object.keys(postsOrderedbyDate).forEach(k => {
-          Object.keys(postsOrderedbyDate[k]).forEach(i => {
+        this.postsOrderedbyDate = this.PSM.makeArrayOrderedbyDate(postswithname)
+        Object.keys(this.postsOrderedbyDate).forEach(k => {
+          Object.keys(this.postsOrderedbyDate[k]).forEach(i => {
             //console.log(postsOrderedbyDate[k][i])
-            var imgurls = postsOrderedbyDate[k][i].imgUrls
+            var imgurls = this.postsOrderedbyDate[k][i].imgUrls
             if (imgurls!=null&&imgurls!=undefined) {
               this.imagesinpostList.push(imgurls)
             }
@@ -299,6 +308,16 @@ $title-fontsize: 1.8rem;
   height: 100%;
   &__margin {
     margin: 30px 0 30px 0;
+  }
+  &__modal {
+    &__contents {
+      width: 100%;
+      height: 100%;
+      &__placeName {
+        padding: 20px 20px 0 20px;
+        font-size: $title-fontsize;
+      }
+    }
   }
   &__map {
     &__title {

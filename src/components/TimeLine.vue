@@ -49,7 +49,16 @@ export default {
       this.$emit("onChangedDispItemCount", this.TLItemsList.length)
     },
     propsParams() {
-      this.searchQueryText = this.propsParams.keyword
+      this.filterItems()
+      //
+    }
+  },
+  methods: {
+    removepost(postid) {
+      this.$emit("removepost", postid)
+    },
+    filterItems() {
+            this.searchQueryText = this.propsParams.keyword
       this.selectedDate = this.propsParams.when
       this.selectedPlaceId = this.propsParams.where
       this.selectedFriendId = this.propsParams.who
@@ -82,23 +91,20 @@ export default {
         })
       }
       this.TLItemsList = tmpRes
-      //
     }
   },
-  methods: {
-    removepost(postid) {
-      this.$emit("removepost", postid)
-    },
-  },
   mounted() {
+    this.filterItems()
   }
 }
 </script>
 
 <style scoped lang="scss">
 .TimeLine {
-  width: 100%;
+  padding: 20px;
   height: 100%;
+  overflow: scroll;
+  text-align: left;
   &__mesnopost {
     display: flex;
     justify-content: center;

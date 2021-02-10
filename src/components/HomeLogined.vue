@@ -442,7 +442,6 @@ export default {
       &__ReviewFromGenleArea {
         &__contents {
           padding-top: 10px;
-          /* TODO: レスポンシブに */
           height: 300px;
           overflow: scroll;
         }
@@ -450,9 +449,9 @@ export default {
     }
   }
   &__MainArea {
-    padding: 20px;
+    padding-bottom: 60px;
     background-color: $main-mainarea-bg;
-    overflow: scroll;
+    overflow: hidden;
     &__buttons {
       position: absolute;
       bottom: 10px;

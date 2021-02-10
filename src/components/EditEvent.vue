@@ -133,6 +133,7 @@ export default {
       nearbyPlaceList: [],
       placeList: [],
       placeListDisp: [],
+      placeListIdandName: {},
       friendsList: [],
       whereAdd: null,
       whoAdd: null,
@@ -174,6 +175,13 @@ export default {
     placeList() {
       // placeListDispはリスト表示用のリスト
       this.placeListDisp = this.placeList
+      //this.placeListIdandName = {}
+      this.placeList.map(e=>{
+        Object.keys(e.items).forEach(i => {
+          var item = e.items[i]
+          this.placeListIdandName[item.placeId] = item.name
+        })
+      })
       // 再度フィルタリング
       this.filteringPlacesListFromSearchbox()
     },
@@ -275,7 +283,6 @@ export default {
     loadFriends() {
       this.friendsList = []
       this.FM.fetchfriendsgroup().then((friedsgroupinfo) => {
-        console.log(friedsgroupinfo)
         if (new MyUtil().isObjNotEmpty(friedsgroupinfo)) {
           this.friendsList.push({
             name: "フレンド リスト",
@@ -679,29 +686,39 @@ export default {
             this.setFirebaseRealtimeDB(UserPostInfoObj)
           }
           this.hideModal('modal-loading')
+          //debug
         })
       } else {
-        alert("when, whereは必須項目です")
+        alert("日時, 場所は必須項目です")
       }
     },
     setFirebaseRealtimeDB(Obj) {
       // placeIdと名前を保存(同名で上書きされるので存在確認はしない)
       this.PM.getIDtoLocationAPI(Obj.where).then((res)=>{
-        this.PM.savemyplace(Obj.where, res).then(() => {
-          this.PSM.savepost(Obj).then(()=>{
-            alert("投稿しました！")
-            this.resetAll()
+        console.log(res)
+        if (res.name == null) {
+          res.name = this.placeListIdandName[Obj.where]
+        }
+        if (!new MyUtil().isAllValueNotEmpty([res.name])) {
+          console.log("GetPlaceName Error", error)
+          alert("投稿に失敗しました")
+        } else {
+          this.PM.savemyplace(Obj.where, res).then(() => {
+            this.PSM.savepost(Obj).then(()=>{
+              alert("投稿しました！")
+              this.resetAll()
+            })
+            .catch((error) => {
+              console.log("Firebase Error", error)
+              alert("投稿に失敗しました")
+            })
           })
           .catch((error) => {
-            console.log("Firebase Error", error)
+            // サーバがエラーを吐くなどしてJSONを正常に取得できないことがあるので、その場合はエラーを表示
             alert("投稿に失敗しました")
+            console.log("Firebase Error", error)
           })
-        })
-        .catch((error) => {
-          // サーバがエラーを吐くなどしてJSONを正常に取得できないことがあるので、その場合はエラーを表示
-          alert("投稿に失敗しました")
-          console.log("Firebase Error", error)
-        })
+        }
       })
     }
   },
