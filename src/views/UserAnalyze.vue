@@ -9,8 +9,12 @@
     <div class="useranalyze__tag">
       <div class="useranalyze__tag__loader" v-show="isLoadingTagImg"><img src="/img/svg-loading-spinner.svg" class="useranalyze__tag__loader__img"></div>
       <!--<img class="useranalyze__tag__svg" id="tagsvg" :src="tagWordcloudSVGUrl" v-on:load="onLoadSVG">-->
-      <div class="useranalyze__tag__svg" ref="tagsvg" v-html="tagWordcloudSVGChange"></div>
-      <img class="useranalyze__tag__img" ref="tagimg" :src="tagWordcloudUrl" v-on:load="()=>{if(this.loadingTagImgCount > 0){this.isLoadingTagImg = false;this.onSizeChange();} this.loadingTagImgCount+=1;}">
+      <!--<div class="useranalyze__tag__svg" ref="tagsvg" v-html="tagWordcloudSVGChange"></div>-->
+      <img class="useranalyze__tag__img" usemap="#taglink" id="tagimg" :src="tagWordcloudUrl" v-on:load="()=>{if(this.loadingTagImgCount > 0){this.isLoadingTagImg = false;/*this.onSizeChange();*/} this.loadingTagImgCount+=1;}">
+      <map name="taglink">
+        <!--<area shape="rect" coords="22,11,122,62" href="map1.html" v-for="item">-->
+        <area shape="rect" :coords="item.pos" v-on:click="()=>alert(item.text)" v-for="item in tagLinkList">
+      </map>
     </div>
     <div class="useranalyze__postlist useranalyze__margin" v-show="publicPostListsListDivided.count>0">
       <p class="useranalyze__postlist__title">投稿まとめ<img src="/img/edit-black-48dp/2x/outline_edit_black_48dp.png" class="editicon" v-on:click="gotoedit()" v-show="isOwner"></p>
@@ -82,8 +86,7 @@ export default {
       imagesinpostList: [],
       imagesinpostListDisp: [],
       tagWordcloudUrl: "https://tsumugu.tech/wordcloud/notfound.png",
-      tagWordcloudSVG: null,
-      tagWordcloudSVGChange: null,
+      tagLinkList: [],
       friendsinpostList: [],
       friendscountList: [],
       infowindows: [],
@@ -115,6 +118,9 @@ export default {
     }
   },
   methods: {
+    alert(mes) {
+      alert(mes)
+    },
     divideList(argList) {
       var splitNum = 6
       const range = (start, stop) => Array.from({ length: (stop - start) + 1}, (_, i) => start + i);
@@ -169,6 +175,7 @@ export default {
         })
       })
     },
+    /*
     onSizeChange() {
       var img = this.$refs.tagimg
       var svg = this.$refs.tagsvg
@@ -288,7 +295,6 @@ export default {
       })
       return retObj
     },
-    /*
     getTextPos(svg) {
       //console.log(svg)
       const domParser = new DOMParser();
@@ -304,6 +310,19 @@ export default {
           "style": "position:absolute;top:"+matrix.e+"px;left:"+matrix.f+"px;"
         })
         console.log(this.tagLinkList)
+      }
+    },
+    getTextPos(svg) {
+      const domParser = new DOMParser();
+      const parsedSVGDoc = domParser.parseFromString(svg, 'image/svg+xml');
+      const parsedSVG = parsedSVGDoc.childNodes[0];
+      var elements = parsedSVG.getElementsByTagName("text")
+      for (var i = 0; i<elements.length; i++) {
+        var matrix = elements[i].transform.animVal[0].matrix
+        this.tagLinkList.push({
+          "href": elements[i].textContent,
+          "pos": matrix.e+","+matrix.f+","+(matrix.e+100)+","+(matrix.f+50)
+        })
       }
     },
     */
@@ -378,14 +397,30 @@ export default {
       })
       if (Object.keys(tagUrlObj).length > 0) {
         var tagUrlStr = JSON.stringify(tagUrlObj)
-        axios.get("https://tsumugu.tech/wordcloud/gen.php?uid="+this.userId+"&words="+encodeURI(tagUrlStr)).then((res)=>{
+        var reqUrl = "https://tsumugu.tech/wordcloud/gen.php?uid="+this.userId+"&words="+encodeURI(tagUrlStr)
+        console.log(reqUrl)
+        axios.get(reqUrl).then((res)=>{
           this.tagWordcloudUrl = res.data.img_url
+          if (new MyUtil().isAllValueNotEmpty([res.data.labels])) {
+            res.data.labels.forEach(e => {
+              this.tagLinkList.push(e)
+            })
+          }
+          /*
+          this.tagLinkList.push({
+          "href": elements[i].textContent,
+          "pos": matrix.e+","+matrix.f+","+(matrix.e+100)+","+(matrix.f+50)
+        })
+          */
+          /*
           //this.tagWordcloudSVGUrl = res.data.svg_url
           axios.get(res.data.svg_url).then((res)=>{
-            this.tagWordcloudSVG = res.data
-            this.setSVGSize()
+            //this.tagWordcloudSVG = res.data
+            //this.setSVGSize()
             //this.getTextPos(this.tagWordcloudSVGUrl)
+            //this.getTextPos(res.data)
           })
+          */
         }).catch((error)=>{
           console.log("WordCloud Error", error)
           alert("画像の生成で問題が発生しました")
@@ -482,7 +517,16 @@ export default {
       alert("マップの読み込みに失敗しました")
     })
 
-    window.addEventListener('resize', this.onSizeChange, false)
+    //ImgMapをレスポンシブにするためにはjQuery時代の古のライブラリを使うしかなく...
+    this.$loadScript("https://cdnjs.cloudflare.com/ajax/libs/image-map-resizer/1.0.10/js/imageMapResizer.min.js")
+    .then(() => {
+      imageMapResize();
+    })
+    .catch(() => {
+      alert("読み込みに失敗しました")
+    })
+
+    //window.addEventListener('resize', this.onSizeChange, false)
   }
 }
 </script>
