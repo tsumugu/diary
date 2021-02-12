@@ -26,6 +26,6 @@ export default {
   background-color: $main-mainarea-bg;
   background-position: center center;
   background-size: cover;
-  border-radius: 0.25rem 0 0 0.25rem;
+  border-radius: 0.25rem;
 }
 </style>

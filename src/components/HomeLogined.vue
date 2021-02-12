@@ -65,7 +65,7 @@
         <div><img src="/img/create_new_folder-black-48dp/2x/outline_create_new_folder_black_48dp.png" class="HomeLogined__MainArea__buttons__button" v-on:click="openPostListModal"></div>
         <div><img src="/img/edit-black-48dp/2x/outline_edit_black_48dp.png" class="HomeLogined__MainArea__buttons__button" v-on:click="gotoRegist"></div>
       </div>
-      <TimeLine :propsPosts="postsList" :propsPostsOrderedbyDateList="postsOrderedbyDateList" :propsParams="filteringParams" :propsNotFoundMes="notFoundMes" @removepost='removepost' @onChangedDispItem="onChangedDispItem"></TimeLine>
+      <TimeLine :propsPosts="postsList" :propsPostsOrderedbyDateList="postsOrderedbyDateList" :propsParams="filteringParams" :propsNotFoundMes="notFoundMes" propsIsOwner=true @removepost='removepost' @onChangedDispItem="onChangedDispItem"></TimeLine>
     </div>
   </div>
 </template>

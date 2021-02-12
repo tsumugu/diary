@@ -27,7 +27,7 @@ const routes = [
     path: '/user/:userid',
     name: 'useranalyze',
     component: () => import('../views/UserAnalyze.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: false }
   },
   {
     path: '/editfriendslist',

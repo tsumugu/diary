@@ -3,15 +3,20 @@
     <modal class="useranalyze__modal" name="modal-timeline" :clickToClose="true" height="95%">
       <div class="useranalyze__modal__contents">
         <div class="useranalyze__modal__contents__placeName">{{placeName}}</div>
-        <TimeLine :propsPosts="postsList" :propsPostsOrderedbyDateList="postsOrderedbyDate" :propsParams="filteringParams" propsNotFoundMes="このリストに含まれている投稿はありません" @removepost='removepost'></TimeLine>
+        <TimeLine :propsPosts="postsList" :propsPostsOrderedbyDateList="postsOrderedbyDate" :propsParams="filteringParams" :propsIsOwner="isOwner" propsNotFoundMes="このリストに含まれている投稿はありません" @removepost='removepost'></TimeLine>
       </div>
     </modal>
     <div class="useranalyze__tag">
       <div class="useranalyze__tag__loader" v-show="isLoadingTagImg"><img src="/img/svg-loading-spinner.svg" class="useranalyze__tag__loader__img"></div>
+      <!--<img class="useranalyze__tag__svg" id="tagsvg" :src="tagWordcloudSVGUrl" v-on:load="onLoadSVG">-->
+      <!--<div class="useranalyze__tag__svg" id="tagsvg" v-html="tagWordcloudSVGUrl"></div>-->
+      <div class="useranalyze__tag__link">
+        <span v-for="link in tagLinkList" :style="link.style">{{link.text}}</span>
+      </div>
       <img class="useranalyze__tag__img" :src="tagWordcloudUrl" v-on:load="()=>{if(this.loadingTagImgCount > 0){this.isLoadingTagImg = false;} this.loadingTagImgCount+=1;}">
     </div>
     <div class="useranalyze__postlist useranalyze__margin" v-show="publicPostListsListDivided.count>0">
-      <p class="useranalyze__postlist__title">投稿まとめ<img src="/img/edit-black-48dp/2x/outline_edit_black_48dp.png" class="editicon" v-on:click="gotoedit()"></p>
+      <p class="useranalyze__postlist__title">投稿まとめ<img src="/img/edit-black-48dp/2x/outline_edit_black_48dp.png" class="editicon" v-on:click="gotoedit()" v-show="isOwner"></p>
       <div class="useranalyze__postlist__list">
         <!---->
         <UAPostListItem :propsItem="publicPostListsListDivided.first" @onClickPostList="onClickPostList" />
@@ -26,14 +31,16 @@
       <p class="useranalyze__map__title">マップ</p>
       <div id="map"></div>
     </div>
+    <!--
     <div class="useranalyze__friends useranalyze__margin" v-show="friendscountList.length>0">
       <p class="useranalyze__friends__title">フレンドランキング</p>
       <div v-for="(friend, index) in friendscountList"><small>No.{{index+1}}</small> {{friend.name}} ({{friend.count}}件)</div>
     </div>
+    -->
     <div class="useranalyze__photos" v-show="imagesinpostListDisp.count>0">
       <p class="useranalyze__photos__title">写真</p>
       <div>
-        <SquareImageViewer :propsSrc="src" :propsKey="key" v-for="(src,key) in imagesinpostListDisp.all" @onClick="onClickImage"></SquareImageViewer>
+        <SquareImageViewer :propsSrc="src" :propsKey="key" v-for="(src,key) in imagesinpostListDisp.all" @onClick="onClickImage" style="cursor: pointer;"></SquareImageViewer>
       </div>
     </div>
   </div>
@@ -62,6 +69,7 @@ export default {
   data() {
     return {
       userId: null,
+      isOwner: false,
       PM: null,
       FM: null,
       PSM: null,
@@ -77,6 +85,7 @@ export default {
       imagesinpostList: [],
       imagesinpostListDisp: [],
       tagWordcloudUrl: "https://tsumugu.tech/wordcloud/notfound.png",
+      tagWordcloudSVGUrl: null,
       friendsinpostList: [],
       friendscountList: [],
       infowindows: [],
@@ -92,7 +101,8 @@ export default {
       loadingTagImgCount: 0,
       isMoreShowImg: false,
       filteringParams: null,
-      placeName: null
+      placeName: null,
+      tagLinkList: []
     }
   },
   watch: {
@@ -159,6 +169,31 @@ export default {
         })
       })
     },
+    getTextPos(svg) {
+      //console.log(svg)
+      const domParser = new DOMParser();
+      const parsedSVGDoc = domParser.parseFromString(svg, 'image/svg+xml');
+      const parsedSVG = parsedSVGDoc.childNodes[0];
+      var elements = parsedSVG.getElementsByTagName("text")
+      for (var i = 0; elements.length; i++) {
+        var matrix = elements[i].transform.animVal[0].matrix
+        /*
+        this.tagLinkList.push({
+          "text": elements[i].textContent,
+          "x": matrix.e,
+          "y": matrix.f,
+          "style": "position:absolute;top:"+matrix.e+"px;left:"+matrix.f+"px;"
+        })
+        */
+       this.tagLinkList.push({
+          "text": elements[i].textContent,
+          "x": matrix.e,
+          "y": matrix.f,
+          "style": "position:absolute;top:"+matrix.e+"px;left:"+matrix.f+"px;"
+        })
+        console.log(this.tagLinkList)
+      }
+    },
     genPins() {
       this.PM.fetchusersavedplaces().then((places)=>{
         if (places != null && places != undefined) {
@@ -212,6 +247,15 @@ export default {
     this.PM = new PlacesManager(axios, database, {uid: this.userId})
     this.FM = new FriendsManager(axios, database, {uid: this.userId})
     this.PSM = new PostsManager(axios, database, {uid: this.userId}, this.PM, this.FM)
+
+    firebase.auth().onAuthStateChanged(user => {
+      if (user == null) {
+        this.isOwner = false
+      } else {
+        this.isOwner = (user.uid==this.userId)
+      }
+    })
+
     //
     this.PSM.fetchalltags().then((tags) => {
       var tagUrlObj = {}
@@ -221,7 +265,18 @@ export default {
       })
       if (Object.keys(tagUrlObj).length > 0) {
         var tagUrlStr = JSON.stringify(tagUrlObj)
-        this.tagWordcloudUrl = "https://tsumugu.tech/wordcloud/gen.php?uid="+this.userId+"&words="+encodeURI(tagUrlStr)
+        axios.get("https://tsumugu.tech/wordcloud/gen.php?uid="+this.userId+"&words="+encodeURI(tagUrlStr)).then((res)=>{
+          this.tagWordcloudUrl = res.data.img_url
+          //this.tagWordcloudSVGUrl = res.data.svg_url
+          axios.get(res.data.svg_url).then((res)=>{
+            this.tagWordcloudSVGUrl = res.data
+            this.getTextPos(this.tagWordcloudSVGUrl)
+          })
+        }).catch((error)=>{
+          console.log("WordCloud Error", error)
+          alert("画像の生成で問題が発生しました")
+        })
+        //this.tagWordcloudUrl = "https://tsumugu.tech/wordcloud/gen.php?uid="+this.userId+"&words="+encodeURI(tagUrlStr)
       } else {
         this.isLoadingTagImg = true
       }
@@ -361,9 +416,6 @@ $title-fontsize: 1.8rem;
       margin:  0 0 0 0;
       font-size: $title-fontsize;
     }
-    &__img {
-      width: 100%;
-    }
     &__loader {
       position: absolute;
       display: flex;
@@ -375,6 +427,14 @@ $title-fontsize: 1.8rem;
         width: 100px;
         height: 100px;
       }
+    }
+    &__link {
+      position: absolute;
+      width: 100%;
+      height: 100px;
+    }
+    &__img {
+      width: 100%;
     }
   }
   &__photos {

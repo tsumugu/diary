@@ -4,7 +4,7 @@
     <div class="TimeLine__Post" v-for="postsList in TLItemsListDisp">
       <div class="TimeLine__Post__Contents" v-for="(posts, day) in postsList">
         <div class="TimeLine__Post__Contents__title">{{day.replaceAll("-", "/")}}</div>
-        <div v-for="post in posts"><TLItem :propsItem=post @removepost='removepost' :key="post.when" /></div>
+        <div v-for="post in posts"><TLItem :propsItem=post @removepost='removepost' :propsIsOwner="propsIsOwner" :key="post.when" /></div>
       </div>
     </div>
   </div>
@@ -22,7 +22,8 @@ export default {
     propsPosts: null,
     propsParams: null,
     propsPostsOrderedbyDateList: null,
-    propsNotFoundMes: null
+    propsNotFoundMes: null,
+    propsIsOwner: true
   },
   data() {
     return {
