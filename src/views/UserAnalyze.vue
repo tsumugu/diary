@@ -8,13 +8,7 @@
     </modal>
     <div class="useranalyze__tag">
       <div class="useranalyze__tag__loader" v-show="isLoadingTagImg"><img src="/img/svg-loading-spinner.svg" class="useranalyze__tag__loader__img"></div>
-      <!--<img class="useranalyze__tag__svg" id="tagsvg" :src="tagWordcloudSVGUrl" v-on:load="onLoadSVG">-->
-      <!--<div class="useranalyze__tag__svg" ref="tagsvg" v-html="tagWordcloudSVGChange"></div>-->
-      <img class="useranalyze__tag__img" usemap="#taglink" id="tagimg" :src="tagWordcloudUrl" v-on:load="()=>{if(this.loadingTagImgCount > 0){this.isLoadingTagImg = false;/*this.onSizeChange();*/} this.loadingTagImgCount+=1;}">
-      <map name="taglink">
-        <!--<area shape="rect" coords="22,11,122,62" href="map1.html" v-for="item">-->
-        <area shape="rect" :coords="item.pos" v-on:click="()=>alert(item.text)" v-for="item in tagLinkList">
-      </map>
+      <img class="useranalyze__tag__img" :src="tagWordcloudUrl" v-on:load="()=>{if(this.loadingTagImgCount > 0){this.isLoadingTagImg = false;/*this.onSizeChange();*/} this.loadingTagImgCount+=1;}">
     </div>
     <div class="useranalyze__postlist useranalyze__margin" v-show="publicPostListsListDivided.count>0">
       <p class="useranalyze__postlist__title">投稿まとめ<img src="/img/edit-black-48dp/2x/outline_edit_black_48dp.png" class="editicon" v-on:click="gotoedit()" v-show="isOwner"></p>
@@ -86,7 +80,6 @@ export default {
       imagesinpostList: [],
       imagesinpostListDisp: [],
       tagWordcloudUrl: "https://tsumugu.tech/wordcloud/notfound.png",
-      tagLinkList: [],
       friendsinpostList: [],
       friendscountList: [],
       infowindows: [],
@@ -175,157 +168,6 @@ export default {
         })
       })
     },
-    /*
-    onSizeChange() {
-      var img = this.$refs.tagimg
-      var svg = this.$refs.tagsvg
-      this.imgWidth = img.clientWidth
-      this.imgHeight = img.clientHeight
-      svg.style.width = this.imgWidth+"px"
-      svg.style.height = this.imgHeight+"px"
-      this.setSVGSize()
-    },
-    setSVGSize() {
-      if (this.imgWidth!=0&&this.imgHeight!=0&&this.tagWordcloudSVG!=null) {
-        //this.tagWordcloudSVGChange = this.genSVG(this.imgWidth, this.imgHeight).outerHTML
-      }
-    },
-    genSVG(width, height) {
-      const domParser = new DOMParser()
-      const parsedSVGDoc = domParser.parseFromString(this.tagWordcloudSVG, 'image/svg+xml')
-      const parsedSVG = parsedSVGDoc.childNodes[0]
-      var elements = parsedSVG.getElementsByTagName("text")
-      var diffWidth = 1280-this.imgWidth
-      var diffHeight = 720-this.imgHeight
-
-      let ns = "http://www.w3.org/2000/svg"
-      let svg = document.createElementNS(ns, "svg")
-      svg.setAttribute("width", width)
-      svg.setAttribute("height", height)
-      let rect = document.createElementNS(ns, "rect")
-      rect.setAttribute("width", width)
-      rect.setAttribute("height", height)
-      rect.setAttribute("style", "fill:transparent;")
-      svg.appendChild(rect)
-      for (var i = 0; i<elements.length; i++) {
-        let text = document.createElementNS(ns, "text")
-        text.appendChild(document.createTextNode( elements[i].textContent))
-        var attributes = elements[i].attributes
-        for (var j = 0; j<attributes.length; j++) {
-          var name = attributes[j].name
-          var value = attributes[j].nodeValue
-          if (name == "transform") {
-            var obj = this.convertTransformtextToObj(value)
-            var culcDiffObj = this.calculateTransformDiff(obj, this.imgWidth, this.imgHeight, diffWidth, diffHeight)
-            value = this.convertObjToTransformtext(culcDiffObj)
-          } else if (name == "font-size") {
-            value = value*0.75
-          }
-          text.setAttributeNS(null, name, value)
-        }
-        //text.setAttribute("style", "transform: scale(1,1);")
-        svg.appendChild(text)
-      }
-      return svg
-    },
-    convertTransformtextToObj(transformText) {
-      var resObj = {}
-      transformText.split(" ").forEach(e => {
-        var title = e.split(",")[0].split("(")[0]
-        if (e.split(",")[1] != undefined) {
-          var x = e.split(",")[0].split("(")[1]
-          var y = e.split(",")[1].replace(")", "")
-          resObj[title] = {
-            "x": x,
-            "y": y
-          }
-        } else {
-          var rotate = e.split(",")[0].split("(")[1].replace(")", "")
-          resObj[title] = {
-            "rotate": rotate
-          }
-        }
-      })
-      return resObj
-    },
-    convertObjToTransformtext(obj) {
-      var resArray = []
-      Object.keys(obj).forEach(k => {
-        if (k == "translate") {
-          resArray.push("translate("+obj[k].x+", "+obj[k].y+")")
-        } else {
-          resArray.push("rotate("+obj[k].rotate+")")
-        }
-      })
-      return resArray.join(" ")
-    },
-    calculateTransformDiff(obj, width, height, diffWidth, diffHeight) {
-      var halfwidth = width/2
-      var halfheight = height/2
-      var retObj = {}
-      Object.keys(obj).forEach(k => {
-        if (k == "translate") {
-          var x = parseInt(obj[k].x)
-          var y = parseInt(obj[k].y)
-          var calculatedX = x-diffWidth
-          var calculatedY = y-diffHeight
-          if (calculatedX<halfwidth) {
-            // 左半分
-            calculatedX+=200
-          } else if (calculatedX>halfwidth) {
-            // 右半分
-            calculatedX+=130
-          }
-          if (calculatedY<halfheight) {
-            // 上半分
-            calculatedY+=120
-          } else if (calculatedY>halfheight) {
-            // 下半分
-            calculatedY+=100
-          }
-          retObj[k] = {
-            "x": calculatedX,
-            "y": calculatedY
-          }
-        } else {
-          retObj[k] = {
-           "rotate": obj[k].rotate
-          }
-        }
-      })
-      return retObj
-    },
-    getTextPos(svg) {
-      //console.log(svg)
-      const domParser = new DOMParser();
-      const parsedSVGDoc = domParser.parseFromString(svg, 'image/svg+xml');
-      const parsedSVG = parsedSVGDoc.childNodes[0];
-      var elements = parsedSVG.getElementsByTagName("text")
-      for (var i = 0; elements.length; i++) {
-        var matrix = elements[i].transform.animVal[0].matrix
-        this.tagLinkList.push({
-          "text": elements[i].textContent,
-          "x": matrix.e,
-          "y": matrix.f,
-          "style": "position:absolute;top:"+matrix.e+"px;left:"+matrix.f+"px;"
-        })
-        console.log(this.tagLinkList)
-      }
-    },
-    getTextPos(svg) {
-      const domParser = new DOMParser();
-      const parsedSVGDoc = domParser.parseFromString(svg, 'image/svg+xml');
-      const parsedSVG = parsedSVGDoc.childNodes[0];
-      var elements = parsedSVG.getElementsByTagName("text")
-      for (var i = 0; i<elements.length; i++) {
-        var matrix = elements[i].transform.animVal[0].matrix
-        this.tagLinkList.push({
-          "href": elements[i].textContent,
-          "pos": matrix.e+","+matrix.f+","+(matrix.e+100)+","+(matrix.f+50)
-        })
-      }
-    },
-    */
     genPins() {
       this.PM.fetchusersavedplaces().then((places)=>{
         if (places != null && places != undefined) {
@@ -347,13 +189,6 @@ export default {
                 this.onClickInfoWindow(tmpInfo.pid, tmpInfo.name)
                 var infoWindow = new google.maps.InfoWindow(tmpInfo)
                 infoWindow.open(this.map, marker)
-                /*
-                infoWindow.addListener('domready', () => {
-                  document.getElementById('infowindowbutton_'+infoWindow.pid).addEventListener('click', () => {
-                    this.onClickInfoWindow(infoWindow.pid)
-                  })
-                })
-                */
               })
               this.markers.push(marker)
             }
@@ -361,7 +196,6 @@ export default {
           // MarkerClustererに渡して表示
           const markerClusterer = new MarkerClusterer(this.map, this.markers, {
             imagePath: "https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m"
-            //imagePath: "/img/markerclusterer/m"
           })
           const styles = markerClusterer.getStyles();
           for (let i=0; i<styles.length; i++) {
@@ -401,31 +235,10 @@ export default {
         console.log(reqUrl)
         axios.get(reqUrl).then((res)=>{
           this.tagWordcloudUrl = res.data.img_url
-          if (new MyUtil().isAllValueNotEmpty([res.data.labels])) {
-            res.data.labels.forEach(e => {
-              this.tagLinkList.push(e)
-            })
-          }
-          /*
-          this.tagLinkList.push({
-          "href": elements[i].textContent,
-          "pos": matrix.e+","+matrix.f+","+(matrix.e+100)+","+(matrix.f+50)
-        })
-          */
-          /*
-          //this.tagWordcloudSVGUrl = res.data.svg_url
-          axios.get(res.data.svg_url).then((res)=>{
-            //this.tagWordcloudSVG = res.data
-            //this.setSVGSize()
-            //this.getTextPos(this.tagWordcloudSVGUrl)
-            //this.getTextPos(res.data)
-          })
-          */
         }).catch((error)=>{
           console.log("WordCloud Error", error)
           alert("画像の生成で問題が発生しました")
         })
-        //this.tagWordcloudUrl = "https://tsumugu.tech/wordcloud/gen.php?uid="+this.userId+"&words="+encodeURI(tagUrlStr)
       } else {
         this.isLoadingTagImg = true
       }
@@ -449,11 +262,6 @@ export default {
         //
         //
         postswithname.forEach(e => {
-          /*
-          if (e.imgUrls!=null&&e.imgUrls!=undefined) {
-            this.imagesinpostList.push(e.imgUrls)
-          }
-          */
           if (e.who.friendId!="null"&&e.who.friendId!=null&&e.who.friendId!=undefined&&e.who.name!="null"&&e.who.name!=null&&e.who.name!=undefined) {
             this.friendsinpostList.push(e.who)
           }
@@ -516,17 +324,6 @@ export default {
       // Failed to fetch script
       alert("マップの読み込みに失敗しました")
     })
-
-    //ImgMapをレスポンシブにするためにはjQuery時代の古のライブラリを使うしかなく...
-    this.$loadScript("https://cdnjs.cloudflare.com/ajax/libs/image-map-resizer/1.0.10/js/imageMapResizer.min.js")
-    .then(() => {
-      imageMapResize();
-    })
-    .catch(() => {
-      alert("読み込みに失敗しました")
-    })
-
-    //window.addEventListener('resize', this.onSizeChange, false)
   }
 }
 </script>
