@@ -61,11 +61,17 @@
         </div>
       </div>
     </modal>
+    <modal class="HomeLogined__modal" name="modal-registpost" :clickToClose="true" height="95%">
+      <div class="HomeLogined__modal__contents">
+        <div style="height:40px;"><img src="/img/close-black-48dp/2x/outline_close_black_48dp.png" v-on:click='()=>{this.$modal.hide("modal-registpost")}' class="icon_clickable" style="width:40px;height:40px;text-align:left;"><img src="/img/open_in_new-black-48dp/2x/outline_open_in_new_black_48dp.png" title="新しいウインドウで投稿ページを開く" v-on:click="gotoRegist" class="icon_clickable" style="width:40px;height:40px;text-align:right;float:right;"></div>
+        <EditEvent />
+      </div>
+    </modal>
     <div class="HomeLogined__MainArea">
       <div class="HomeLogined__MainArea__buttons">
         <div><img src="/img/share-black-48dp/2x/baseline_share_black_48dp.png" class="HomeLogined__MainArea__buttons__button" v-on:click="gotoUserpage"></div>
         <div><img src="/img/create_new_folder-black-48dp/2x/outline_create_new_folder_black_48dp.png" class="HomeLogined__MainArea__buttons__button" v-on:click="openPostListModal"></div>
-        <div><img src="/img/edit-black-48dp/2x/outline_edit_black_48dp.png" class="HomeLogined__MainArea__buttons__button" v-on:click="gotoRegist"></div>
+        <div><img src="/img/edit-black-48dp/2x/outline_edit_black_48dp.png" class="HomeLogined__MainArea__buttons__button" v-on:click='()=>{this.$modal.show("modal-registpost")}''></div>
       </div>
       <TimeLine :propsPosts="postsList" :propsPostsOrderedbyDateList="postsOrderedbyDateList" :propsParams="filteringParams" :propsNotFoundMes="notFoundMes" propsIsOwner=true @removepost='removepost' @onChangedDispItem="onChangedDispItem"></TimeLine>
     </div>
@@ -77,18 +83,20 @@ import axios from 'axios'
 import firebase from 'firebase'
 var database = firebase.database()
 import formatISO  from 'date-fns/formatISO'
+import DatePicker from 'v-calendar/lib/components/date-picker.umd'
 import PlacesManager from '../assets/PlacesManager.js'
 import FriendsManager from '../assets/FriendsManager.js'
 import PostsManager from '../assets/PostsManager.js'
 import MyUtil from '../assets/MyUtil.js'
 import TimeLine from '@/components/TimeLine.vue'
-import DatePicker from 'v-calendar/lib/components/date-picker.umd'
+import EditEvent from '@/components/EditEvent.vue'
 
 export default {
   name: 'HomeLogined',
   components: {
     DatePicker,
-    TimeLine
+    TimeLine,
+    EditEvent
   },
   props: {
     propsUserInfo: null
