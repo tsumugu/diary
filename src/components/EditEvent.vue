@@ -13,9 +13,13 @@
         <!-- -->
         <div class="editevent__body__signined__imgpreview">
           <div v-for="(src, key) in previewImageList">
-            <button v-on:click="removeImgAtInput(src)">削除</button>
-            <button v-on:click="getEXIFinfo('prev-' + key)">画像に埋め込まれているデータから日時と場所を入力</button>
-            <img v-bind:src="src" v-bind:id="'prev-' + key" :key="key">
+            <div class="editevent__body__signined__imgpreview__item">
+              <div class="editevent__body__signined__imgpreview__item__buttons">
+                <img src="/img/delete-black-48dp/2x/outline_delete_black_48dp.png" class="editevent__body__signined__imgpreview__item__buttons__button icon_clickable" v-on:click="removeImgAtInput(src)">
+                <img src="/img/edit_location-black-48dp/2x/outline_edit_location_black_48dp.png" title="画像に埋め込まれているデータから日時と場所を入力" class="editevent__body__signined__imgpreview__item__buttons__button icon_clickable" v-on:click="getEXIFinfo('prev-' + key)">
+              </div>
+              <img v-bind:src="src" v-bind:id="'prev-' + key" :key="key">
+            </div>
           </div>
         </div>
         <div class="editevent__body__signined__upload"><input type="file" ref="imgInput" @change="onFileChange" accept="image/*" multiple /></div>
@@ -23,7 +27,7 @@
         <div class="editevent__body__signined__where"><div class="editevent__body__signined__where__contents"><div class="icon_img_conteiner" v-on:click="showModal('modal-where')"><img src="/img/location_on-black-48dp/2x/baseline_location_on_black_48dp.png" class="icon_img"> {{whereName==null?"未入力":whereName}}</div></div></div>
         <modal class="editevent__modal" name="modal-where" :clickToClose="true" height="95%">
           <div class="editevent__modal__contents">
-            <button v-on:click="hideModal('modal-where')">Close</button>
+            <div style="height:40px;text-align:left;"><img src="/img/close-black-48dp/2x/outline_close_black_48dp.png" v-on:click="hideModal('modal-where')" class="icon_clickable" style="width:40px;height:40px;"></div>
             <div><button v-on:click="searchNearbyPlaceByGPS">GPSを更新</button></div>
             <div><input type="text" v-model="whereAdd" @keyup.enter="onAddWhereButton" /></div>
             <ul>
@@ -51,7 +55,7 @@
         <div class="editevent__body__signined__who"><div class="editevent__body__signined__who__contents"><div class="icon_img_conteiner" v-on:click="showModal('modal-who')"><img src="/img/group-black-48dp/2x/outline_group_black_48dp.png" class="icon_img"> {{whoName==null?"未入力":whoName}}</div></div></div>
         <modal class="editevent__modal" name="modal-who" :clickToClose="true" height="95%">
           <div class="editevent__modal__contents">
-            <button v-on:click="hideModal('modal-who')">Close</button>
+            <div style="height:40px;text-align:left;"><img src="/img/close-black-48dp/2x/outline_close_black_48dp.png" v-on:click="hideModal('modal-who')" class="icon_clickable" style="width:40px;height:40px;"></div>
             <ul>
               <!---->
               <li>
@@ -460,7 +464,7 @@ export default {
           console.log("Places Manager Error", error)
         })
       } else {
-        alert("位置情報が埋め込まれていないようです...")
+        alert("画像に情報が埋め込まれていないようです...")
       }
     },
     searchNearbyPlaceByGPS() {
@@ -778,6 +782,26 @@ ul {
       padding: 20px;
       width: 100%;
       height: 100%;
+      &__imgpreview {
+        text-align: center;
+        &__item {
+          display: inline-block;
+          position: relative;
+          &__buttons {
+            position: absolute;
+            top: 0;
+            left: 0;
+            margin: 10px;
+            &__button {
+              width: 40px;
+              height: 40px;
+            }
+          }
+          &>img {
+            border: 1px solid $main-border;
+          }
+        }
+      }
       &__datepicker{
         &__input {
           border: none;

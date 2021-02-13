@@ -2,6 +2,7 @@
   <div class="useranalyze">
     <modal class="useranalyze__modal" name="modal-timeline" :clickToClose="true" height="95%">
       <div class="useranalyze__modal__contents">
+        <div style="padding:20px 20px 0 20px;height:40px;text-align:left;"><img src="/img/close-black-48dp/2x/outline_close_black_48dp.png" v-on:click='()=>{this.$modal.hide("modal-timeline")}' class="icon_clickable" style="width:40px;height:40px;"></div>
         <div class="useranalyze__modal__contents__placeName">{{placeName}}</div>
         <TimeLine :propsPosts="postsList" :propsPostsOrderedbyDateList="postsOrderedbyDate" :propsParams="filteringParams" :propsIsOwner="isOwner" propsNotFoundMes="このリストに含まれている投稿はありません" @removepost='removepost'></TimeLine>
       </div>
@@ -341,7 +342,7 @@ $title-fontsize: 1.8rem;
       width: 100%;
       height: 100%;
       &__placeName {
-        padding: 20px 20px 0 20px;
+        padding: 0 20px 0 20px;
         font-size: $title-fontsize;
       }
     }

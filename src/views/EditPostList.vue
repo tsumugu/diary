@@ -5,6 +5,7 @@
       <div class="editpostlist__body__signined" v-if="isSignIn">
         <modal class="editpostlist__modal" name="modal-editpostlist" :clickToClose="true" height="95%">
           <div class="editpostlist__modal__contents">
+            <div style="height:40px;text-align:left;"><img src="/img/close-black-48dp/2x/outline_close_black_48dp.png" v-on:click='()=>{this.$modal.hide("modal-editpostlist")}' class="icon_clickable" style="width:40px;height:40px;"></div>
             <div class="editpostlist__modal__contents__div">
               <button v-on:click="onClickedDeleteButton">このまとめを削除する</button>
             </div>

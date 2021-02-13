@@ -5,6 +5,7 @@
         <div class="editfriends__body__signined" v-if="isSignIn">
           <modal name="modal-editfriends" :clickToClose="true" height="95%">
             <div style="padding: 20px;">
+              <div style="height:40px;text-align:left;"><img src="/img/close-black-48dp/2x/outline_close_black_48dp.png" v-on:click='()=>{this.$modal.hide("modal-editfriends")}' class="icon_clickable" style="width:40px;height:40px;"></div>
               <div>
                 <h2>名前編集</h2>
                 <input type="text" v-model="friendName">
