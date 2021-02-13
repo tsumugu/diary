@@ -3,7 +3,7 @@
     <div class="HomeLogined__ColumnLeftArea">
       <div class="HomeLogined__ColumnLeftArea__HeaderArea"><div class="HomeLogined__ColumnLeftArea__HeaderArea__title">Diary</div><div class="HomeLogined__ColumnLeftArea__HeaderArea__menubutton"><img src="/img/more_horiz-white-48dp/2x/outline_more_horiz_white_48dp.png" class="HomeLogined__ColumnLeftArea__HeaderArea__menubutton__img"></div></div>
       <div class="HomeLogined__ColumnLeftArea__ReviewthedayArea">
-        <div class="HomeLogined__ColumnLeftArea__ReviewthedayArea__title">絞り込む ({{this.postsList.length}}件中{{this.TLItemsListDisp.length}}件表示中)</div>
+        <div class="HomeLogined__ColumnLeftArea__ReviewthedayArea__title">絞り込む ({{this.postsList.length}}件中{{this.TLItemsList.length}}件表示中)</div>
         <div class="HomeLogined__ColumnLeftArea__ReviewthedayArea__ReviewFromKeywordArea"><input type="text" v-model="searchQueryText" placeholder="キーワードを入力 (例: 伊豆旅行2021)"></div>
         <!--<hr class="HomeLogined__ColumnLeftArea__ReviewthedayArea__hr">-->
         <div class="HomeLogined__ColumnLeftArea__ReviewthedayArea__ReviewFromGenleArea">
@@ -63,6 +63,7 @@
     </modal>
     <div class="HomeLogined__MainArea">
       <div class="HomeLogined__MainArea__buttons">
+        <div><img src="/img/share-black-48dp/2x/baseline_share_black_48dp.png" class="HomeLogined__MainArea__buttons__button" v-on:click="gotoUserpage"></div>
         <div><img src="/img/create_new_folder-black-48dp/2x/outline_create_new_folder_black_48dp.png" class="HomeLogined__MainArea__buttons__button" v-on:click="openPostListModal"></div>
         <div><img src="/img/edit-black-48dp/2x/outline_edit_black_48dp.png" class="HomeLogined__MainArea__buttons__button" v-on:click="gotoRegist"></div>
       </div>
@@ -166,6 +167,9 @@ export default {
     },
     gotoRegist() {
       window.open('https://diary.tsumugu2626.xyz/regist')
+    },
+    gotoUserpage() {
+      window.open("https://diary.tsumugu2626.xyz/user/"+this.userInfo.uid)
     },
     removepost(postid) {
       new MyUtil().confirmExPromise("この投稿を本当に削除しますか?").then(() => {
@@ -391,7 +395,6 @@ export default {
   },
   mounted() {
     this.userInfo = this.propsUserInfo
-    console.log("http://localhost:8080/user/"+this.userInfo.uid)
   }
 }
 </script>
