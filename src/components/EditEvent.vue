@@ -340,10 +340,13 @@ export default {
           this.postItem = tlitem
           this.whenBeforeFormated = new Date(tlitem.when)
           this.what = tlitem.what
+          //this.uploadFiles = tlitem.imgUrls==undefined ? [] : tlitem.imgUrls
           this.previewImageList = tlitem.imgUrls==undefined ? [] : tlitem.imgUrls
           this.where = tlitem.where
           this.who = tlitem.who
-          this.tags = tlitem.tags
+          if (new MyUtil().isAllValueNotEmpty([tlitem.tags])) {
+            this.tags = tlitem.tags.concat([])
+          }
         } else {
           alert("投稿が存在しないようです。")
         }
@@ -529,6 +532,7 @@ export default {
         }).then((dt)=>{
           this.$refs.imgInput.files = dt.files;
           // 更新を反映させる
+          this.previewImageList = []
           this.uploadFiles = this.$refs.imgInput.files
         })
       }
@@ -565,8 +569,19 @@ export default {
       }
     },
     onFileChange(e) {
+      if (this.previewImageList.filter(e=>e.includes("https://i.readme.tsumugu2626.xyz/")).length != 0) {
+
+      }
       const files = e.target.files || e.dataTransfer.files
-      this.uploadFiles = files
+      //this.uploadFiles = files
+      if (this.previewImageList.filter(e=>e.includes("https://i.readme.tsumugu2626.xyz/")).length == 0) {
+        this.previewImageList = []
+      }
+      if (this.uploadFiles == null) {
+        this.uploadFiles = files
+      } else {
+        this.uploadFiles = [...this.uploadFiles, ...files]
+      }
     },
     onChangePlaceList() {
       this.placeList = []
@@ -702,7 +717,6 @@ export default {
     setFirebaseRealtimeDB(Obj) {
       // placeIdと名前を保存(同名で上書きされるので存在確認はしない)
       this.PM.getIDtoLocationAPI(Obj.where).then((res)=>{
-        console.log(res)
         if (res.name == null) {
           res.name = this.placeListIdandName[Obj.where]
         }
