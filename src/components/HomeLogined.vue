@@ -16,28 +16,28 @@
               <div class="tabs__wrapper__items">
                 <img src="/img/watch_later-black-48dp/2x/outline_watch_later_black_48dp.png" v-show="activeNum!==0" class="tabs__wrapper__items__img">
                 <img src="/img/watch_later-white-48dp/2x/outline_watch_later_white_48dp.png" v-show="activeNum===0" class="tabs__wrapper__items__img">
-                <p class="tabs__wrapper__items__text" v-bind:class="{'textwhite': activeNum===0}">日時</p>
+                <p class="tabs__wrapper__items__text" v-bind:class="{'tabactivetextcolor': activeNum===0}">日時</p>
               </div>
             </div>
             <div class="HomeLogined__ColumnLeftArea__ReviewthedayArea__ReviewFromGenleArea__tabs__tag tabs__wrapper tabs__wrapper--border" v-on:click="onClickTab(1)" v-bind:class="{'tabs__wrapper--active': activeNum === 1}">
               <div class="tabs__wrapper__items">
                 <img src="/img/sell-black-48dp/2x/outline_sell_black_48dp.png" v-show="activeNum!==1" class="tabs__wrapper__items__img">
                 <img src="/img/sell-white-48dp/2x/outline_sell_white_48dp.png" v-show="activeNum===1" class="tabs__wrapper__items__img">
-                <p class="tabs__wrapper__items__text" v-bind:class="{'textwhite': activeNum===1}">タグ</p>
+                <p class="tabs__wrapper__items__text" v-bind:class="{'tabactivetextcolor': activeNum===1}">タグ</p>
               </div>
             </div>
             <div class="HomeLogined__ColumnLeftArea__ReviewthedayArea__ReviewFromGenleArea__tabs__place tabs__wrapper tabs__wrapper--border" v-on:click="onClickTab(2)" v-bind:class="{'tabs__wrapper--active': activeNum === 2}">
               <div class="tabs__wrapper__items">
                 <img src="/img/location_on-black-48dp/2x/baseline_location_on_black_48dp.png" v-show="activeNum!==2" class="tabs__wrapper__items__img">
                 <img src="/img/location_on-white-48dp/2x/baseline_location_on_white_48dp.png" v-show="activeNum===2" class="tabs__wrapper__items__img">
-                <p class="tabs__wrapper__items__text" v-bind:class="{'textwhite': activeNum===2}">場所</p>
+                <p class="tabs__wrapper__items__text" v-bind:class="{'tabactivetextcolor': activeNum===2}">場所</p>
               </div>
             </div>
             <div class="HomeLogined__ColumnLeftArea__ReviewthedayArea__ReviewFromGenleArea__tabs__friends tabs__wrapper" v-on:click="onClickTab(3)" v-bind:class="{'tabs__wrapper--active': activeNum === 3}">
               <div class="tabs__wrapper__items">
                 <img src="/img/group-black-48dp/2x/outline_group_black_48dp.png" v-show="activeNum!==3" class="tabs__wrapper__items__img">
                 <img src="/img/group-white-48dp/2x/outline_group_white_48dp.png" v-show="activeNum===3" class="tabs__wrapper__items__img">
-                <p class="tabs__wrapper__items__text" v-bind:class="{'textwhite': activeNum===3}">人物</p>
+                <p class="tabs__wrapper__items__text" v-bind:class="{'tabactivetextcolor': activeNum===3}">人物</p>
               </div>
             </div>
           </div>
@@ -49,9 +49,12 @@
               </ul>
             </div>
             <div v-show="activeNum === 2">
+              <div id="map"></div>
+              <!--
               <ul>
                 <li v-for="(name, id) in placesInPostsList"><label><input type="radio" v-model="selectedPlaceId" :value="id">{{name}}</label></li>
               </ul>
+              -->
             </div>
             <div v-show="activeNum === 3">
               <ul>
@@ -108,6 +111,7 @@ import firebase from 'firebase'
 var database = firebase.database()
 import formatISO  from 'date-fns/formatISO'
 import DatePicker from 'v-calendar/lib/components/date-picker.umd'
+import MarkerClusterer from '@googlemaps/markerclustererplus'
 import PlacesManager from '../assets/PlacesManager.js'
 import FriendsManager from '../assets/FriendsManager.js'
 import PostsManager from '../assets/PostsManager.js'
@@ -152,7 +156,9 @@ export default {
       notFoundMes: "今日はまだ投稿がありません",
       PostListName: null,
       listPublicStatus: "public",
-      filteringParams: null
+      filteringParams: null,
+      map: null,
+      markers: []
     }
   },
   watch: {
@@ -331,6 +337,63 @@ export default {
           this.placesInPostsList[post.where.placeId] = post.where.name
         }
       })
+      this.genMap()
+    },
+    genMap() {
+      this.$loadScript("https://maps.googleapis.com/maps/api/js?key=AIzaSyCmhvC49uN8fqrGEVOeMwAX-IglON8rcsQ")
+      .then(()=>{
+        this.map = new google.maps.Map(document.getElementById("map"), {
+          center: {lat: 35.6895014, lng: 139.6917337},
+          zoom: 6,
+        })
+        this.genPin()
+      })
+    },
+    genPin() {
+      var pinPriomiseList = []
+      Object.keys(this.placesInPostsList).map(placeid=>{
+        var promise = new Promise(resolve=>{
+          var _placeid = placeid
+          this.PM.placeidtolocation(placeid).then(res=>{
+            if (res!=null && res!=undefined) {
+              var name = this.placesInPostsList[_placeid]
+              var lat = res.lat
+              var lon = res.lon
+              if (new MyUtil().isAllValueNotEmpty([name, _placeid, lat, lon])) {
+                //if (!this.markers.map(e=>e.pid).includes(_placeid)) {
+                var tmpInfo = {
+                  position: {
+                    lat: lat, 
+                    lng: lon
+                  },
+                  name: name,
+                  pid: _placeid
+                }
+                var marker = new google.maps.Marker(tmpInfo)
+                marker.addListener("click", () => {
+                  this.selectedPlaceId = tmpInfo.pid
+                })
+                this.markers.push(marker)
+                //}
+              }
+            }
+            resolve(true)
+          })
+        })
+        pinPriomiseList.push(promise)
+      })
+      // 処理がすべて完了したらMarkerClustererに渡して表示
+      Promise.all(pinPriomiseList).then(() => {
+        const markerClusterer = new MarkerClusterer(this.map, this.markers, {
+          imagePath: "https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m"
+        })
+        const styles = markerClusterer.getStyles();
+        for (let i=0; i<styles.length; i++) {
+          styles[i].textSize = 14;
+          // これがないとマーカーがずれる
+          styles[i].backgroundPosition = "-1 0";
+        }
+      })
     },
     changeMes() {
       this.notFoundMes = "検索結果はありません"
@@ -432,6 +495,10 @@ export default {
 </script>
 
 <style scoped lang="scss">
+ul {
+  padding: 0;
+  list-style: none;
+}
 .HomeLogined {
   display:grid;
   grid-template-columns: 450px 1fr;
@@ -456,7 +523,7 @@ export default {
       display:grid;
       grid-template-columns: 1fr 30px;
       padding: 20px;
-      color: $white;
+      color: $main-headerarea-textcolor;
       background-color: $main-headerarea-bg;
       &__title {
         font-size: 200%;
@@ -516,7 +583,7 @@ export default {
 .tabs {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr 1fr;
-  border-bottom: solid 5px $main-accent-color;
+  border-bottom: solid 5px $main-tab-bg;
   &__wrapper {
     display: flex;
     justify-content: center; 
@@ -526,7 +593,7 @@ export default {
       border-width: 0 1px 0 1px;
     }
     &--active{
-      background-color: $main-accent-color;
+      background-color: $main-tab-bg;
     }
     &__items {
       display: grid;
@@ -540,18 +607,35 @@ export default {
         font-size: 120%;
         width: 40px;
         line-height: 0;
+        user-select: none;
       }
     }
   }
 }
 .tabs__wrapper:hover:not(.tabs__wrapper--active) {
-  background-color: $main-accent-color-hover;
+  background-color: $main-tab-bg-hover;
 }
 .tag__wrapper {
   display: inline-block;
   margin-right: 5px;
 }
-.textwhite {
-  color: white;
+.tabactivetextcolor {
+  color: $main-tab-textcolor-active;
+}
+.tagSuggestButton {
+  margin: 0;
+  padding: 0;
+  background-color: transparent;
+  border: none;
+  color: $main-textcolor;
+  font-size: 1rem;
+  opacity: 1;
+}
+.tagSuggestButton:disabled {
+  opacity: 0.3;
+}
+#map {
+  width: 100%;
+  height: 300px;
 }
 </style>

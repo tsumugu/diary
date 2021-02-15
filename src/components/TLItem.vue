@@ -3,7 +3,7 @@
     <div class="TLItem__when">{{item.when.split("T")[1].slice( 0, -3)}}</div>
     <div>{{item.what}}</div>
     <!--<div><img v-bind:src="src" v-for="(src, key) in item.imgUrls" :key="key"></div>-->
-    <div><img v-lazy="src" v-for="(src, key) in item.imgUrls" :key="key"></div>
+    <div><img :data-src="src" class="lazyload" v-for="(src, key) in item.imgUrls" :key="key"></div>
     <div v-show="item.where.name!=undefined"><div class="icon_img_conteiner"><img src="/img/location_on-black-48dp/2x/baseline_location_on_black_48dp.png" class="icon_img"> {{item.where.name}}</div></div>
     <div v-show="item.who.name!=undefined&&propsIsOwner"><div class="icon_img_conteiner"><img src="/img/group-black-48dp/2x/outline_group_black_48dp.png" class="icon_img"> {{item.who.name}}</div></div>
     <div><div class="icon_img_conteiner"><span class="TLItem__tag" v-for="tag in item.tags" :key="key">#{{tag}}</span></div></div>
@@ -60,8 +60,8 @@ button {
   &__tag {
     margin: 5px 5px 5px 0;
     padding: 5px;
-    color: white;
-    background-color: $main-accent-color;
+    color: $main-tag-textcolor;
+    background-color: $main-tag-color;
     border-radius: .25rem;
   }
   &__button {

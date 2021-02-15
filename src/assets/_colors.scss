@@ -1,16 +1,19 @@
 $white:  #ffffff;
+$main-textcolor: #2c3e50;
+$main-accent-color: #60bece;
 
-$main-headerarea-bg: #bab8b8;
+$main-headerarea-bg: #b4b4b4;
+$main-headerarea-textcolor: $white;
 $main-mainarea-bg: #F7F5F5;
 $main-border: #cbd5e0;
-/*
-$main-accent-color: rgb(255, 192, 203);
-$main-accent-color-hover: rgba(255, 192, 203, 0.4);
-$main-accent-color: rgb(95, 189, 206);
-$main-accent-color-hover: rgba(95, 189, 206, 0.4);
-*/
-$main-accent-color: rgb(186, 184, 184);
-$main-accent-color-hover: rgba(186, 184, 184, 0.4);
+
+$main-tab-bg: rgb(217, 217, 217);
+$main-tab-bg-hover: rgba(217, 217, 217, 0.4);
+$main-tab-textcolor-active: $main-textcolor;
+
+$main-tag-color: $main-accent-color;
+$main-tag-textcolor: $white;
+
 $icon-color-hover: rgba(186, 184, 184, 0.2);
 
 $form-main: #e2e8f0;

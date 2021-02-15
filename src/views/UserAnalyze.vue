@@ -317,7 +317,7 @@ export default {
           pinPriomiseList.push(promise)
         })
         // 処理がすべて完了したらMarkerClustererに渡して表示
-        Promise.all(pinPriomiseList).then((debug) => {
+        Promise.all(pinPriomiseList).then(() => {
           const markerClusterer = new MarkerClusterer(this.map, this.markers, {
             imagePath: "https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m"
           })
