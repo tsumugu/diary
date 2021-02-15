@@ -12,10 +12,34 @@
           <div class="icon_img_conteiner">人物:{{this.selectedFriendName}} <img src="/img/close-black-48dp/2x/outline_close_black_48dp.png" class="icon_img icon_clickable" v-show="this.selectedFriendId!=null" v-on:click="()=>{ this.selectedFriendId = null; this.selectedFriendName = null; this.filteringPosts() }"></div>
           <div>タグ:<div class="tag__wrapper" v-for="tag in tagsList" :key="tag"><div class="icon_img_conteiner">#{{tag}}<img src="/img/close-black-48dp/2x/outline_close_black_48dp.png" class="icon_img icon_clickable" v-on:click="onTagClicked"></div></div></div>
           <div class="HomeLogined__ColumnLeftArea__ReviewthedayArea__ReviewFromGenleArea__tabs tabs">
-            <div class="HomeLogined__ColumnLeftArea__ReviewthedayArea__ReviewFromGenleArea__tabs__date tabs__wrapper" v-on:click="onClickTab(0)" v-bind:class="{'tabs__wrapper--active': activeNum === 0}"><div class="tabs__wrapper__items"><img src="/img/watch_later-black-48dp/2x/outline_watch_later_black_48dp.png" class="tabs__wrapper__items__img"><p class="tabs__wrapper__items__text">日時</p></div></div>
-            <div class="HomeLogined__ColumnLeftArea__ReviewthedayArea__ReviewFromGenleArea__tabs__tag tabs__wrapper tabs__wrapper--border" v-on:click="onClickTab(1)" v-bind:class="{'tabs__wrapper--active': activeNum === 1}"><div class="tabs__wrapper__items"><img src="/img/sell-black-48dp/2x/outline_sell_black_48dp.png" class="tabs__wrapper__items__img"><p class="tabs__wrapper__items__text">タグ</p></div></div>
-            <div class="HomeLogined__ColumnLeftArea__ReviewthedayArea__ReviewFromGenleArea__tabs__place tabs__wrapper tabs__wrapper--border" v-on:click="onClickTab(2)" v-bind:class="{'tabs__wrapper--active': activeNum === 2}"><div class="tabs__wrapper__items"><img src="/img/location_on-black-48dp/2x/baseline_location_on_black_48dp.png" class="tabs__wrapper__items__img"><p class="tabs__wrapper__items__text">場所</p></div></div>
-            <div class="HomeLogined__ColumnLeftArea__ReviewthedayArea__ReviewFromGenleArea__tabs__friends tabs__wrapper" v-on:click="onClickTab(3)" v-bind:class="{'tabs__wrapper--active': activeNum === 3}"><div class="tabs__wrapper__items"><img src="/img/group-black-48dp/2x/outline_group_black_48dp.png" class="tabs__wrapper__items__img"><p class="tabs__wrapper__items__text">人物</p></div></div>
+            <div class="HomeLogined__ColumnLeftArea__ReviewthedayArea__ReviewFromGenleArea__tabs__date tabs__wrapper" v-on:click="onClickTab(0)" v-bind:class="{'tabs__wrapper--active': activeNum === 0}">
+              <div class="tabs__wrapper__items">
+                <img src="/img/watch_later-black-48dp/2x/outline_watch_later_black_48dp.png" v-show="activeNum!==0" class="tabs__wrapper__items__img">
+                <img src="/img/watch_later-white-48dp/2x/outline_watch_later_white_48dp.png" v-show="activeNum===0" class="tabs__wrapper__items__img">
+                <p class="tabs__wrapper__items__text" v-bind:class="{'textwhite': activeNum===0}">日時</p>
+              </div>
+            </div>
+            <div class="HomeLogined__ColumnLeftArea__ReviewthedayArea__ReviewFromGenleArea__tabs__tag tabs__wrapper tabs__wrapper--border" v-on:click="onClickTab(1)" v-bind:class="{'tabs__wrapper--active': activeNum === 1}">
+              <div class="tabs__wrapper__items">
+                <img src="/img/sell-black-48dp/2x/outline_sell_black_48dp.png" v-show="activeNum!==1" class="tabs__wrapper__items__img">
+                <img src="/img/sell-white-48dp/2x/outline_sell_white_48dp.png" v-show="activeNum===1" class="tabs__wrapper__items__img">
+                <p class="tabs__wrapper__items__text" v-bind:class="{'textwhite': activeNum===1}">タグ</p>
+              </div>
+            </div>
+            <div class="HomeLogined__ColumnLeftArea__ReviewthedayArea__ReviewFromGenleArea__tabs__place tabs__wrapper tabs__wrapper--border" v-on:click="onClickTab(2)" v-bind:class="{'tabs__wrapper--active': activeNum === 2}">
+              <div class="tabs__wrapper__items">
+                <img src="/img/location_on-black-48dp/2x/baseline_location_on_black_48dp.png" v-show="activeNum!==2" class="tabs__wrapper__items__img">
+                <img src="/img/location_on-white-48dp/2x/baseline_location_on_white_48dp.png" v-show="activeNum===2" class="tabs__wrapper__items__img">
+                <p class="tabs__wrapper__items__text" v-bind:class="{'textwhite': activeNum===2}">場所</p>
+              </div>
+            </div>
+            <div class="HomeLogined__ColumnLeftArea__ReviewthedayArea__ReviewFromGenleArea__tabs__friends tabs__wrapper" v-on:click="onClickTab(3)" v-bind:class="{'tabs__wrapper--active': activeNum === 3}">
+              <div class="tabs__wrapper__items">
+                <img src="/img/group-black-48dp/2x/outline_group_black_48dp.png" v-show="activeNum!==3" class="tabs__wrapper__items__img">
+                <img src="/img/group-white-48dp/2x/outline_group_white_48dp.png" v-show="activeNum===3" class="tabs__wrapper__items__img">
+                <p class="tabs__wrapper__items__text" v-bind:class="{'textwhite': activeNum===3}">人物</p>
+              </div>
+            </div>
           </div>
           <div class="HomeLogined__ColumnLeftArea__ReviewthedayArea__ReviewFromGenleArea__contents">
             <div v-show="activeNum === 0"><DatePicker :available-dates="availableDates" :attributes="calenderAttrs" v-model='SelectedDateOnCalendar' /></div>
@@ -70,8 +94,8 @@
     <div class="HomeLogined__MainArea">
       <div class="HomeLogined__MainArea__buttons">
         <div><img src="/img/share-black-48dp/2x/baseline_share_black_48dp.png" class="HomeLogined__MainArea__buttons__button" v-on:click="gotoUserpage"></div>
-        <div><img src="/img/create_new_folder-black-48dp/2x/outline_create_new_folder_black_48dp.png" class="HomeLogined__MainArea__buttons__button" v-on:click="openPostListModal"></div>
-        <div><img src="/img/edit-black-48dp/2x/outline_edit_black_48dp.png" class="HomeLogined__MainArea__buttons__button" v-on:click='()=>{this.$modal.show("modal-registpost")}''></div>
+        <div><img src="/img/create_new_folder-black-48dp/2x/outline_create_new_folder_black_48dp.png" class="HomeLogined__MainArea__buttons__button" title="投稿まとめを作成" v-on:click="openPostListModal"></div>
+        <div><img src="/img/edit-black-48dp/2x/outline_edit_black_48dp.png" class="HomeLogined__MainArea__buttons__button" v-on:click='()=>{this.$modal.show("modal-registpost")}'></div>
       </div>
       <TimeLine :propsPosts="postsList" :propsPostsOrderedbyDateList="postsOrderedbyDateList" :propsParams="filteringParams" :propsNotFoundMes="notFoundMes" propsIsOwner=true @removepost='removepost' @onChangedDispItem="onChangedDispItem"></TimeLine>
     </div>
@@ -476,11 +500,11 @@ export default {
     overflow: hidden;
     &__buttons {
       position: absolute;
-      bottom: 10px;
-      right: 10px;
+      bottom: 20px;
+      right: 20px;
       &__button {
-        width: 70px;
-        height: 70px;
+        width: 60px;
+        height: 60px;
         &:hover {
           background-color: $icon-color-hover;
           border-radius: 0.25rem;
@@ -526,5 +550,8 @@ export default {
 .tag__wrapper {
   display: inline-block;
   margin-right: 5px;
+}
+.textwhite {
+  color: white;
 }
 </style>
