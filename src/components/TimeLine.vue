@@ -28,15 +28,7 @@ export default {
   data() {
     return {
       TLItemsList: [],
-      TLItemsListDisp: [],
-      /*
-      searchQueryText: null,
-      selectedDate: null,
-      selectedPlaceId: null,
-      selectedFriendId: null,
-      tagsList: [],
-      imgUrl: null
-      */
+      TLItemsListDisp: []
     }
   },
   watch: {
@@ -93,32 +85,4 @@ export default {
     }
   }
 }
-/*
-img {
-  width: 100px;
-  border-radius: .25rem;
-}
-button {
-  margin: 10px 10px 10px 0;
-}
-.TLItem {
-  margin-top: 10px;
-  padding: 20px;
-  background-color: $white;
-  border: solid 1px $main-border;
-  border-radius: .25rem;
-  &__when {
-    font-size: 1.5rem;
-  }
-  &__tag {
-    margin: 5px 5px 5px 0;
-    padding: 5px;
-    background-color: $main-accent-color;
-    border-radius: .25rem;
-  }
-  &__button {
-    display: inline-block;
-  }
-}
-*/
 </style>

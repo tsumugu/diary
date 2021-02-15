@@ -44,31 +44,35 @@ export default {
 </script>
 
 <style scoped lang="scss">
-  .UAPostListItem {
-    display: grid;
-    grid-template-columns: 80px 1fr;
-    margin: 5px;
-    border: 1px solid $main-border;
-    border-radius: 0.25rem;
-    &:hover {
-      cursor: pointer;
-      opacity: 0.5;
-    }
-    &__titlewrapper {
-      display: flex;
-      align-items: center;
-      margin: 10px;
-      &__title {
-        word-break: break-all;
-      }
-    }
-    &__img {
-      width: 80px;
-      height: 80px;
-      background-color: $main-mainarea-bg;
-      background-position: center center;
-      background-size: cover;
-      border-radius: 0.25rem 0 0 0.25rem;
+p {
+  margin: 0;
+  padding: 0;
+}
+.UAPostListItem {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  margin: 5px;
+  border: 1px solid $main-border;
+  border-radius: 0.25rem;
+  &:hover {
+    cursor: pointer;
+    opacity: 0.5;
+  }
+  &__titlewrapper {
+    display: flex;
+    align-items: center;
+    margin: 10px;
+    &__title {
+      word-break: break-all;
     }
   }
+  &__img {
+    width: 80px;
+    height: 80px;
+    background-color: $main-mainarea-bg;
+    background-position: center center;
+    background-size: cover;
+    border-radius: 0.25rem 0 0 0.25rem;
+  }
+}
 </style>

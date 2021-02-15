@@ -17,7 +17,7 @@
         <!---->
         <UAPostListItem :propsItem="publicPostListsListDivided.first" @onClickPostList="onClickPostList" />
         <!---->
-        <button v-show="publicPostListsListDivided.count>6" v-on:click="onClickMoreShowButton">もっと見る</button>
+        <button v-show="publicPostListsListDivided.count>10" v-on:click="onClickMoreShowButton">もっと見る</button>
         <!---->
         <UAPostListItem v-show="isShowPostListSecondZone" :propsItem="publicPostListsListDivided.second" @onClickPostList="onClickPostList" />
         <!---->
@@ -114,7 +114,7 @@ export default {
       alert(mes)
     },
     divideList(argList) {
-      var splitNum = 6
+      var splitNum = 10
       const range = (start, stop) => Array.from({ length: (stop - start) + 1}, (_, i) => start + i);
       if (argList.length > splitNum) {
         // 0~4, 5~(this.publicPostListsList.length-1)
@@ -187,13 +187,28 @@ export default {
       database.ref("postlist/"+this.userId).on('value', (snapshot) =>{
         var lists = snapshot.val()
         if (lists != null || lists != undefined) {
-          this.publicPostListsList = Object.keys(lists).map(k=>{
+          //this.publicPostListsList = 
+          var publicpostlists = Object.keys(lists).map(k=>{
             if (lists[k].status=="public") {
               var tmpList = lists[k]
               tmpList["listid"] = k
               return tmpList
             }
           }).filter(Boolean)
+          //日付順にSort (SinceDateのみ)
+          Object.keys(publicpostlists).forEach(list => {
+            publicpostlists.sort(function(a, b) {
+              const dateA = parseInt(a.sincedate.replaceAll("-", ""))
+              const dateB = parseInt(b.sincedate.replaceAll("-", ""))
+              if (dateA > dateB) {
+                return 1;
+              } else {
+                return -1;
+              }
+            })
+            
+          })
+          this.publicPostListsList = publicpostlists
           resolve(this.publicPostListsList)
         }
       })
@@ -382,10 +397,6 @@ $title-fontsize: 1.8rem;
     }
     &__svg {
       position: absolute;
-      /*
-      border: 3px solid blue;
-      background-color:red;
-      */
     }
     &__img {
       width: 100%;
