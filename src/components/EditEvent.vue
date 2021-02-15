@@ -489,7 +489,6 @@ export default {
         return false
       }
       this.placeListDisp = []
-      console.log("----")
       Object.keys(this.placeList).forEach(k=>{
         var placeItems = this.placeList[k]
         // 名前やplaceidが未設定のものは弾く
@@ -503,7 +502,16 @@ export default {
           })
         }
       })
-      console.log("----")
+      if (this.placeListDisp.length == 0) {
+        this.placeListDisp.push({
+          name: "検索しても見つからなかった場合はこれを選択",
+          items: [{name: this.whereAdd, placeId: "pid_"+new MyUtil().uniqueStr()}]
+        })
+        this.placeList.push({
+          name: "検索しても見つからなかった場合はこれを選択",
+          items: [{name: this.whereAdd, placeId: "pid_"+new MyUtil().uniqueStr()}]
+        })
+      }
     },
     removeImgAtInput(imgUrl) {
       if (imgUrl.includes("https://i.readme.tsumugu2626.xyz/")) {
@@ -601,7 +609,7 @@ export default {
     onAddWhereButton() {
       this.PM.searchplacesbyname(this.whereAdd).then((response) => {
         this.searchResultPlaceList = []
-        this.searchResultPlaceList.push({name: "検索しても見つからなかった場合はこれを選択", items: [{name: this.whereAdd, placeId: "pid_"+new MyUtil().uniqueStr()}]})
+        //this.searchResultPlaceList.push({name: "検索しても見つからなかった場合はこれを選択", items: [{name: this.whereAdd, placeId: "pid_"+new MyUtil().uniqueStr()}]})
         this.searchResultPlaceList.push({name: "検索結果", items: response.data})
       }).catch((error) => {
         console.log("Places Manager Error", error)
@@ -712,7 +720,6 @@ export default {
             this.setFirebaseRealtimeDB(UserPostInfoObj)
           }
           this.hideModal('modal-loading')
-          //debug
         })
       } else {
         alert("日時, 場所は必須項目です")

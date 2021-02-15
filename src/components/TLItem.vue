@@ -5,7 +5,7 @@
     <!--<div><img v-bind:src="src" v-for="(src, key) in item.imgUrls" :key="key"></div>-->
     <div><img v-lazy="src" v-for="(src, key) in item.imgUrls" :key="key"></div>
     <div v-show="item.where.name!=undefined"><div class="icon_img_conteiner"><img src="/img/location_on-black-48dp/2x/baseline_location_on_black_48dp.png" class="icon_img"> {{item.where.name}}</div></div>
-    <div v-show="item.who.name!=undefined"><div class="icon_img_conteiner"><img src="/img/group-black-48dp/2x/outline_group_black_48dp.png" class="icon_img"> {{item.who.name}}</div></div>
+    <div v-show="item.who.name!=undefined&&propsIsOwner"><div class="icon_img_conteiner"><img src="/img/group-black-48dp/2x/outline_group_black_48dp.png" class="icon_img"> {{item.who.name}}</div></div>
     <div><div class="icon_img_conteiner"><span class="TLItem__tag" v-for="tag in item.tags" :key="key">#{{tag}}</span></div></div>
     <hr v-show="propsIsOwner">
     <div class="TLItem__button" v-show="propsIsOwner"><div class="icon_img_conteiner"><img src="/img/delete-black-48dp/2x/outline_delete_black_48dp.png" class="icon_img--large icon_clickable" v-on:click="removepost(item.postid)"></div></div>

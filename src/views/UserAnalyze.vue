@@ -27,12 +27,10 @@
       <p class="useranalyze__map__title">マップ</p>
       <div id="map"></div>
     </div>
-    <!--
-    <div class="useranalyze__friends useranalyze__margin" v-show="friendscountList.length>0">
+    <div class="useranalyze__friends useranalyze__margin" v-show="friendscountList.length>0&&isOwner">
       <p class="useranalyze__friends__title">フレンドランキング</p>
       <div v-for="(friend, index) in friendscountList"><small>No.{{index+1}}</small> {{friend.name}} ({{friend.count}}件)</div>
     </div>
-    -->
     <div class="useranalyze__photos" v-show="imagesinpostListDisp.count>0">
       <p class="useranalyze__photos__title">写真</p>
       <div>
@@ -223,6 +221,7 @@ export default {
       }
     })
 
+    // TODO: ownerはすべての投稿、その他はリストに含まれている投稿のみ
     //
     this.PSM.fetchalltags().then((tags) => {
       var tagUrlObj = {}

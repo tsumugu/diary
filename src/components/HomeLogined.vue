@@ -61,7 +61,7 @@
         </div>
       </div>
     </modal>
-    <modal class="HomeLogined__modal" name="modal-registpost" :clickToClose="true" height="95%">
+    <modal class="HomeLogined__modal" name="modal-registpost" :clickToClose="false" height="95%">
       <div class="HomeLogined__modal__contents">
         <div style="height:40px;"><img src="/img/close-black-48dp/2x/outline_close_black_48dp.png" v-on:click='()=>{this.$modal.hide("modal-registpost")}' class="icon_clickable" style="width:40px;height:40px;text-align:left;"><img src="/img/open_in_new-black-48dp/2x/outline_open_in_new_black_48dp.png" title="新しいウインドウで投稿ページを開く" v-on:click="gotoRegist" class="icon_clickable" style="width:40px;height:40px;text-align:right;float:right;"></div>
         <EditEvent />
