@@ -90,6 +90,26 @@ export default class PlacesManager {
         return placeName
       }
     }
+    getLocationFromPlaceId(placeId) {
+      var placesInfo = this.placesinfoCache
+      var retLocation = null
+      if (placesInfo != null) {
+        Object.keys(placesInfo).forEach(pid => {
+          if (pid == placeId) {
+            retLocation = {
+              "lat": placesInfo[pid].lat,
+              "lon": placesInfo[pid].lon
+            }
+          }
+        })
+      }
+      if (retLocation == null) {
+        console.log("Place Name Not Found", placeId)
+        return null
+      } else {
+        return retLocation
+      }
+    }
     placeidtoname(placeId) {
       return new Promise((resolve) => {
         if (placeId == undefined || placeId == null) {
@@ -101,6 +121,20 @@ export default class PlacesManager {
           })
         } else {
           resolve(this.getNameFromPlaceId(placeId))
+        }
+      })
+    }
+    placeidtolocation(placeId) {
+      return new Promise((resolve) => {
+        if (placeId == undefined || placeId == null) {
+          resolve(null);
+        }
+        if (this.placesinfoCache == null) {
+          this.fetchusersavedplaces().then(()=>{
+            resolve(this.getLocationFromPlaceId(placeId))
+          })
+        } else {
+          resolve(this.getLocationFromPlaceId(placeId))
         }
       })
     }

@@ -36,51 +36,57 @@ export default class PostsManager {
         })
       })
     }
-    fetchalltags(limit=null) {
-      return new Promise((resolve) => {
-        this.fetchallposts().then(res=>{
-          if (res == null || res == undefined) {
-            resolve([])
-          } else {
-            var tagsinpostList = []
-            Object.keys(res).forEach(k => {
-              var e = res[k]
-              if (e.tags!=undefined) {
-                tagsinpostList.push(e.tags)
-              }
-            })
-            var tmpTagsCountList = []
-            tagsinpostList.forEach(e=>{
-              e.forEach(f=>{
-                if (tmpTagsCountList[f] == undefined) {
-                  tmpTagsCountList[f] = 0
-                }
-                tmpTagsCountList[f] += 1
-              })
-            })
-            var tagscountList = []
-            Object.keys(tmpTagsCountList).forEach(k => {
-              tagscountList.push({
-                name: k,
-                count: tmpTagsCountList[k]
-              })
-            })
-            tagscountList.sort(function(a, b) {
-              if (a.count < b.count) {
-                return 1
-              } else {
-                return -1
-              }
-            })
-            if (limit != null) {
-              if (tagscountList.length>=limit) {
-                tagscountList = tagscountList.splice(0, limit)
-              }
-            }
-            resolve(tagscountList)
+    countTags(posts, limit) {
+      if (posts == null || posts == undefined) {
+        return []
+      } else {
+        var tagsinpostList = []
+        Object.keys(posts).forEach(k => {
+          var e = posts[k]
+          if (e.tags!=undefined) {
+            tagsinpostList.push(e.tags)
           }
         })
-        
+        var tmpTagsCountList = []
+        tagsinpostList.forEach(e=>{
+          e.forEach(f=>{
+            if (tmpTagsCountList[f] == undefined) {
+              tmpTagsCountList[f] = 0
+            }
+            tmpTagsCountList[f] += 1
+          })
+        })
+        var tagscountList = []
+        Object.keys(tmpTagsCountList).forEach(k => {
+          tagscountList.push({
+            name: k,
+            count: tmpTagsCountList[k]
+          })
+        })
+        tagscountList.sort(function(a, b) {
+          if (a.count < b.count) {
+            return 1
+          } else {
+            return -1
+          }
+        })
+        if (limit != null) {
+          if (tagscountList.length>=limit) {
+            tagscountList = tagscountList.splice(0, limit)
+          }
+        }
+        return tagscountList
+      }
+    }
+    fetchalltags(limit=null, posts=null) {
+      return new Promise((resolve) => {
+        if (posts!=null) {
+          resolve(this.countTags(posts, limit))
+        } else {
+          this.fetchallposts().then(res=>{
+            resolve(this.countTags(res, limit))
+          })
+        }
       })
     }
     makeArrayWithNames(snapshots) {

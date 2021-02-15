@@ -29,12 +29,14 @@ export default {
     return {
       TLItemsList: [],
       TLItemsListDisp: [],
+      /*
       searchQueryText: null,
       selectedDate: null,
       selectedPlaceId: null,
       selectedFriendId: null,
       tagsList: [],
       imgUrl: null
+      */
     }
   },
   watch: {
@@ -60,52 +62,7 @@ export default {
       this.$emit("removepost", postid)
     },
     filterItems() {
-      this.searchQueryText = this.propsParams.keyword
-      this.selectedDate = this.propsParams.when
-      this.selectedPlaceId = this.propsParams.where
-      this.selectedFriendId = this.propsParams.who
-      this.tagsList = this.propsParams.tags
-      this.imgUrl = this.propsParams.imgUrl
-      //フィルタリング
-      var tmpRes = this.propsPosts
-      if (new MyUtil().isAllValueNotEmpty([this.searchQueryText])) {
-        tmpRes = tmpRes.filter(e=>new MyUtil().isObjectIncludeQureyText([e.what, e.where.name, e.who.name, e.tags].flat(), this.searchQueryText))
-      }
-      if (new MyUtil().isAllValueNotEmpty([this.selectedDate])) {
-        tmpRes = tmpRes.filter(e=>{
-          if (e.when != undefined) {
-            return e.when.split("T")[0]==this.selectedDate
-          }
-        })
-      }
-      if (new MyUtil().isAllValueNotEmpty([this.selectedPlaceId])) {
-        tmpRes = tmpRes.filter(e=>e.where.placeId==this.selectedPlaceId)
-      }
-      if (new MyUtil().isAllValueNotEmpty([this.selectedFriendId])) {
-        tmpRes = tmpRes.filter(e=>e.who.friendId==this.selectedFriendId)
-      }
-      if (new MyUtil().isAllValueNotEmpty([this.tagsList])) {
-        tmpRes = tmpRes.filter(e=>{
-          return this.tagsList.filter(t=>{
-            if (e.tags != undefined) {
-              return e.tags.includes(t)
-            }
-          }).length == this.tagsList.length
-        })
-      }
-      if (new MyUtil().isAllValueNotEmpty([this.imgUrl])) {
-        tmpRes = tmpRes.filter(e=>{
-          var imgUrls = e.imgUrls
-          if (new MyUtil().isAllValueNotEmpty([imgUrls])) {
-            for (var i=0;i<imgUrls.length;i++) {
-              if (imgUrls[i] == this.imgUrl) {
-                return true
-              }
-            }
-          }
-        })
-      }
-      this.TLItemsList = tmpRes
+      this.TLItemsList = new MyUtil().filteringPostsWithPrms(this.propsPosts, this.propsParams)
     }
   },
   mounted() {

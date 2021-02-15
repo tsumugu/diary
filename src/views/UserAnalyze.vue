@@ -166,44 +166,6 @@ export default {
           alert('削除しました！')
         })
       })
-    },
-    genPins() {
-      this.PM.fetchusersavedplaces().then((places)=>{
-        if (places != null && places != undefined) {
-          // google.maps.Markerを生成
-          this.markers = []
-          Object.keys(places).forEach(placeid => {
-            if (places[placeid].lat != undefined && places[placeid].lon != undefined) {
-              var tmpInfo = {
-                position: {
-                  lat: places[placeid].lat, 
-                  lng: places[placeid].lon
-                },
-                name: places[placeid].name,
-                content: '<button id="infowindowbutton_'+placeid+'" style="margin:0; padding:0; background-color:transparent; border:none; font-size:1rem;">'+places[placeid].name+'</button>',
-                pid: placeid
-              }
-              var marker = new google.maps.Marker(tmpInfo)
-              marker.addListener("click", () => {
-                this.onClickInfoWindow(tmpInfo.pid, tmpInfo.name)
-                var infoWindow = new google.maps.InfoWindow(tmpInfo)
-                infoWindow.open(this.map, marker)
-              })
-              this.markers.push(marker)
-            }
-          })
-          // MarkerClustererに渡して表示
-          const markerClusterer = new MarkerClusterer(this.map, this.markers, {
-            imagePath: "https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m"
-          })
-          const styles = markerClusterer.getStyles();
-          for (let i=0; i<styles.length; i++) {
-            styles[i].textSize = 14;
-            // これがないとマーカーがずれる
-            styles[i].backgroundPosition = "-1 0";
-          }
-        }
-      })
     }
   },
   mounted() {
@@ -220,109 +182,143 @@ export default {
         this.isOwner = (user.uid==this.userId)
       }
     })
-
-    // TODO: ownerはすべての投稿、その他はリストに含まれている投稿のみ
-    //
-    this.PSM.fetchalltags().then((tags) => {
-      var tagUrlObj = {}
-      Object.keys(tags).forEach(k => {
-        var e = tags[k]
-        tagUrlObj[e.name] = e.count
+    // 投稿まとめを読み込み
+    var postlistPromise = new Promise((resolve)=>{
+      database.ref("postlist/"+this.userId).on('value', (snapshot) =>{
+        var lists = snapshot.val()
+        if (lists != null || lists != undefined) {
+          this.publicPostListsList = Object.keys(lists).map(k=>{
+            if (lists[k].status=="public") {
+              var tmpList = lists[k]
+              tmpList["listid"] = k
+              return tmpList
+            }
+          }).filter(Boolean)
+          resolve(this.publicPostListsList)
+        }
       })
-      if (Object.keys(tagUrlObj).length > 0) {
-        var tagUrlStr = JSON.stringify(tagUrlObj)
-        var reqUrl = "https://tsumugu.tech/wordcloud/gen.php?uid="+this.userId+"&words="+encodeURI(tagUrlStr)
-        console.log(reqUrl)
-        axios.get(reqUrl).then((res)=>{
-          this.tagWordcloudUrl = res.data.img_url
-        }).catch((error)=>{
-          console.log("WordCloud Error", error)
-          alert("画像の生成で問題が発生しました")
-        })
-      } else {
-        this.isLoadingTagImg = true
-      }
     })
-    //フレンドのランキング作成
-    this.PSM.fetchallposts().then((posts) => {
+    // 投稿を取得
+    var postPromise = new Promise((resolve)=>{
+      this.PSM.fetchallposts().then((posts) => {
+        resolve(posts)
+      })
+    })
+    // Google Maps JavaScript APIを読み込み
+    var googleMapsPromise = this.$loadScript("https://maps.googleapis.com/maps/api/js?key=AIzaSyCmhvC49uN8fqrGEVOeMwAX-IglON8rcsQ")
+    // すべて揃ったら...
+    Promise.all([postlistPromise, postPromise, googleMapsPromise]).then((values) => {
+      var publicpostlist = values[0]
+      var posts = values[1]
       this.PSM.makeArrayWithNames(posts).then((postswithname) => {
         this.postsList = postswithname
-        //
         this.postsOrderedbyDate = this.PSM.makeArrayOrderedbyDate(postswithname)
+        // ownerはすべての投稿、その他はリストに含まれている投稿のみ
+        if (this.isOwner) {
+          filteredItems = postswithname
+        } else {
+          // リストに含まれている投稿のみ抽出
+          var filteredItems = []
+          publicpostlist.forEach(e => {
+            filteredItems.push(new MyUtil().filteringPostsWithPrms(postswithname, e.parms))
+          })
+          filteredItems = new MyUtil().uniquePostArray(filteredItems.flat())
+        }
+        // タグ、画像、フレンド、ピンを配列に格納していく
+        // タグ
+        this.PSM.fetchalltags(null, filteredItems).then((tags) => {
+          var tagUrlObj = {}
+          Object.keys(tags).forEach(k => {
+            var e = tags[k]
+            tagUrlObj[e.name] = e.count
+          })
+          if (Object.keys(tagUrlObj).length > 0) {
+            var tagUrlStr = JSON.stringify(tagUrlObj)
+            var reqUrl = "https://tsumugu.tech/wordcloud/gen.php?uid="+this.userId+"&words="+encodeURI(tagUrlStr)
+            console.log(reqUrl)
+            axios.get(reqUrl).then((res)=>{
+              this.tagWordcloudUrl = res.data.img_url
+            }).catch((error)=>{
+              console.log("WordCloud Error", error)
+              alert("画像の生成で問題が発生しました")
+            })
+          } else {
+            this.isLoadingTagImg = true
+          }
+        })
+        // 画像
         Object.keys(this.postsOrderedbyDate).forEach(k => {
           Object.keys(this.postsOrderedbyDate[k]).forEach(i => {
-            //console.log(postsOrderedbyDate[k][i])
-            var imgurls = this.postsOrderedbyDate[k][i].imgUrls
-            if (imgurls!=null&&imgurls!=undefined) {
-              this.imagesinpostList.push(imgurls)
+            var postid = this.postsOrderedbyDate[k][i].postid
+            if (filteredItems.filter(e=>e.postid==postid).length != 0) {
+              var imgurls = this.postsOrderedbyDate[k][i].imgUrls
+              if (imgurls!=null&&imgurls!=undefined) {
+                this.imagesinpostList.push(imgurls)
+              }
             }
           })
         })
         this.imagesinpostListDisp = this.divideList(this.imagesinpostList.flat())
-        //
-        //
-        postswithname.forEach(e => {
-          if (e.who.friendId!="null"&&e.who.friendId!=null&&e.who.friendId!=undefined&&e.who.name!="null"&&e.who.name!=null&&e.who.name!=undefined) {
-            this.friendsinpostList.push(e.who)
-          }
+        // mapを生成
+        this.map = new google.maps.Map(document.getElementById("map"), {
+          center: this.defaultLocation,
+          zoom: 6,
         })
-        var tmpFriendsCountList = []
-        this.friendsinpostList.forEach(e=>{
-          if (tmpFriendsCountList[e.friendId] == undefined) {
-            tmpFriendsCountList[e.friendId] = 0
-          }
-          tmpFriendsCountList[e.friendId] += 1
-        })
-        this.friendscountList = []
-        Object.keys(tmpFriendsCountList).forEach(k => {
-          this.FM.friendidtoname(k).then(name=>{
-            this.friendscountList.push({
-              friendid: k,
-              name: name,
-              count: tmpFriendsCountList[k]
+        // ピン
+        var pinPriomiseList = []
+        filteredItems.map(e=>{
+          var promise = new Promise(resolve=>{
+            this.PM.placeidtolocation(e.where.placeId).then(res=>{
+              if (res!=null && res!=undefined) {
+                var name = e.where.name
+                var placeid = e.where.placeId
+                var lat = res.lat
+                var lon = res.lon
+                if (new MyUtil().isAllValueNotEmpty([name, placeid, lat, lon])) {
+                  // そのpidの場所がすでに格納されていなかったら格納
+                  if (!this.markers.map(e=>e.pid).includes(placeid)) {
+                    var tmpInfo = {
+                      position: {
+                        lat: lat, 
+                        lng: lon
+                      },
+                      name: name,
+                      content: '<button id="infowindowbutton_'+placeid+'" style="margin:0; padding:0; background-color:transparent; border:none; font-size:1rem;">'+name+'</button>',
+                      pid: placeid
+                    }
+                    var marker = new google.maps.Marker(tmpInfo)
+                    marker.addListener("click", () => {
+                      this.onClickInfoWindow(tmpInfo.pid, tmpInfo.name)
+                      var infoWindow = new google.maps.InfoWindow(tmpInfo)
+                      infoWindow.open(this.map, marker)
+                    })
+                    this.markers.push(marker)
+                  }
+                }
+              }
+              resolve(true)
             })
           })
+          pinPriomiseList.push(promise)
         })
-        
-        this.friendscountList.sort(function(a, b) {
-          if (a.count > b.count) {
-            return 1
-          } else {
-            return -1
+        // 処理がすべて完了したらMarkerClustererに渡して表示
+        Promise.all(pinPriomiseList).then((debug) => {
+          const markerClusterer = new MarkerClusterer(this.map, this.markers, {
+            imagePath: "https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m"
+          })
+          const styles = markerClusterer.getStyles();
+          for (let i=0; i<styles.length; i++) {
+            styles[i].textSize = 14;
+            // これがないとマーカーがずれる
+            styles[i].backgroundPosition = "-1 0";
           }
         })
-        if (this.friendscountList.length > 5) {
-          this.friendscountList = this.friendscountList.splice(0, 5)
-        }
+        //
       })
-    })
-    // 投稿まとめを読み込み
-    database.ref("postlist/"+this.userId).on('value', (snapshot) =>{
-      var lists = snapshot.val()
-      if (lists != null || lists != undefined) {
-        this.publicPostListsList = Object.keys(lists).map(k=>{
-          if (lists[k].status=="public") {
-            var tmpList = lists[k]
-            tmpList["listid"] = k
-            return tmpList
-          }
-        }).filter(Boolean)
-      }
-    })
-    // Google Maps JavaScript APIをロード
-    this.$loadScript("https://maps.googleapis.com/maps/api/js?key=AIzaSyCmhvC49uN8fqrGEVOeMwAX-IglON8rcsQ")
-    .then(() => {
-      // mapを生成
-      this.map = new google.maps.Map(document.getElementById("map"), {
-        center: this.defaultLocation,
-        zoom: 6,
-      })
-      // ピンを生成
-      this.genPins()
     })
     .catch(() => {
       // Failed to fetch script
-      alert("マップの読み込みに失敗しました")
+      alert("処理に失敗しました")
     })
   }
 }

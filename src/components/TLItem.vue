@@ -60,6 +60,7 @@ button {
   &__tag {
     margin: 5px 5px 5px 0;
     padding: 5px;
+    color: white;
     background-color: $main-accent-color;
     border-radius: .25rem;
   }

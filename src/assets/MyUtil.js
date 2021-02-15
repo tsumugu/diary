@@ -45,7 +45,7 @@ export default class MyUtil {
             if (item.replace(/\s+/g,'').length <= 0) {
               return false
             }
-          } else {
+          } else if (item instanceof Array) {
             // 配列のときはlengthを取得
             var itemV = null
             if (item.length == undefined) {
@@ -119,5 +119,58 @@ export default class MyUtil {
         return Promise.resolve();
       }
       return Promise.reject();
+    }
+    filteringPostsWithPrms(posts, params) {
+      //フィルタリング
+      var tmpRes = posts
+      //prmsが指定されていなかったら
+      if (!this.isAllValueNotEmpty([params])) {
+        return tmpRes
+      }
+      if (this.isAllValueNotEmpty([params.keyword])) {
+        tmpRes = tmpRes.filter(e=>this.isObjectIncludeQureyText([e.what, e.where.name, e.who.name, e.tags].flat(), params.keyword))
+      }
+      if (this.isAllValueNotEmpty([params.when])) {
+        tmpRes = tmpRes.filter(e=>{
+          if (e.when != undefined) {
+            return e.when.split("T")[0]==params.when
+          }
+        })
+      }
+      if (this.isAllValueNotEmpty([params.where])) {
+        tmpRes = tmpRes.filter(e=>e.where.placeId==params.where)
+      }
+      if (this.isAllValueNotEmpty([params.who])) {
+        tmpRes = tmpRes.filter(e=>e.who.friendId==params.who)
+      }
+      if (this.isAllValueNotEmpty([params.tags])) {
+        tmpRes = tmpRes.filter(e=>{
+          return params.tags.filter(t=>{
+            if (e.tags != undefined) {
+              return e.tags.includes(t)
+            }
+          }).length == params.tags.length
+        })
+      }
+      if (this.isAllValueNotEmpty([params.imgUrl])) {
+        tmpRes = tmpRes.filter(e=>{
+          var imgUrls = e.imgUrls
+          if (this.isAllValueNotEmpty([imgUrls])) {
+            for (var i=0;i<imgUrls.length;i++) {
+              if (imgUrls[i] == params.imgUrl) {
+                return true
+              }
+            }
+          }
+        })
+      }
+      return tmpRes
+    }
+    uniquePostArray(posts) {
+      var uniquedArray = []
+      posts.map(e=>e.postid).unique().forEach(postid=>{
+        uniquedArray.push(posts.filter(post=>post.postid==postid)[0])
+      })
+      return uniquedArray.flat();
     }
   }
