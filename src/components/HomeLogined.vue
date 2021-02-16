@@ -527,6 +527,7 @@ ul {
       background-color: $main-headerarea-bg;
       &__title {
         font-size: 200%;
+        font-family: 'Electrolize', sans-serif !important;
       }
       &__menubutton {
         position: relative;
