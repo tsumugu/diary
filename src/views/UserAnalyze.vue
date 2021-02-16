@@ -372,6 +372,7 @@ $title-fontsize: 1.8rem;
       font-size: $title-fontsize;
     }
     &__list {
+      margin: 0 20px 0 20px;
       &__itemwrapper {
         display: grid;
         grid-template-columns: 1fr 1fr;
