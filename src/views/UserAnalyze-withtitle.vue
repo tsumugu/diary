@@ -8,6 +8,7 @@
       </div>
     </modal>
     <div class="useranalyze__tag">
+      <div class="useranalyze__tag__title">Tsumugu Diary</div>
       <div class="useranalyze__tag__loader" v-show="isLoadingTagImg"><img src="/img/svg-loading-spinner.svg" class="useranalyze__tag__loader__img"></div>
       <img class="useranalyze__tag__img" :src="tagWordcloudUrl" v-on:load="()=>{if(this.loadingTagImgCount > 0){this.isLoadingTagImg = false;/*this.onSizeChange();*/} this.loadingTagImgCount+=1;}">
     </div>
@@ -52,6 +53,7 @@ import UAPostListItem from '@/components/UAPostListItem.vue'
 import SquareImageViewer from '@/components/SquareImageViewer.vue'
 import TimeLine from '@/components/TimeLine.vue'
 import MyUtil from '../assets/MyUtil.js'
+
 export default {
   name: "useranalyze",
   components: {
@@ -77,7 +79,7 @@ export default {
       tagscountList: [],
       imagesinpostList: [],
       imagesinpostListDisp: [],
-      tagWordcloudUrl: "https://tsumugu.tech/wordcloud/notfound.png",
+      tagWordcloudUrl: "https://tsumugu.tech/wordcloud/notfound_new.png?v=1",
       friendsinpostList: [],
       friendscountList: [],
       infowindows: [],
@@ -96,8 +98,7 @@ export default {
       placeName: null,
       tagLinkList: [],
       imgWidth: 0,
-      imgHeight: 0,
-      isShowEditButton: false
+      imgHeight: 0
     }
   },
   watch: {
@@ -178,11 +179,13 @@ export default {
     this.isShowEditButton = false
     /*
     firebase.auth().onAuthStateChanged(user => {
+      
       if (user == null) {
         this.isOwner = false
       } else {
         this.isOwner = (user.uid==this.userId)
       }
+
     })
     */
     // 投稿まとめを読み込み
@@ -252,7 +255,7 @@ export default {
           })
           if (Object.keys(tagUrlObj).length > 0) {
             var tagUrlStr = JSON.stringify(tagUrlObj)
-            var reqUrl = "https://tsumugu.tech/wordcloud/gen.php?uid="+this.userId+"&words="+encodeURI(tagUrlStr)
+            var reqUrl = "https://tsumugu.tech/wordcloud/gen.php?gen=new&uid="+this.userId+"&words="+encodeURI(tagUrlStr)
             console.log(reqUrl)
             axios.get(reqUrl).then((res)=>{
               this.tagWordcloudUrl = res.data.img_url
@@ -383,9 +386,13 @@ $title-fontsize: 1.8rem;
     }
   }
   &__tag {
+    text-align: right;
     &__title {
-      margin:  0 0 0 0;
-      font-size: $title-fontsize;
+      position: absolute;
+      top: 200px;
+      right: 480px;
+      font-family: 'Electrolize', sans-serif !important;
+      font-size: 2.5rem;
     }
     &__loader {
       position: absolute;
@@ -403,7 +410,9 @@ $title-fontsize: 1.8rem;
       position: absolute;
     }
     &__img {
-      width: 80%;
+      margin-right: 50px;
+      /*width: 40%;*/
+      height: 400px;
     }
   }
   &__photos {
