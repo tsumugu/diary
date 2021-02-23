@@ -47,12 +47,14 @@ const routes = [
     component: () => import('../views/EditPostList.vue'),
     meta: { requiresAuth: true }
   },
+  /*
   {
     path: '/signup',
     name: 'signup',
     component: () => import('../views/SignUp.vue'),
     meta: { requiresAuth: false }
   },
+  */
   {
     path: '/signin',
     name: 'signin',

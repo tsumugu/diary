@@ -4,15 +4,16 @@
       <div class="useranalyze__modal__contents">
         <div style="padding:20px 20px 0 20px;height:40px;text-align:left;"><img src="/img/close-black-48dp/2x/outline_close_black_48dp.png" v-on:click='()=>{this.$modal.hide("modal-timeline")}' class="icon_clickable" style="width:40px;height:40px;"></div>
         <div class="useranalyze__modal__contents__placeName">{{placeName}}</div>
-        <TimeLine :propsPosts="postsList" :propsPostsOrderedbyDateList="postsOrderedbyDate" :propsParams="filteringParams" :propsIsOwner="isOwner" propsNotFoundMes="このリストに含まれている投稿はありません" @removepost='removepost'></TimeLine>
+        <TimeLine :propsPosts="postsList" :propsPostsOrderedbyDateList="postsOrderedbyDate" :propsParams="filteringParams" :propsIsOwner="isShowEditButton" propsNotFoundMes="このリストに含まれている投稿はありません" @removepost='removepost'></TimeLine>
       </div>
     </modal>
     <div class="useranalyze__tag">
+      <div class="useranalyze__tag__title">Tsumugu Diary</div>
       <div class="useranalyze__tag__loader" v-show="isLoadingTagImg"><img src="/img/svg-loading-spinner.svg" class="useranalyze__tag__loader__img"></div>
       <img class="useranalyze__tag__img" :src="tagWordcloudUrl" v-on:load="()=>{if(this.loadingTagImgCount > 0){this.isLoadingTagImg = false;/*this.onSizeChange();*/} this.loadingTagImgCount+=1;}">
     </div>
     <div class="useranalyze__postlist useranalyze__margin" v-show="publicPostListsListDivided.count>0">
-      <p class="useranalyze__postlist__title">投稿まとめ<img src="/img/edit-black-48dp/2x/outline_edit_black_48dp.png" class="editicon" v-on:click="gotoedit()" v-show="isOwner"></p>
+      <p class="useranalyze__postlist__title">投稿まとめ<img src="/img/edit-black-48dp/2x/outline_edit_black_48dp.png" class="editicon" v-on:click="gotoedit()" v-show="isShowEditButton"></p>
       <div class="useranalyze__postlist__list">
         <!---->
         <UAPostListItem :propsItem="publicPostListsListDivided.first" @onClickPostList="onClickPostList" />
@@ -27,7 +28,7 @@
       <p class="useranalyze__map__title">マップ</p>
       <div id="map"></div>
     </div>
-    <div class="useranalyze__friends useranalyze__margin" v-show="friendscountList.length>0&&isOwner">
+    <div class="useranalyze__friends useranalyze__margin" v-show="friendscountList.length>0&&isShowEditButton">
       <p class="useranalyze__friends__title">フレンドランキング</p>
       <div v-for="(friend, index) in friendscountList"><small>No.{{index+1}}</small> {{friend.name}} ({{friend.count}}件)</div>
     </div>
@@ -78,7 +79,7 @@ export default {
       tagscountList: [],
       imagesinpostList: [],
       imagesinpostListDisp: [],
-      tagWordcloudUrl: "https://tsumugu.tech/wordcloud/notfound.png",
+      tagWordcloudUrl: "https://tsumugu.tech/wordcloud/notfound.png?v=1",
       friendsinpostList: [],
       friendscountList: [],
       infowindows: [],
@@ -174,14 +175,19 @@ export default {
     this.PM = new PlacesManager(axios, database, {uid: this.userId})
     this.FM = new FriendsManager(axios, database, {uid: this.userId})
     this.PSM = new PostsManager(axios, database, {uid: this.userId}, this.PM, this.FM)
-
+    this.isOwner = true
+    this.isShowEditButton = false
+    /*
     firebase.auth().onAuthStateChanged(user => {
+      
       if (user == null) {
         this.isOwner = false
       } else {
         this.isOwner = (user.uid==this.userId)
       }
+
     })
+    */
     // 投稿まとめを読み込み
     var postlistPromise = new Promise((resolve)=>{
       database.ref("postlist/"+this.userId).on('value', (snapshot) =>{
@@ -380,9 +386,13 @@ $title-fontsize: 1.8rem;
     }
   }
   &__tag {
+    text-align: right;
     &__title {
-      margin:  0 0 0 0;
-      font-size: $title-fontsize;
+      position: absolute;
+      top: 200px;
+      right: 480px;
+      font-family: 'Electrolize', sans-serif !important;
+      font-size: 2.5rem;
     }
     &__loader {
       position: absolute;
@@ -400,7 +410,9 @@ $title-fontsize: 1.8rem;
       position: absolute;
     }
     &__img {
-      width: 100%;
+      margin-right: 50px;
+      /*width: 40%;*/
+      height: 400px;
     }
   }
   &__photos {
