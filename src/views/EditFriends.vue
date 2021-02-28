@@ -3,7 +3,7 @@
     <div class="editfriends__loading" v-if="isNowLoading"><!-- Loading --></div>
       <div class="editfriends__body" v-else>
         <div class="editfriends__body__signined" v-if="isSignIn">
-          <modal name="modal-editfriends" :clickToClose="true" height="95%">
+          <modal name="modal-editfriends" :clickToClose="true" width="95%" height="95%">
             <div style="padding: 20px;">
               <div style="height:40px;text-align:left;"><img src="/img/close-black-48dp/2x/outline_close_black_48dp.png" v-on:click='()=>{this.$modal.hide("modal-editfriends")}' class="icon_clickable" style="width:40px;height:40px;"></div>
               <div>

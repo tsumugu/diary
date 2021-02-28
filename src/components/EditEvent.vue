@@ -25,7 +25,7 @@
         <div class="editevent__body__signined__upload"><input type="file" ref="imgInput" @change="onFileChange" accept="image/*" multiple /></div>
          <!-- -->
         <div class="editevent__body__signined__where"><div class="editevent__body__signined__where__contents"><div class="icon_img_conteiner" v-on:click="showModal('modal-where')"><img src="/img/location_on-black-48dp/2x/baseline_location_on_black_48dp.png" class="icon_img"> {{whereName==null?"未入力":whereName}}</div></div></div>
-        <modal class="editevent__modal" name="modal-where" :clickToClose="true" height="95%">
+        <modal class="editevent__modal" name="modal-where" :clickToClose="true" width="95%" height="95%">
           <div class="editevent__modal__contents">
             <div style="height:40px;text-align:left;"><img src="/img/close-black-48dp/2x/outline_close_black_48dp.png" v-on:click="hideModal('modal-where')" class="icon_clickable" style="width:40px;height:40px;"></div>
             <div><button v-on:click="searchNearbyPlaceByGPS">GPSを更新</button></div>
@@ -53,7 +53,7 @@
         </modal>
         <!-- -->
         <div class="editevent__body__signined__who"><div class="editevent__body__signined__who__contents"><div class="icon_img_conteiner" v-on:click="showModal('modal-who')"><img src="/img/group-black-48dp/2x/outline_group_black_48dp.png" class="icon_img"> {{whoName==null?"未入力":whoName}}</div></div></div>
-        <modal class="editevent__modal" name="modal-who" :clickToClose="true" height="95%">
+        <modal class="editevent__modal" name="modal-who" :clickToClose="true" width="95%" height="95%">
           <div class="editevent__modal__contents">
             <div style="height:40px;text-align:left;"><img src="/img/close-black-48dp/2x/outline_close_black_48dp.png" v-on:click="hideModal('modal-who')" class="icon_clickable" style="width:40px;height:40px;"></div>
             <ul>
