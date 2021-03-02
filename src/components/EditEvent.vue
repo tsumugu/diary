@@ -458,6 +458,7 @@ export default {
         this.PM.searchnearbyplacesbylatlon(InfoFromEXIF.latitude, InfoFromEXIF.longitude).then((response) => {
           this.nearbyPlaceList = [{name: "画像に埋め込まれていた情報からの検索結果", items: response.data }]
           new MyUtil().confirmExPromise("位置情報が埋め込まれていました。それを基に場所を入力しますか？").then(()=>{
+            this.whereAdd = null
             this.showModal("modal-where")
           })
         }).catch((error) => {

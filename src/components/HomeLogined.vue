@@ -91,7 +91,7 @@
     <modal class="HomeLogined__modal" name="modal-registpost" :clickToClose="false" width="95%" height="95%">
       <div class="HomeLogined__modal__contents">
         <div style="height:40px;"><img src="/img/close-black-48dp/2x/outline_close_black_48dp.png" v-on:click='()=>{this.$modal.hide("modal-registpost")}' class="icon_clickable" style="width:40px;height:40px;text-align:left;"><img src="/img/open_in_new-black-48dp/2x/outline_open_in_new_black_48dp.png" title="新しいウインドウで投稿ページを開く" v-on:click="gotoRegist" class="icon_clickable" style="width:40px;height:40px;text-align:right;float:right;"></div>
-        <EditEvent />
+        <EditEvent style="height: calc( 100% - 80px ); overflow: scroll;" />
       </div>
     </modal>
     <div class="HomeLogined__MainArea">
@@ -524,6 +524,8 @@ ul {
   &__modal {
     &__contents {
       padding: 20px;
+      height: 100%;
+      /*overflow: scroll;*/
       &__title {
         margin: 0 !important;
       }
