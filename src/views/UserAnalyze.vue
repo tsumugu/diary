@@ -174,17 +174,18 @@ export default {
     this.PM = new PlacesManager(axios, database, {uid: this.userId})
     this.FM = new FriendsManager(axios, database, {uid: this.userId})
     this.PSM = new PostsManager(axios, database, {uid: this.userId}, this.PM, this.FM)
-    this.isOwner = true
+    /*this.isOwner = true
     this.isShowEditButton = false
-    /*
+    */
     firebase.auth().onAuthStateChanged(user => {
       if (user == null) {
         this.isOwner = false
+        this.isShowEditButton = false
       } else {
         this.isOwner = (user.uid==this.userId)
+        this.isShowEditButton = (user.uid==this.userId)
       }
     })
-    */
     // 投稿まとめを読み込み
     var postlistPromise = new Promise((resolve)=>{
       database.ref("postlist/"+this.userId).on('value', (snapshot) =>{
